@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { @apply bg-base font-sans text-base font-normal text-cream antialiased; }
+h1, h2 { @apply font-bold tracking-tight; }
+h3, h4 { @apply font-bold; }
+button, .btn-primary, .btn-secondary, .btn-outline { @apply font-sans; }
+
+/* Cream filled button (main action) */
+.btn-primary { @apply flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-cream px-5 font-bold text-base transition active:scale-[0.98] disabled:opacity-60; }
+/* Card-coloured button with a subtle border (secondary actions) */
+.btn-secondary { @apply flex min-h-[50px] w-full items-center justify-center rounded-xl border border-line bg-card px-4 text-sm font-semibold text-cream transition active:scale-[0.98]; }
+/* Cream outline button (e.g. Google login) */
+.btn-outline { @apply flex min-h-[50px] w-full items-center justify-center rounded-xl border border-cream bg-transparent px-4 font-semibold text-cream transition active:scale-[0.98]; }
+.input { @apply min-h-[50px] w-full rounded-xl border border-line bg-card px-4 text-cream placeholder:text-muted/70 focus:border-cream focus:outline-none; }
+.card { @apply rounded-2xl border border-line bg-card p-4; }
+.section-label { @apply text-xs font-bold uppercase tracking-[0.18em] text-muted; }

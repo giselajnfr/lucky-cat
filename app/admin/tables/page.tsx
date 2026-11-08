@@ -1,0 +1,1 @@
+import { AdminLiveTables } from "@/components/admin/AdminLiveTables"; export default function Page() { return <main><h1 className="mb-4 text-3xl font-extrabold">Live Tables</h1><AdminLiveTables /></main>; }
