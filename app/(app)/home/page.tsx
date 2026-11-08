@@ -6,6 +6,9 @@ export default async function Home() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const name: string = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "teman";
+  // Only admins get a shortcut to /admin (the page itself is also protected on the server).
+  const { data: prof } = user ? await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle() : { data: null };
+  const isAdmin = prof?.role === "ADMIN";
   // RLS limits this to games the user owns or has joined.
   const { data: latest } = await supabase.from("games")
     .select("id, room_code, status, game_players(player_name, current_score)")
@@ -16,7 +19,10 @@ export default async function Home() {
     <main className="space-y-5">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-2.5"><LogoMark size="36px" /><span className="text-sm font-bold">Lucky Cat Mahjong</span></div>
-        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card font-bold" aria-label={name}>{name[0]?.toUpperCase()}</span>
+        <div className="flex items-center gap-2">
+          {isAdmin && <Link href="/admin" className="rounded-full border border-cream px-3 py-1.5 text-xs font-bold">Admin</Link>}
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card font-bold" aria-label={name}>{name[0]?.toUpperCase()}</span>
+        </div>
       </header>
 
       <div>
