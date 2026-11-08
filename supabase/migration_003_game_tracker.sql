@@ -240,3 +240,6 @@ create policy "games update owner meta" on public.games for update to authentica
 
 -- ============ 7. Realtime ============
 -- games, game_players, game_hands and score_transactions are already in the supabase_realtime publication (schema.sql).
+
+-- Make the Supabase API notice the new functions right away (fixes "Could not find the function ... in the schema cache").
+notify pgrst, 'reload schema';

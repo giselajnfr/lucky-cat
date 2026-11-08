@@ -20,14 +20,16 @@ export function NewGameForm() {
   const [seats, setSeats] = useState<Seat[]>([0, 1, 2, 3].map(() => ({ playerId: null, name: "" })));
   const [name, setName] = useState("");
   const [when, setWhen] = useState(localNow());
-  const [start, setStart] = useState(0);
+  const [start, setStart] = useState("0");
   const [round, setRound] = useState<(typeof ROUNDS)[number]>("east");
   const [last, setLast] = useState<(typeof ROUNDS)[number]>(HK18_RULES.progression.lastRoundWind);
-  const [minFan, setMinFan] = useState(HK18_RULES.minimumFan);
+  const [minFan, setMinFan] = useState(String(HK18_RULES.minimumFan));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [q, setQ] = useState(""); const [found, setFound] = useState<{ id: string; display_name: string }[]>([]);
-  const [target, setTarget] = useState<number | null>(null);
+  const [found, setFound] = useState<{ id: string; display_name: string }[]>([]);
+  const [active, setActive] = useState<number | null>(null); // seat whose name field is being edited
+  const labelOf = (s: Seat) => (s.playerId ? roster.find((r) => r.id === s.playerId)?.name ?? "…" : s.name);
+  const typed = active !== null ? labelOf(seats[active]).trim() : "";
 
   useEffect(() => {
     (async () => {
@@ -37,13 +39,12 @@ export function NewGameForm() {
     })();
   }, [supabase]);
   useEffect(() => {
-    if (q.trim().length < 2) { setFound([]); return; }
-    const t = setTimeout(async () => { const { data } = await supabase.rpc("search_profiles", { q }); setFound((data ?? []) as { id: string; display_name: string }[]); }, 250);
+    if (typed.length < 2) { setFound([]); return; }
+    const t = setTimeout(async () => { const { data } = await supabase.rpc("search_profiles", { q: typed }); setFound((data ?? []) as { id: string; display_name: string }[]); }, 250);
     return () => clearTimeout(t);
-  }, [q, supabase]);
+  }, [typed, supabase]);
 
   const taken = new Set(seats.map((s) => s.playerId).filter(Boolean));
-  const labelOf = (s: Seat) => (s.playerId ? roster.find((r) => r.id === s.playerId)?.name ?? "…" : s.name);
   const names = seats.map((s) => labelOf(s).trim().toLowerCase());
   const dupe = names.some((n, i) => n && names.indexOf(n) !== i);
   const ready = seats.every((s) => labelOf(s).trim()) && !dupe;
@@ -52,7 +53,7 @@ export function NewGameForm() {
   async function submit(e: React.FormEvent) {
     e.preventDefault(); if (!ready) return; setBusy(true); setError(null);
     const { data, error } = await supabase.rpc("create_game", {
-      p_name: name, p_played_at: new Date(when).toISOString(), p_starting_points: start, p_round_wind: round, p_min_fan: minFan, p_last_round_wind: last,
+      p_name: name, p_played_at: new Date(when).toISOString(), p_starting_points: Number(start || "0"), p_round_wind: round, p_min_fan: Math.min(99, Math.max(1, Number(minFan) || 1)), p_last_round_wind: last,
       p_players: seats.map((s, seat) => (s.playerId ? { seat, player_id: s.playerId } : { seat, name: s.name.trim() })),
     });
     if (error) { setError(error.message); setBusy(false); return; }
@@ -71,28 +72,30 @@ export function NewGameForm() {
 
       <section className="space-y-3">
         <h2 className="section-label">Pemain & kursi</h2>
-        {seats.map((s, i) => (
-          <div key={i} className="card space-y-2">
-            <div className="flex items-center justify-between"><b>Kursi {WIND_LABEL[SEATS[i]]}</b>{i === 0 && <span className="text-xs text-muted">Dealer awal</span>}</div>
-            {s.playerId || s.name ? (
-              <div className="flex items-center justify-between rounded-xl border border-line bg-base/40 px-3 py-2"><span className="font-semibold">{labelOf(s)}</span>
-                <button type="button" className="text-xs underline" onClick={() => set(i, { playerId: null, name: "" })}>Ganti</button></div>
-            ) : target === i ? (
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-2">{roster.filter((r) => !taken.has(r.id)).map((r) => <button type="button" key={r.id} className={chip(false)} onClick={() => { set(i, { playerId: r.id, name: "" }); setTarget(null); }}>{r.name}{r.user_id ? "" : " (tamu)"}</button>)}</div>
-                <input className="input" placeholder="Nama tamu baru" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const v = (e.target as HTMLInputElement).value.trim(); if (v) { set(i, { playerId: null, name: v }); setTarget(null); } } }} />
-                <input className="input" placeholder="Cari pemain terdaftar…" value={q} onChange={(e) => setQ(e.target.value)} />
-                {found.map((f) => <button type="button" key={f.id} className={chip(false) + " mr-2"} onClick={async () => {
-                  const { data: ps } = await supabase.from("players").select("id").eq("user_id", f.id).maybeSingle();
-                  if (ps) set(i, { playerId: ps.id, name: "" }); else { const { data: ins } = await supabase.from("players").insert({ name: f.display_name, user_id: f.id, owner_id: (await supabase.auth.getUser()).data.user!.id }).select("id, name, user_id").single(); if (ins) { setRoster((r) => [...r, ins as RosterPlayer]); set(i, { playerId: ins.id, name: "" }); } }
-                  setTarget(null); setQ("");
-                }}>{f.display_name}</button>)}
-              </div>
-            ) : <button type="button" className="btn-secondary !min-h-[44px]" onClick={() => setTarget(i)}>Pilih pemain atau tambah tamu</button>}
-          </div>
-        ))}
+        {seats.map((s, i) => {
+          const text = labelOf(s); const t = text.trim().toLowerCase();
+          const sugg = active === i ? roster.filter((r) => (!taken.has(r.id) || r.id === s.playerId) && r.name.toLowerCase() !== t && r.name.toLowerCase().includes(t)).slice(0, 6) : [];
+          const profiles = active === i ? found.filter((f) => !roster.some((r) => r.user_id === f.id)) : [];
+          const pick = (playerId: string) => { set(i, { playerId, name: "" }); setActive(null); };
+          return (
+            <div key={i} className="card space-y-2">
+              <div className="flex items-center justify-between"><label htmlFor={`p${i}`} className="font-bold">Kursi {WIND_LABEL[SEATS[i]]}</label>{i === 0 && <span className="text-xs text-muted">Dealer awal</span>}</div>
+              <input id={`p${i}`} className="input" value={text} placeholder="Ketik nama pemain" maxLength={40} autoComplete="off" autoCapitalize="words" enterKeyHint="next"
+                onFocus={() => setActive(i)} onChange={(e) => set(i, { playerId: null, name: e.target.value })} />
+              {(sugg.length > 0 || profiles.length > 0) && (
+                <div className="flex flex-wrap gap-2">
+                  {sugg.map((r) => <button type="button" key={r.id} className={chip(false)} onClick={() => pick(r.id)}>{r.name}{r.user_id ? "" : " (tamu)"}</button>)}
+                  {profiles.map((f) => <button type="button" key={f.id} className={chip(false)} onClick={async () => {
+                    const { data: ps } = await supabase.from("players").select("id").eq("user_id", f.id).maybeSingle();
+                    if (ps) { pick(ps.id); return; }
+                    const { data: ins } = await supabase.from("players").insert({ name: f.display_name, user_id: f.id, owner_id: (await supabase.auth.getUser()).data.user!.id }).select("id, name, user_id").single();
+                    if (ins) { setRoster((r) => [...r, ins as RosterPlayer]); pick(ins.id); }
+                  }}>{f.display_name}</button>)}
+                </div>)}
+            </div>);
+        })}
         {dupe && <p role="alert" className="text-sm text-red-300">Satu pemain tidak boleh duduk di dua kursi.</p>}
-        <p className="text-xs text-muted">Pemain tamu tidak perlu akun. Tekan Enter setelah mengetik nama tamu.</p>
+        <p className="text-xs text-muted">Ketik nama pemain di tiap kursi. Pilih dari saran jika sudah pernah main; pemain tamu tidak perlu akun.</p>
       </section>
 
       <section className="card space-y-3">
@@ -100,8 +103,8 @@ export function NewGameForm() {
         <div><p className="mb-1.5 text-xs font-semibold text-muted">Ronde awal</p><div className="grid grid-cols-4 gap-2">{ROUNDS.map((r) => <button type="button" key={r} className={chip(round === r)} onClick={() => setRound(r)}>{ROUND_LABEL[r]}</button>)}</div></div>
         <div><p className="mb-1.5 text-xs font-semibold text-muted">Game berakhir setelah ronde</p><div className="grid grid-cols-4 gap-2">{ROUNDS.map((r) => <button type="button" key={r} className={chip(last === r)} onClick={() => setLast(r)}>{ROUND_LABEL[r]}</button>)}</div></div>
         <div className="grid grid-cols-2 gap-3">
-          <div><label className="mb-1.5 block text-xs font-semibold" htmlFor="mf">Minimum faan</label><input id="mf" type="number" min={1} max={99} className="input" value={minFan} onChange={(e) => setMinFan(Math.max(1, Number(e.target.value) || 1))} /></div>
-          <div><label className="mb-1.5 block text-xs font-semibold" htmlFor="sp">Skor awal</label><input id="sp" type="number" className="input" value={start} onChange={(e) => setStart(Number(e.target.value) || 0)} /></div>
+          <div><label className="mb-1.5 block text-xs font-semibold" htmlFor="mf">Minimum faan</label><input id="mf" inputMode="numeric" pattern="[0-9]*" maxLength={2} className="input" value={minFan} onFocus={(e) => e.target.select()} onChange={(e) => setMinFan(e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, ""))} /></div>
+          <div><label className="mb-1.5 block text-xs font-semibold" htmlFor="sp">Skor awal</label><input id="sp" inputMode="numeric" pattern="[0-9]*" placeholder="0" className="input" value={start} onFocus={(e) => e.target.select()} onChange={(e) => setStart(e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, ""))} /></div>
         </div>
         <p className="text-xs text-muted">Aturan rumah: HK18 (minimum {HK18_RULES.minimumFan} faan, poin = faan).</p>
       </section>

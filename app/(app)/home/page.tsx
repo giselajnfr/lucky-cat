@@ -32,7 +32,7 @@ export default async function Home() {
 
       <section className="flex flex-col items-center gap-4 rounded-3xl border border-line bg-card p-4">
         <LogoMark size="132px" />
-        <Link href="/game" className="btn-primary">Mulai game baru</Link>
+        <Link href="/game/new" className="btn-primary">Mulai game baru</Link>
       </section>
 
       <div className="grid grid-cols-2 gap-3">
