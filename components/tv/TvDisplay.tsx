@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { fmtScore, scoreTone } from "@/lib/ui/score";
 import { LogoMark } from "@/components/ui/LogoMark";
 import { WinningEventQueue } from "@/lib/tv/eventQueue";
 import { createChime } from "@/lib/tv/chime";
@@ -21,7 +22,7 @@ function TableCard({ t, big }: { t: TvTable; big: boolean }) {
       <ul className="mt-[0.8vw] space-y-[0.3vw]">
         {ranked(t).map((p, i) => (
           <li key={p.seat} className={`flex justify-between font-bold ${big ? "text-[2.2vw]" : "text-[1.6vw]"}`}>
-            <span>{MEDALS[i]} {p.name}{p.seat === t.dealer_seat ? " 👑" : ""}</span><span>{fmt(p.score)}</span>
+            <span>{MEDALS[i]} {p.name}{p.seat === t.dealer_seat ? " 👑" : ""}</span><span className={scoreTone(p.score)}>{fmtScore(p.score)}</span>
           </li>
         ))}
       </ul>
@@ -37,7 +38,7 @@ function Spotlight({ t }: { t: TvTable }) {
       <p className="text-[3vw] font-bold text-muted">{t.round_wind ? ROUND_NAME[t.round_wind] : ""} · Hand {t.hand_number ?? "-"}</p>
       <div className="grid grid-cols-2 gap-[3vw]">
         <ul className="space-y-[1vw] text-[3.4vw] font-extrabold">
-          {ranked(t).map((p, i) => <li key={p.seat} className="flex justify-between">{MEDALS[i]} {p.name}{p.seat === dealer ? " 👑" : ""}<span>{fmt(p.score)}</span></li>)}
+          {ranked(t).map((p, i) => <li key={p.seat} className="flex justify-between">{MEDALS[i]} {p.name}{p.seat === dealer ? " 👑" : ""}<span className={scoreTone(p.score)}>{fmtScore(p.score)}</span></li>)}
         </ul>
         <ul className="space-y-[1vw] text-[2.6vw] font-bold text-muted">
           {[...t.players].sort((a, b) => a.seat - b.seat).map((p) => <li key={p.seat}>{WIND_NAME[seatWind(p.seat, dealer)].toUpperCase()} — <span className="text-cream">{p.name}</span></li>)}
@@ -50,7 +51,7 @@ function Spotlight({ t }: { t: TvTable }) {
 function Leaderboard({ rows, type }: { rows: LeaderRow[]; type: string }) {
   const sorted = [...rows].sort((a, b) => type === "most_wins" ? b.wins_today - a.wins_today : type === "highest_fan" ? b.best_fan_today - a.best_fan_today : b.score - a.score).slice(0, 8);
   const label = type === "most_wins" ? "Most Wins Today" : type === "highest_fan" ? "Highest Fan Today" : "Highest Score";
-  const val = (r: LeaderRow) => type === "most_wins" ? `${r.wins_today} wins` : type === "highest_fan" ? `${r.best_fan_today} fan` : fmt(r.score);
+  const val = (r: LeaderRow) => type === "most_wins" ? `${r.wins_today} wins` : type === "highest_fan" ? `${r.best_fan_today} fan` : fmtScore(r.score);
   return (
     <div className="flex h-full flex-col justify-center gap-[1.5vw] px-[10vw]">
       <h2 className="text-[5vw] font-extrabold">🏆 TODAY&apos;S LEADERBOARD</h2>

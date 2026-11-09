@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { WIND_LABEL } from "@/components/calculator/HandCalculator";
 import { RecordHand } from "./RecordHand";
+import { BackLink } from "@/components/layout/BackLink";
+import { RoomCode } from "./RoomCode";
+import { fmtScore, scoreTone } from "@/lib/ui/score";
 import { ROUND_TO_WIND, seatWindOf } from "@/lib/game-engine";
 import type { FanDetailRow, GamePlayerRow, GameRow, HandRow } from "@/lib/game/types";
 
@@ -58,13 +61,15 @@ export function GameDashboard({ initial, isOwner }: { initial: Full; isOwner: bo
 
   return (
     <main className="space-y-4">
+      <BackLink href="/game" label="Game" />
       <header>
         <div className="flex items-start justify-between gap-3">
           <div><h1 className="text-[1.6rem] leading-tight">{game.name || `Game ${game.room_code}`}</h1>
-            <p className="text-xs text-muted">Ruang {game.room_code} · HK18 · min {game.min_fan} faan · {new Date(game.played_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}</p></div>
-          <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold ${finished ? "border-line text-muted" : "border-cream text-cream"}`}>{STATUS[game.status]}</span>
+            <p className="text-xs text-muted">HK18 · min {game.min_fan} faan · {new Date(game.played_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}</p></div>
+          <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold ${finished ? "border-line text-muted" : game.status === "paused" ? "border-warn text-warn" : "border-pos text-pos"}`}>{STATUS[game.status]}</span>
         </div>
       </header>
+      <RoomCode code={game.room_code} />
 
       <section className="grid grid-cols-3 gap-2 text-center">
         <div className="card !p-3"><p className="text-[11px] text-muted">Ronde</p><p className="font-extrabold">{ROUND_LABEL[game.current_round_wind]}</p></div>
@@ -82,7 +87,7 @@ export function GameDashboard({ initial, isOwner }: { initial: Full; isOwner: bo
                 <span>{WIND_LABEL[seatWindOf(p.seat_position, game.current_dealer_seat)]}</span>{isDealer && <b>Dealer</b>}
               </div>
               <p className="mt-1 truncate text-lg font-bold">{p.player_name}</p>
-              <p className="text-3xl font-extrabold leading-tight">{p.current_score}</p>
+              <p className={`text-3xl font-extrabold leading-tight ${scoreTone(p.current_score, lead)}`}>{fmtScore(p.current_score)}</p>
               <p className={`text-xs ${lead ? "text-base/70" : "text-muted"}`}>{wins(p.id)} menang{finished && p.final_rank ? ` · Peringkat ${p.final_rank}` : lead ? " · Memimpin" : ""}</p>
             </div>
           );
@@ -91,7 +96,7 @@ export function GameDashboard({ initial, isOwner }: { initial: Full; isOwner: bo
       <p className="text-sm text-muted">Total poin beredar: {players.reduce((s, p) => s + p.current_score, 0)} · {hands.length} tangan dimainkan</p>
 
       {lastOver && !finished && <p className="card border-cream text-sm">Ronde terakhir sudah selesai. Kamu bisa mengakhiri game sekarang atau terus bermain.</p>}
-      {msg && <p role="alert" className="text-sm text-red-300">{msg}</p>}
+      {msg && <p role="alert" className="text-sm font-semibold text-neg">{msg}</p>}
 
       {isOwner && !finished && (
         <div className="space-y-2">
@@ -100,7 +105,7 @@ export function GameDashboard({ initial, isOwner }: { initial: Full; isOwner: bo
           <div className="grid grid-cols-3 gap-2">
             <button className="btn-secondary" disabled={busy || hands.length === 0} onClick={() => setConfirm("undo")}>Batalkan tangan</button>
             <button className="btn-secondary" disabled={busy || game.status !== "in_progress"} onClick={() => rpc("set_game_paused", { p_game: gid, p_paused: true })}>Jeda</button>
-            <button className="btn-secondary" disabled={busy} onClick={() => setConfirm("finish")}>Akhiri</button>
+            <button className="btn-secondary !border-neg !text-neg" disabled={busy} onClick={() => setConfirm("finish")}>Akhiri</button>
           </div>
         </div>
       )}
@@ -126,7 +131,7 @@ export function GameDashboard({ initial, isOwner }: { initial: Full; isOwner: bo
             <p className="mt-1 text-sm text-muted">{confirm === "finish" ? "Skor akhir dan peringkat disimpan. Game yang sudah selesai tidak bisa diubah lagi." : "Skor, dealer, dan ronde dikembalikan seperti sebelum tangan itu."}</p>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button className="btn-secondary" onClick={() => setConfirm(null)}>Kembali</button>
-              <button className="btn-primary" disabled={busy} onClick={() => rpc(confirm === "finish" ? "finish_game" : "undo_last_hand", { p_game: gid })}>{confirm === "finish" ? "Akhiri" : "Batalkan"}</button>
+              <button className="btn-danger" disabled={busy} onClick={() => rpc(confirm === "finish" ? "finish_game" : "undo_last_hand", { p_game: gid })}>{confirm === "finish" ? "Akhiri" : "Batalkan"}</button>
             </div>
           </div>
         </div>

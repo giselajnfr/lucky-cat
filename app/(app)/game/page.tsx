@@ -1,33 +1,66 @@
 import Link from "next/link";
+import { fmtScore, scoreTone } from "@/lib/ui/score";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 const ROUND = { east: "Timur", south: "Selatan", west: "Barat", north: "Utara" } as const;
+type P = { player_name: string; current_score: number };
 
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: { tab?: string } }) {
+  const tab = searchParams.tab === "selesai" ? "selesai" : "berlangsung";
   const s = createClient();
-  const { data: games } = await s.from("games").select("id, name, room_code, status, played_at, current_round_wind, game_players(player_name, seat_position, current_score), game_hands(count)")
-    .neq("status", "finished").order("created_at", { ascending: false });
+  const { data: { user } } = await s.auth.getUser();
+  // RLS: only games this user owns or has joined.
+  const { data } = await s.from("games")
+    .select("id, name, room_code, status, owner_id, played_at, current_round_wind, game_players(player_name, current_score), game_hands(count)")
+    .order("played_at", { ascending: false });
+  const all = data ?? [];
+  const live = all.filter((g) => g.status !== "finished"), done = all.filter((g) => g.status === "finished");
+  const list = tab === "selesai" ? done : live;
+
   return (
     <main className="space-y-5">
-      <h1 className="text-[1.75rem]">Game</h1>
-      <Link href="/game/new" className="btn-primary">Mulai game baru</Link>
-      <div className="grid grid-cols-2 gap-3"><Link href="/quick-score" className="btn-secondary">Hitung skor cepat</Link><Link href="/guidebook" className="btn-secondary">Aturan HK18</Link></div>
-      <Link href="/history" className="btn-secondary">Riwayat game</Link>
-      <section>
-        <h2 className="section-label mb-3">Game yang belum selesai</h2>
-        {games?.length ? (
-          <ul className="space-y-3">{games.map((g) => {
-            const ps = [...(g.game_players ?? [])].sort((a, b) => b.current_score - a.current_score);
-            const hands = (g.game_hands as unknown as { count: number }[])?.[0]?.count ?? 0;
-            return (<li key={g.id}><Link href={`/game/${g.id}`} className="card block">
-              <div className="flex justify-between"><b>{g.name || `Game ${g.room_code}`}</b><span className="text-xs text-muted">{g.status === "paused" ? "Dijeda" : "Berlangsung"}</span></div>
-              <p className="text-xs text-muted">Ronde {ROUND[g.current_round_wind as keyof typeof ROUND]} · {hands} tangan · {new Date(g.played_at).toLocaleDateString("id-ID", { dateStyle: "medium" })}</p>
-              <p className="mt-2 text-sm">{ps.map((p) => `${p.player_name} ${p.current_score}`).join(" · ")}</p>
-              <p className="mt-2 text-xs font-bold underline">Lanjutkan</p></Link></li>);
-          })}</ul>
-        ) : <p className="card text-sm text-muted">Tidak ada game yang sedang berjalan.</p>}
-      </section>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-[1.75rem]">Game</h1>
+        <div className="flex gap-2">
+          <Link href="/game/join" className="btn-secondary btn-sm">Gabung</Link>
+          <Link href="/game/new" className="btn-primary btn-sm">+ Baru</Link>
+        </div>
+      </div>
+
+      <nav className="seg" aria-label="Filter game">
+        <Link href="/game" className={`seg-item ${tab === "berlangsung" ? "seg-on" : ""}`} aria-current={tab === "berlangsung" ? "page" : undefined}>Berlangsung ({live.length})</Link>
+        <Link href="/game?tab=selesai" className={`seg-item ${tab === "selesai" ? "seg-on" : ""}`} aria-current={tab === "selesai" ? "page" : undefined}>Selesai ({done.length})</Link>
+      </nav>
+
+      {list.length ? (
+        <ul className="space-y-3">{list.map((g) => {
+          const ps = [...(g.game_players as P[])].sort((a, b) => b.current_score - a.current_score);
+          const hands = (g.game_hands as unknown as { count: number }[])?.[0]?.count ?? 0;
+          const fin = g.status === "finished", viewer = g.owner_id !== user?.id;
+          return (
+            <li key={g.id}><Link href={fin ? `/history/${g.id}` : `/game/${g.id}`} className={`card block ${fin ? "" : "!border-l-4 " + (g.status === "paused" ? "!border-l-warn" : "!border-l-pos")}`}>
+              <div className="flex items-start justify-between gap-2">
+                <b>{g.name || `Game ${g.room_code}`}</b>
+                <span className="flex shrink-0 items-center gap-2 text-xs font-bold">
+                  {viewer && <span className="rounded-full border border-line px-2 py-0.5 font-semibold text-muted">Penonton</span>}
+                  <span className={fin ? "text-muted" : g.status === "paused" ? "text-warn" : "text-pos"}>{fin ? "Selesai" : g.status === "paused" ? "Dijeda" : "Berlangsung"}</span>
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs text-muted">{new Date(g.played_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })} · {hands} tangan{fin ? "" : ` · Ronde ${ROUND[g.current_round_wind as keyof typeof ROUND]}`} · {g.room_code}</p>
+              <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">{ps.map((p) => <span key={p.player_name}>{p.player_name} <b className={scoreTone(p.current_score)}>{fmtScore(p.current_score)}</b></span>)}</p>
+              <p className="mt-2 text-xs font-bold">{fin ? "Lihat ringkasan →" : viewer ? "Lihat game →" : "Lanjutkan →"}</p>
+            </Link></li>);
+        })}</ul>
+      ) : tab === "selesai" ? (
+        <p className="card text-sm text-muted">Belum ada game selesai.</p>
+      ) : (
+        <div className="card space-y-3 text-center">
+          <p className="text-sm text-muted">Tidak ada game yang sedang berlangsung.</p>
+          <Link href="/game/new" className="btn-primary">Mulai game baru</Link>
+          <Link href="/game/join" className="btn-ghost">Punya kode ruang? Gabung</Link>
+        </div>
+      )}
     </main>
   );
 }

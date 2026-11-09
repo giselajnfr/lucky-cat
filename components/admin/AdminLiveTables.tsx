@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { fmtScore, scoreTone } from "@/lib/ui/score";
 import { MEDALS, ROUND_NAME, STATUS_LABEL, WIND_NAME, seatWind } from "@/lib/tv/types";
 
 type P = { id: string; player_name: string; seat_position: number; current_score: number };
@@ -59,7 +60,7 @@ export function AdminLiveTables() {
                   {sorted.map((p, i) => (
                     <li key={p.id} className="flex items-center justify-between rounded-xl bg-base px-3 py-2">
                       <span className="font-semibold">{MEDALS[i]} {p.player_name}{p.seat_position === g.current_dealer_seat ? " 👑" : ""} <span className="text-xs text-muted">{WIND_NAME[seatWind(p.seat_position, g.current_dealer_seat)]}</span></span>
-                      <span className="flex items-center gap-3 font-bold">{p.current_score.toLocaleString("en-US")}
+                      <span className="flex items-center gap-3 font-bold"><span className={scoreTone(p.current_score)}>{fmtScore(p.current_score)}</span>
                         <button className="text-xs text-muted underline" onClick={() => {
                           const v = prompt(`New score for ${p.player_name}`, String(p.current_score));
                           if (v !== null && v.trim() !== "" && !Number.isNaN(Number(v))) call("admin_correct_score", { p_player: p.id, p_new: Math.round(Number(v)), p_reason: prompt("Reason (optional)") });
