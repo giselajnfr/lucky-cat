@@ -30,3 +30,11 @@ Anything the HK18 table does not define is a config flag, listed on the in-app *
 
 ## Tests
 `npm test` (vitest): scoring engine, game engine, statistics, request validation.
+
+## Demo data (for client presentations)
+In the Supabase SQL Editor, with your account already set to ADMIN:
+1. Run `supabase/demo/seed_demo_data.sql` — creates 7 demo games across 6 cafe tables (3 playing, 1 paused, 1 empty, 1 finished) with hands, fan details and scores. Safe to re-run.
+   Scores follow HK18 (1 point per faan), so they look small; set `mult int := 100` near the top of the script for bigger numbers.
+2. Open `/admin`, `/admin/tables` and `/tv`.
+3. With `/tv` open, run `supabase/demo/trigger_hu_demo.sql` to fire a live "HU!" highlight (change `tn` for another table).
+4. When done, run `supabase/demo/remove_demo_data.sql`.
