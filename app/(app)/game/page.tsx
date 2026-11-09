@@ -14,7 +14,7 @@ export default async function Page({ searchParams }: { searchParams: { tab?: str
   const isAdmin = prof?.role === "ADMIN";
   // RLS: only games this user owns or has joined.
   const { data } = await s.from("games")
-    .select("id, name, room_code, status, owner_id, played_at, current_round_wind, game_players(player_name, current_score), game_hands(count)")
+    .select("id, name, room_code, status, owner_id, played_at, setup_complete, starting_points, current_round_wind, game_players(player_name, current_score), game_hands(count)")
     .order("played_at", { ascending: false });
   const all = data ?? [];
   const live = all.filter((g) => g.status !== "finished"), done = all.filter((g) => g.status === "finished");
@@ -49,9 +49,9 @@ export default async function Page({ searchParams }: { searchParams: { tab?: str
                   <span className={fin ? "text-muted" : g.status === "paused" ? "text-warn" : "text-pos"}>{fin ? "Selesai" : g.status === "paused" ? "Dijeda" : "Berlangsung"}</span>
                 </span>
               </div>
-              <p className="mt-0.5 text-xs text-muted">{new Date(g.played_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })} · {hands} tangan{fin ? "" : ` · Ronde ${ROUND[g.current_round_wind as keyof typeof ROUND]}`} · {g.room_code}</p>
-              <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">{ps.map((p) => <span key={p.player_name}>{p.player_name} <b className={scoreTone(p.current_score)}>{fmtScore(p.current_score)}</b></span>)}</p>
-              <p className="mt-2 text-xs font-bold">{fin ? "Lihat ringkasan →" : "Lanjutkan →"}</p>
+              <p className="mt-0.5 text-xs text-muted">{new Date(g.played_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })} · {hands} tangan{fin || !g.setup_complete ? "" : ` · Ronde ${ROUND[g.current_round_wind as keyof typeof ROUND]}`} · {g.room_code}</p>
+              {!g.setup_complete ? <p className="mt-2 text-sm text-muted">Belum dimulai. Isi nama pemain dan pilih aturan meja.</p> : <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">{ps.map((p) => <span key={p.player_name}>{p.player_name} <b className={scoreTone(p.current_score, false, g.starting_points)}>{fmtScore(p.current_score)}</b></span>)}</p>}
+              <p className="mt-2 text-xs font-bold">{fin ? "Lihat ringkasan →" : g.setup_complete ? "Lanjutkan →" : "Atur meja →"}</p>
             </Link></li>);
         })}</ul>
       ) : tab === "selesai" ? (

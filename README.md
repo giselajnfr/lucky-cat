@@ -4,7 +4,7 @@ Game Tracker · HK18 score calculator · statistics · House Rules guide. Next.j
 
 ## Run locally
 1. `npm install`
-2. Create a Supabase project. In **SQL Editor** run, in order: `supabase/schema.sql`, `supabase/migration_002_admin_tv.sql`, `supabase/migration_003_game_tracker.sql`.
+2. Create a Supabase project. In **SQL Editor** run, in order: `supabase/schema.sql`, then migrations `002`, `003`, `004` and `005` (all in `supabase/`).
 3. Copy `.env.example` to `.env.local` and fill in all three values (URL, anon key, **service-role key**).
 4. Auth → URL Configuration: add `http://localhost:3000/auth/callback`. For Google login add the provider in Auth → Providers.
 5. `npm run dev` → http://localhost:3000
@@ -40,8 +40,19 @@ In the Supabase SQL Editor, with your account already set to ADMIN:
 4. When done, run `supabase/demo/remove_demo_data.sql`.
 
 ## Rooms, joining and editing hands
-- **Admins open tables.** Admin → Live Tables → *Buka meja* on an empty table, fill in the four players. The table card then shows the **room code**.
-- **Players join with the code** (Beranda → *Gabung dengan kode*, or the shared link). Anyone who joined can record, edit and undo hands; only the owner/admin can pause or finish the game.
+**1. Admin opens a room** (Admin → Live Tables → *Buka ruang*). The admin only picks the **play time** (1/2/3/4 hours, custom, or no limit). The table card then shows the **room code**.
+- The play time is a **guide, not a lock**. Players see a countdown (`h:mm:ss`) on their phone; when it hits zero it keeps counting as overtime and nothing is paused or closed.
+- Admin can add time any moment from the table card (**+30 menit / +1 jam / +2 jam**, or *Atur…* for an exact total, empty = no clock).
+
+**2. Players join with the code** (Beranda → *Gabung dengan kode*, or the shared link) and the first screen is the table setup:
+- type the four player names around the table (East deals first; names from your earlier games are suggested),
+- pick the rule book: **Chicken Hand** (no faan: every valid win is 1 point), **Beginner** (minimum 3 faan) or **Advanced** (minimum 5 faan),
+- pick the **starting points** (0 / 1.000 / 5.000 / 10.000 / any number) and whether to use a **faan cap** (8 / 10 / 13 / custom). A hand worth more than the cap is paid as the cap,
+- *Mulai sesi*. The first player to submit wins; everybody else at the table sees the same scoreboard live. Rounds (start / last) are under *Opsi lanjutan*.
+
+**3. Playing.** Anyone who joined can record, edit and undo hands; only the owner/admin can pause or finish the game.
 - **Editing a hand** (*Ubah* in the hand history) replays the whole game from hand 1, so dealer, seat winds, payments and every score after it are recomputed. Finished games are locked.
-- Run `supabase/migration_004_rooms_and_edits.sql` after migration 003. It also needs `SUPABASE_SERVICE_ROLE_KEY` on the server (already required for recording hands).
+- The minimum faan and the cap are stored per game and enforced on the server (the browser only previews).
+- Run `supabase/migration_005_room_setup_and_clock.sql` after migration 004. It also needs `SUPABASE_SERVICE_ROLE_KEY` on the server (already required for recording hands).
 - Demo-seeded games store tile lists but no hand details, so their hands can be viewed but not edited.
+- Chicken Hand: faan are not counted and there is no cap. Every valid win is worth 1 point (`flatPointsPerWin` in the scoring config), settled like any other hand: the discarder pays 1, or on a self draw each opponent pays 1.

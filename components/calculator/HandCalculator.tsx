@@ -109,27 +109,6 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
   return (
     <div className="space-y-4">
       <section className="card space-y-3">
-        <h2 className="section-label">Konteks kemenangan</h2>
-        <div className="grid grid-cols-2 gap-2">
-          {(["SELF_DRAW", "DISCARD"] as WinMethod[]).map((m) => (
-            <button key={m} type="button" disabled={!!lockedMethod} onClick={() => setMethod(m)} className={chip(effMethod === m) + (lockedMethod && effMethod !== m ? " opacity-40" : "")}>
-              {m === "SELF_DRAW" ? "Menang sendiri (Self Draw)" : "Dari buangan"}
-            </button>
-          ))}
-        </div>
-        {fixed ? (
-          <p className="text-sm text-muted">Kursi <b className="text-cream">{fixed.seatLabel}</b> · Ronde <b className="text-cream">{WIND_LABEL[fixed.roundWind]}</b></p>
-        ) : (
-          <>
-            <div><p className="mb-1.5 text-xs font-semibold text-muted">Angin kursi pemenang</p>
-              <div className="grid grid-cols-4 gap-2">{WINDS.map((w) => <button key={w} type="button" onClick={() => setSeat(w)} className={chip(seat === w)}>{WIND_LABEL[w]}</button>)}</div></div>
-            <div><p className="mb-1.5 text-xs font-semibold text-muted">Angin ronde</p>
-              <div className="grid grid-cols-4 gap-2">{WINDS.map((w) => <button key={w} type="button" onClick={() => setRound(w)} className={chip(round === w)}>{WIND_LABEL[w]}</button>)}</div></div>
-          </>
-        )}
-      </section>
-
-      <section className="card space-y-3">
         <div className="flex items-baseline justify-between">
           <h2 className="section-label">Tangan kamu</h2>
           <span className={`text-sm font-bold ${complete ? "text-cream" : "text-muted"}`}>{concealed.length}/{need} kartu{melds.length ? ` + ${melds.length} set` : ""}</span>
@@ -165,6 +144,27 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
           {BONUS_TILES.map((f) => <Tile key={f} t={f} fluid ring={flowers.includes(f)} onClick={() => toggleFlower(f)} label={`Bunga ${f}`} />)}
         </div>
         <p className="text-xs text-muted">Bunga: Plum 1 · Anggrek 2 · Krisan 3 · Bambu 4. Musim: Semi 1 · Panas 2 · Gugur 3 · Dingin 4. Tanpa bunga sama sekali = +1 faan.</p>
+      </section>
+
+      <section className="card space-y-3">
+        <h2 className="section-label">Konteks kemenangan</h2>
+        <div className="grid grid-cols-2 gap-2">
+          {(["SELF_DRAW", "DISCARD"] as WinMethod[]).map((m) => (
+            <button key={m} type="button" disabled={!!lockedMethod} onClick={() => setMethod(m)} className={chip(effMethod === m) + (lockedMethod && effMethod !== m ? " opacity-40" : "")}>
+              {m === "SELF_DRAW" ? "Menang sendiri (Self Draw)" : "Dari buangan"}
+            </button>
+          ))}
+        </div>
+        {fixed ? (
+          <p className="text-sm text-muted">Kursi <b className="text-cream">{fixed.seatLabel}</b> · Ronde <b className="text-cream">{WIND_LABEL[fixed.roundWind]}</b></p>
+        ) : (
+          <>
+            <div><p className="mb-1.5 text-xs font-semibold text-muted">Angin kursi pemenang</p>
+              <div className="grid grid-cols-4 gap-2">{WINDS.map((w) => <button key={w} type="button" onClick={() => setSeat(w)} className={chip(seat === w)}>{WIND_LABEL[w]}</button>)}</div></div>
+            <div><p className="mb-1.5 text-xs font-semibold text-muted">Angin ronde</p>
+              <div className="grid grid-cols-4 gap-2">{WINDS.map((w) => <button key={w} type="button" onClick={() => setRound(w)} className={chip(round === w)}>{WIND_LABEL[w]}</button>)}</div></div>
+          </>
+        )}
       </section>
 
       <section className="card space-y-2" aria-label="Poin tambahan">

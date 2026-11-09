@@ -6,6 +6,9 @@ import { WIND_LABEL } from "@/components/calculator/HandCalculator";
 import { RecordHand } from "./RecordHand";
 import { BackLink } from "@/components/layout/BackLink";
 import { RoomCode } from "./RoomCode";
+import { GameSetup } from "./GameSetup";
+import { SessionClock } from "./SessionClock";
+import { ruleSummary } from "@/lib/game/presets";
 import { HandTiles } from "@/components/mahjong/HandTiles";
 import { fmtScore, scoreTone } from "@/lib/ui/score";
 import { ROUND_TO_WIND, seatWindOf } from "@/lib/game-engine";
@@ -68,12 +71,18 @@ export function GameDashboard({ initial, canPlay, canManage }: { initial: Full; 
       <header>
         <div className="flex items-start justify-between gap-3">
           <div><h1 className="text-[1.6rem] leading-tight">{game.name || `Game ${game.room_code}`}</h1>
-            <p className="text-xs text-muted">HK18 · min {game.min_fan} faan · {new Date(game.played_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}</p></div>
+            <p className="text-xs text-muted">{game.setup_complete ? `${ruleSummary(game)} · ${new Date(game.played_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}` : "Ruang dibuka · menunggu pengaturan meja"}</p></div>
           <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold ${finished ? "border-line text-muted" : game.status === "paused" ? "border-warn text-warn" : "border-pos text-pos"}`}>{STATUS[game.status]}</span>
         </div>
       </header>
       <RoomCode code={game.room_code} />
+      {game.session_minutes && !finished && <SessionClock startedAt={game.session_started_at} minutes={game.session_minutes} />}
 
+      {!game.setup_complete && (canPlay
+        ? <GameSetup gameId={gid} onDone={load} />
+        : <p className="card text-sm text-muted">Menunggu pemain mengisi nama dan memilih aturan meja ini.</p>)}
+
+      {game.setup_complete && <>
       <section className="grid grid-cols-3 gap-2 text-center">
         <div className="card !p-3"><p className="text-[11px] text-muted">Ronde</p><p className="font-extrabold">{ROUND_LABEL[game.current_round_wind]}</p></div>
         <div className="card !p-3"><p className="text-[11px] text-muted">Tangan</p><p className="font-extrabold">{finished ? hands.length : hands.length + 1}</p></div>
@@ -90,7 +99,7 @@ export function GameDashboard({ initial, canPlay, canManage }: { initial: Full; 
                 <span>{WIND_LABEL[seatWindOf(p.seat_position, game.current_dealer_seat)]}</span>{isDealer && <b>Dealer</b>}
               </div>
               <p className="mt-1 truncate text-lg font-bold">{p.player_name}</p>
-              <p className={`text-3xl font-extrabold leading-tight ${scoreTone(p.current_score, isDealer)}`}>{fmtScore(p.current_score)}</p>
+              <p className={`text-3xl font-extrabold leading-tight ${scoreTone(p.current_score, isDealer, game.starting_points)}`}>{fmtScore(p.current_score)}</p>
               <p className={`text-xs ${isDealer ? "text-base/70" : "text-muted"}`}>{wins(p.id)} menang{finished && p.final_rank ? ` · Peringkat ${p.final_rank}` : lead ? " · Memimpin" : ""}</p>
             </div>
           );
@@ -121,12 +130,14 @@ export function GameDashboard({ initial, canPlay, canManage }: { initial: Full; 
           <ol className="space-y-2">{[...hands].reverse().map((h) => (
             <li key={h.id} className="card !p-3 text-sm">
               <div className="flex items-center justify-between gap-2"><b>#{h.hand_number} · {h.winner_player_id ? nameOf(h.winner_player_id) : "Seri"}{h.edited_at && <span className="ml-2 text-[11px] font-semibold text-warn">diubah</span>}</b>
-                <span className="flex items-center gap-1"><b>{h.winner_player_id ? `${h.total_fan} faan` : "0"}</b>{canPlay && !finished && <button type="button" className="btn-ghost !min-h-[36px] !px-2 text-xs !text-cream underline" onClick={() => setEditing(h)}>Ubah</button>}</span></div>
+                <span className="flex items-center gap-1"><b>{h.winner_player_id ? (game.rule_preset === "chicken" ? `${h.final_points} poin` : `${h.total_fan} faan`) : "0"}</b>{canPlay && !finished && <button type="button" className="btn-ghost !min-h-[36px] !px-2 text-xs !text-cream underline" onClick={() => setEditing(h)}>Ubah</button>}</span></div>
               <p className="text-xs text-muted">{METHOD[h.winning_method]}{h.discard_player_id ? ` · dibuang ${nameOf(h.discard_player_id)}` : ""} · Ronde {ROUND_LABEL[h.round_wind as keyof typeof ROUND_LABEL]}</p>
               <div className="mt-2"><HandTiles detail={h.hand_detail} tiles={h.hand_tiles} width={20} /></div>
               {h.hand_fan_details?.length ? <p className="mt-2 text-xs text-muted">{h.hand_fan_details.map((f: FanDetailRow) => `${f.fan_name} +${f.fan_value}`).join(" · ")}</p> : null}
             </li>))}</ol>)}
       </section>
+
+      </>}
 
       {recording && <RecordHand game={game} players={players} handsPlayed={hands.length} onCancel={() => setRecording(false)} onDone={async () => { setRecording(false); await load(); }} />}
       {editing && <RecordHand key={editing.id} edit={editing} game={game} players={players} handsPlayed={hands.length} onCancel={() => setEditing(null)} onDone={async () => { setEditing(null); await load(); }} />}

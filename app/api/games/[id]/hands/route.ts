@@ -32,6 +32,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const g = game as GameRow & { game_players: GamePlayerRow[] };
   const { data: canPlay } = await supabase.rpc("can_play_game", { gid: g.id });
   if (!canPlay) return err(403, "Gabung dengan kode ruang dulu untuk mencatat tangan");
+  if (!g.setup_complete) return err(409, "Meja belum dimulai. Isi nama pemain dan pilih aturan dulu.");
   if (g.status !== "in_progress") return err(409, g.status === "finished" ? "Game is already finished" : "Game is paused");
 
   const { count } = await supabase.from("game_hands").select("id", { count: "exact", head: true }).eq("game_id", g.id);

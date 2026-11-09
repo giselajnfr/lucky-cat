@@ -23,16 +23,16 @@ export function ScoreCard({ payload, winnerName, title }: { payload: CalcPayload
 
   async function image(): Promise<{ blob: Blob; name: string }> {
     const b = buildScorecardSvg({
-      total: result.totalFan, method: input.winningMethod, seatLabel: seat, roundLabel: `Ronde ${WIND_LABEL[input.roundWind]}`, winnerName, title,
+      total: result.basePoints, method: input.winningMethod, seatLabel: seat, roundLabel: `Ronde ${WIND_LABEL[input.roundWind]}`, winnerName, title,
       concealed: input.concealedTiles, melds: input.melds, winningTile: input.winningTile, flowers: input.flowers,
       breakdown: result.detectedFan.map((f) => ({ name: f.name, fan: f.fan, count: f.count })),
     });
-    return { blob: await svgToPng(b.svg, b.width, b.height), name: `mahjong-${result.totalFan}-poin.png` };
+    return { blob: await svgToPng(b.svg, b.width, b.height), name: `mahjong-${result.basePoints}-poin.png` };
   }
   async function save() { setBusy("save"); setMsg(null); try { const i = await image(); downloadBlob(i.blob, i.name); setMsg("Gambar tersimpan."); } catch (e) { setMsg((e as Error).message); } setBusy(null); }
   async function share() {
     setBusy("share"); setMsg(null);
-    try { const i = await image(); if (!(await shareBlob(i.blob, i.name, `${result.totalFan} poin · ${method}`))) { downloadBlob(i.blob, i.name); setMsg("Perangkat ini tidak mendukung berbagi. Gambar diunduh sebagai gantinya."); } }
+    try { const i = await image(); if (!(await shareBlob(i.blob, i.name, `${result.basePoints} poin · ${method}`))) { downloadBlob(i.blob, i.name); setMsg("Perangkat ini tidak mendukung berbagi. Gambar diunduh sebagai gantinya."); } }
     catch (e) { setMsg((e as Error).message); }
     setBusy(null);
   }
@@ -40,8 +40,13 @@ export function ScoreCard({ payload, winnerName, title }: { payload: CalcPayload
   return (
     <section className="card space-y-4" aria-live="polite">
       <div>
-        <p className="text-5xl font-extrabold leading-none">{result.totalFan} <span className="text-2xl">POIN</span></p>
+        <p className="text-5xl font-extrabold leading-none">{result.basePoints} <span className="text-2xl">POIN</span></p>
         <p className="mt-2 text-sm text-muted">{method} · {seat} · Ronde {WIND_LABEL[input.roundWind]}{winnerName ? ` · ${winnerName}` : ""}</p>
+        {result.rawFan > result.totalFan && (
+          <p className="mt-3 rounded-xl border border-line bg-base/40 p-3 text-sm text-muted">
+            Dibatasi cap: nilai tangan {result.rawFan} faan dibayar sebagai <b className="text-cream">{result.totalFan} faan</b>.
+          </p>
+        )}
         {!result.meetsMinimum && (
           <p role="alert" className="mt-3 rounded-xl border border-amber-300/50 bg-base/40 p-3 text-sm text-amber-200">
             Belum memenuhi minimum {result.minimumFan} faan. Tangan ini belum bisa dicatat sebagai kemenangan.
@@ -53,6 +58,7 @@ export function ScoreCard({ payload, winnerName, title }: { payload: CalcPayload
 
       <div>
         <h3 className="section-label mb-2">Rincian</h3>
+        {result.detectedFan.length === 0 && <p className="text-sm text-muted">Tanpa faan: setiap kemenangan sah bernilai {result.basePoints} poin.</p>}
         <ul className="divide-y divide-line/60">
           {result.detectedFan.map((f) => (
             <li key={f.id} className="flex items-baseline justify-between py-2 text-sm">

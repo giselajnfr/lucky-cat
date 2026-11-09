@@ -17,9 +17,9 @@ export default async function Home() {
 
   // RLS limits both queries to games the user owns or has joined.
   const [{ data: live }, { data: last }] = await Promise.all([
-    supabase.from("games").select("id, name, room_code, status, current_round_wind, game_players(player_name, current_score)")
+    supabase.from("games").select("id, name, room_code, status, current_round_wind, starting_points, game_players(player_name, current_score)")
       .neq("status", "finished").order("played_at", { ascending: false }).limit(2),
-    supabase.from("games").select("id, game_players(player_name, current_score)")
+    supabase.from("games").select("id, starting_points, game_players(player_name, current_score)")
       .eq("status", "finished").order("finished_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   const lastPlayers = [...((last?.game_players ?? []) as P[])].sort(byScore).slice(0, 4);
@@ -59,7 +59,7 @@ export default async function Home() {
                 <span className={`shrink-0 text-xs font-bold ${g.status === "paused" ? "text-warn" : "text-pos"}`}>{g.status === "paused" ? "Dijeda" : `Ronde ${ROUND[g.current_round_wind as keyof typeof ROUND]}`}</span>
               </div>
               <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">{[...(g.game_players as P[])].sort(byScore).map((p) => (
-                <span key={p.player_name}>{p.player_name} <b className={scoreTone(p.current_score)}>{fmtScore(p.current_score)}</b></span>))}</p>
+                <span key={p.player_name}>{p.player_name} <b className={scoreTone(p.current_score, false, g.starting_points)}>{fmtScore(p.current_score)}</b></span>))}</p>
               <p className="mt-2 text-xs font-bold">Lanjutkan →</p>
             </Link></li>))}</ul>
         </section>
@@ -72,7 +72,7 @@ export default async function Home() {
             <li key={p.player_name} className={`rounded-xl border px-2 py-2.5 text-center ${i === 0 ? "border-cream bg-cream text-base" : "border-line bg-card"}`}>
               <p className={`text-[10px] ${i === 0 ? "text-base/70" : "text-muted"}`}>{i + 1}</p>
               <p className="truncate text-sm font-bold">{p.player_name}</p>
-              <p className={`text-[11px] font-bold ${scoreTone(p.current_score, i === 0) || (i === 0 ? "text-base/70" : "text-muted")}`}>{fmtScore(p.current_score)}</p>
+              <p className={`text-[11px] font-bold ${scoreTone(p.current_score, i === 0, last!.starting_points) || (i === 0 ? "text-base/70" : "text-muted")}`}>{fmtScore(p.current_score)}</p>
             </li>))}</ol></Link>
         ) : <p className="card text-sm text-muted">Belum ada game selesai. Hasilnya muncul di sini setelah game pertama berakhir.</p>}
       </section>

@@ -52,7 +52,7 @@ export default function Page() {
           <div className="card space-y-2 text-sm"><h3>Jalannya permainan</h3>
             <ol className="list-decimal space-y-1 pl-5"><li>Setiap pemain mengambil lalu membuang satu kartu secara bergiliran.</li><li>Kartu buangan boleh diambil untuk Chow (hanya dari pemain sebelumnya), Pong, atau Kong.</li><li>Menang dari kartu buangan lawan disebut <b>menang dari buangan</b>. Menang dari kartu yang diambil sendiri disebut <b>Self Draw</b>.</li><li>Jika kartu habis tanpa pemenang, tangan itu <b>seri</b> dan tidak ada poin berpindah.</li></ol></div>
           <div className="card space-y-2 text-sm"><h3>Minimum {HK18_RULES.minimumFan} faan</h3>
-            <p>Tangan menang harus bernilai minimal <b>{HK18_RULES.minimumFan} faan</b> untuk sah. Faan dari pola tangan dan faan tambahan dijumlahkan. Chicken Hand bernilai 0 faan, jadi tidak cukup sendirian.</p></div>
+            <p>Tangan menang harus bernilai minimal <b>{HK18_RULES.minimumFan} faan</b> untuk sah. Faan dari pola tangan dan faan tambahan dijumlahkan. Chicken Hand bernilai 0 faan, jadi tidak cukup sendirian. Pemain memilih buku aturan sendiri saat memulai meja: <b>Chicken Hand</b> (tanpa minimum), <b>Beginner</b> (minimum 3 faan) atau <b>Advanced</b> (minimum 5 faan), dan boleh memakai batas faan (cap).</p></div>
         </div></section>
 
       <section><H2 id="pola">Pola tangan</H2><div className="space-y-3">{PATTERN_RULES.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>

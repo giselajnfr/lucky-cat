@@ -22,7 +22,7 @@ function TableCard({ t, big }: { t: TvTable; big: boolean }) {
       <ul className="mt-[0.8vw] space-y-[0.3vw]">
         {ranked(t).map((p, i) => (
           <li key={p.seat} className={`flex justify-between font-bold ${big ? "text-[2.2vw]" : "text-[1.6vw]"}`}>
-            <span>{MEDALS[i]} {p.name}{p.seat === t.dealer_seat ? " 👑" : ""}</span><span className={scoreTone(p.score)}>{fmtScore(p.score)}</span>
+            <span>{MEDALS[i]} {p.name}{p.seat === t.dealer_seat ? " 👑" : ""}</span><span className={scoreTone(p.score, false, t.starting_points ?? 0)}>{fmtScore(p.score)}</span>
           </li>
         ))}
       </ul>
@@ -38,7 +38,7 @@ function Spotlight({ t }: { t: TvTable }) {
       <p className="text-[3vw] font-bold text-muted">{t.round_wind ? ROUND_NAME[t.round_wind] : ""} · Hand {t.hand_number ?? "-"}</p>
       <div className="grid grid-cols-2 gap-[3vw]">
         <ul className="space-y-[1vw] text-[3.4vw] font-extrabold">
-          {ranked(t).map((p, i) => <li key={p.seat} className="flex justify-between">{MEDALS[i]} {p.name}{p.seat === dealer ? " 👑" : ""}<span className={scoreTone(p.score)}>{fmtScore(p.score)}</span></li>)}
+          {ranked(t).map((p, i) => <li key={p.seat} className="flex justify-between">{MEDALS[i]} {p.name}{p.seat === dealer ? " 👑" : ""}<span className={scoreTone(p.score, false, t.starting_points ?? 0)}>{fmtScore(p.score)}</span></li>)}
         </ul>
         <ul className="space-y-[1vw] text-[2.6vw] font-bold text-muted">
           {[...t.players].sort((a, b) => a.seat - b.seat).map((p) => <li key={p.seat}>{WIND_NAME[seatWind(p.seat, dealer)].toUpperCase()} — <span className="text-cream">{p.name}</span></li>)}
@@ -70,7 +70,7 @@ function Highlight({ e, animate, more }: { e: WinningHandEvent; animate: boolean
       <h1 className="text-[8vw] font-extrabold leading-none">🀄 {e.winner.name.toUpperCase()} HU!</h1>
       <p className="text-[2.4vw] font-semibold text-muted">TABLE {String(e.tableNumber).padStart(2, "0")} · {ROUND_NAME[e.roundWind] ?? e.roundWind} · {e.winningMethod === "self_draw" ? "Self Draw" : "Discard Win"}</p>
       <div className="flex flex-wrap justify-center gap-[1.5vw] text-[3vw] font-bold">{e.detectedFan.map((f) => <span key={f.name}>🀄 {f.name} <span className="text-muted">{f.fan}</span></span>)}</div>
-      <p className="text-[7vw] font-extrabold">{e.totalFan} FAN</p>
+      <p className="text-[7vw] font-extrabold">{e.totalFan > 0 ? `${e.totalFan} FAN` : `${e.points} POIN`}</p>
       <p className="text-[4vw] font-bold">+{fmt(e.points)} POINTS</p>
       <div className="flex flex-wrap justify-center gap-[0.4vw]">{e.handTiles.map((t, i) => <span key={i} className="rounded-[0.5vw] bg-cream px-[0.8vw] py-[0.3vw] text-[2vw] font-extrabold text-base">{t}</span>)}</div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
