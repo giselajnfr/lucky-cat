@@ -17,6 +17,7 @@ export type HandDetail = {
 export type HandRow = {
   id: string; game_id: string; hand_number: number; round_wind: string; dealer_player_id: string; winner_player_id: string | null;
   winning_method: "self_draw" | "discard" | "draw"; discard_player_id: string | null; total_fan: number; final_points: number;
-  hand_tiles: string[] | null; hand_detail: HandDetail | null; created_at: string; hand_fan_details?: FanDetailRow[];
+  hand_tiles: string[] | null; hand_detail: HandDetail | null; created_at: string;
+  state_before?: { round_wind: string; dealer_seat: number; dealer_rotations: number } | null; edited_at?: string | null; hand_fan_details?: FanDetailRow[];
 };
 export type RosterPlayer = { id: string; name: string; user_id: string | null };
