@@ -13,7 +13,8 @@ const ROUND_LABEL = { east: "Timur", south: "Selatan", west: "Barat", north: "Ut
 const pad = (n: number) => String(n).padStart(2, "0");
 const localNow = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 
-export function NewGameForm() {
+/** Admin only: opens a game for a cafe table. Players then join with the room code. */
+export function NewGameForm({ tableId }: { tableId?: string }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [roster, setRoster] = useState<RosterPlayer[]>([]);
@@ -33,9 +34,9 @@ export function NewGameForm() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: me }, { data: list }] = await Promise.all([supabase.rpc("ensure_self_player"), supabase.from("players").select("id, name, user_id").order("name")]);
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: list } = await supabase.from("players").select("id, name, user_id").eq("owner_id", user!.id).order("name");
       setRoster((list ?? []) as RosterPlayer[]);
-      if (me) setSeats((s) => (s[0].playerId || s[0].name ? s : [{ playerId: me as string, name: "" }, ...s.slice(1)]));
     })();
   }, [supabase]);
   useEffect(() => {
@@ -57,6 +58,12 @@ export function NewGameForm() {
       p_players: seats.map((s, seat) => (s.playerId ? { seat, player_id: s.playerId } : { seat, name: s.name.trim() })),
     });
     if (error) { setError(error.message); setBusy(false); return; }
+    if (tableId) {   // seat the new game at its cafe table, then show the room code on the table card
+      const { data: g } = await supabase.from("games").select("room_code").eq("id", data).single();
+      const { error: e2 } = await supabase.rpc("admin_assign_game", { p_table: tableId, p_code: g?.room_code });
+      if (e2) { setError(e2.message); setBusy(false); return; }
+      router.push("/admin/tables"); router.refresh(); return;
+    }
     router.push(`/game/${data}`); router.refresh();
   }
   const chip = (on: boolean) => `min-h-[40px] rounded-xl border px-3 text-sm font-semibold ${on ? "border-cream bg-cream text-base" : "border-line bg-card text-cream"}`;

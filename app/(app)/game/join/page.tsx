@@ -6,7 +6,7 @@ export default function Page({ searchParams }: { searchParams: { code?: string }
     <main>
       <BackLink href="/game" label="Game" />
       <h1 className="text-[1.75rem]">Gabung game</h1>
-      <p className="mt-1 text-sm text-muted">Masukkan kode ruang dari teman yang membuat game.</p>
+      <p className="mt-1 text-sm text-muted">Masukkan kode ruang dari staf untuk meja kamu.</p>
       <JoinGameForm initialCode={searchParams.code ?? ""} />
     </main>
   );

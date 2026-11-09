@@ -14,5 +14,10 @@ export default async function Page({ params }: { params: { id: string } }) {
     s.from("game_hands").select("*, hand_fan_details(fan_name, fan_value, fan_id, category)").eq("game_id", params.id).order("hand_number"),
   ]);
   if (!g.data) notFound();   // RLS hides games the user cannot access
-  return <GameDashboard initial={{ game: g.data as GameRow, players: (p.data ?? []) as GamePlayerRow[], hands: (h.data ?? []) as HandRow[] }} isOwner={g.data.owner_id === user?.id} />;
+  const [{ data: canPlay }, { data: prof }] = await Promise.all([
+    s.rpc("can_play_game", { gid: params.id }),
+    user ? s.from("profiles").select("role").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
+  ]);
+  const canManage = g.data.owner_id === user?.id || prof?.role === "ADMIN";
+  return <GameDashboard initial={{ game: g.data as GameRow, players: (p.data ?? []) as GamePlayerRow[], hands: (h.data ?? []) as HandRow[] }} canPlay={!!canPlay} canManage={canManage} />;
 }

@@ -1,6 +1,8 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import { RoomCode } from "@/components/game/RoomCode";
 import { fmtScore, scoreTone } from "@/lib/ui/score";
 import { MEDALS, ROUND_NAME, STATUS_LABEL, WIND_NAME, seatWind } from "@/lib/tv/types";
 
@@ -11,7 +13,6 @@ export function AdminLiveTables() {
   const supabase = useMemo(() => createClient(), []);
   const [rows, setRows] = useState<Row[]>([]);
   const [num, setNum] = useState("");
-  const [codes, setCodes] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     const { data } = await supabase.from("cafe_tables")
@@ -55,7 +56,8 @@ export function AdminLiveTables() {
                 <span className="text-sm">{STATUS_LABEL[r.status]}</span>
               </header>
               {g ? (<>
-                <p className="text-sm text-muted">{ROUND_NAME[g.current_round_wind]} · Hand {(g.game_hands?.[0]?.count ?? 0) + 1} · Room <b className="tracking-widest text-cream">{g.room_code}</b></p>
+                <p className="text-sm text-muted">{ROUND_NAME[g.current_round_wind]} · Hand {(g.game_hands?.[0]?.count ?? 0) + 1}</p>
+                <RoomCode code={g.room_code} />
                 <ul className="space-y-2">
                   {sorted.map((p, i) => (
                     <li key={p.id} className="flex items-center justify-between rounded-xl bg-base px-3 py-2">
@@ -71,12 +73,13 @@ export function AdminLiveTables() {
                   {g.status === "paused" ? <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => call("admin_set_game_status", { p_game: g.id, p_status: "in_progress" })}>Resume</button>
                     : g.status === "in_progress" && <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => call("admin_set_game_status", { p_game: g.id, p_status: "paused" })}>Pause</button>}
                   {g.status !== "finished" && <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => confirm("Mark this game as finished?") && call("admin_set_game_status", { p_game: g.id, p_status: "finished" })}>Finish</button>}
+                  <Link href={`/game/${g.id}`} className="btn-secondary !min-h-[44px] flex-1">Buka game</Link>
                   <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => confirm("Remove this game from the table?") && call("admin_release_table", { p_table: r.id })}>Release</button>
                 </div>
               </>) : (
-                <div className="flex gap-2">
-                  <input className="input" placeholder="Room code" maxLength={4} value={codes[r.id] ?? ""} onChange={(e) => setCodes({ ...codes, [r.id]: e.target.value.toUpperCase() })} />
-                  <button className="btn-secondary max-w-[8rem]" onClick={() => call("admin_assign_game", { p_table: r.id, p_code: codes[r.id] ?? "" })}>Assign</button>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted">Meja kosong. Buka meja, lalu berikan kode ruang ke pemain.</p>
+                  <Link href={`/admin/tables/open?table=${r.id}`} className="btn-primary">Buka meja</Link>
                 </div>)}
             </article>);
         })}

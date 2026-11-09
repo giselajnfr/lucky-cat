@@ -41,11 +41,12 @@ export default async function Home() {
 
       {/* One primary action; the other two are clearly secondary. */}
       <section className="space-y-3" aria-label="Mulai">
-        <Link href="/game/new" className="btn-primary !min-h-[60px] text-lg">Mulai game baru</Link>
-        <div className="grid grid-cols-2 gap-3">
-          <Link href="/game/join" className="btn-secondary">Gabung dengan kode</Link>
+        <Link href="/game/join" className="btn-primary !min-h-[60px] text-lg">Gabung dengan kode</Link>
+        <div className={`grid gap-3 ${isAdmin ? "grid-cols-2" : "grid-cols-1"}`}>
           <Link href="/quick-score" className="btn-secondary">Hitung skor cepat</Link>
+          {isAdmin && <Link href="/admin/tables" className="btn-secondary !border-warn !text-warn">Buka meja (admin)</Link>}
         </div>
+        <p className="text-xs text-muted">Minta kode ruang dari staf di meja kamu, lalu masukkan di sini.</p>
       </section>
 
       {live?.length ? (

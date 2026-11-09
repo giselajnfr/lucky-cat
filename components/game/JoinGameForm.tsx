@@ -32,7 +32,7 @@ export function JoinGameForm({ initialCode = "" }: { initialCode?: string }) {
         <label htmlFor="code" className="mb-1.5 block text-xs font-semibold">Kode ruang</label>
         <input id="code" value={code} onChange={(e) => setCode(clean(e.target.value))} autoFocus autoComplete="off" autoCapitalize="characters" autoCorrect="off" spellCheck={false}
           maxLength={4} placeholder="ABCD" aria-describedby="code-help" className="input !min-h-[72px] text-center text-4xl font-extrabold tracking-[0.4em]" />
-        <p id="code-help" className="mt-2 text-xs text-muted">Minta kode 4 karakter dari pembuat game. Kamu akan melihat skor dan riwayat tangan secara langsung sebagai penonton.</p>
+        <p id="code-help" className="mt-2 text-xs text-muted">Minta kode 4 karakter dari staf. Setelah bergabung, kamu bisa mencatat tangan dan melihat skor meja secara langsung.</p>
       </div>
       {error && <p role="alert" className="text-sm font-semibold text-neg">{error}</p>}
       <button className="btn-primary" disabled={busy || code.length !== 4}>{busy ? "Mencari…" : "Gabung game"}</button>

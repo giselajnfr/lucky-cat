@@ -2,7 +2,7 @@ import { BackLink } from "@/components/layout/BackLink";
 import { fmtScore, scoreTone } from "@/lib/ui/score";
 import { notFound } from "next/navigation";
 import { LineChart, BarList } from "@/components/charts/Charts";
-import { HandView } from "@/components/mahjong/HandView";
+import { HandTiles } from "@/components/mahjong/HandTiles";
 import { gameSummary, scoreProgression, type SGame, type SHand, type SPlayer } from "@/lib/stats/aggregate";
 import { createClient } from "@/lib/supabase/server";
 import type { HandDetail } from "@/lib/game/types";
@@ -41,7 +41,7 @@ export default async function Page({ params }: { params: { id: string } }) {
           <li key={x.id} className="card space-y-2 text-sm">
             <div className="flex justify-between"><b>#{x.hand_number} · {x.winner_player_id ? name(x.winner_player_id) : "Seri"}</b><b>{x.winner_player_id ? `${x.total_fan} faan` : "—"}</b></div>
             <p className="text-xs text-muted">{METHOD[x.winning_method as keyof typeof METHOD]}{x.discard_player_id ? ` · dibuang ${name(x.discard_player_id)}` : ""}{d ? ` · kursi ${d.seatWind}` : ""}</p>
-            {d && <HandView concealed={d.concealed} melds={d.melds as never} winningTile={d.winningTile} flowers={d.flowers} width={24} />}
+            <HandTiles detail={d} tiles={x.hand_tiles} width={22} />
             {x.hand_fan_details?.length > 0 && <ul className="divide-y divide-line/50">{x.hand_fan_details.map((f: { fan_name: string; fan_value: number }) => <li key={f.fan_name} className="flex justify-between py-1.5"><span>{f.fan_name}</span><b>+{f.fan_value}</b></li>)}</ul>}
           </li>); })}</ol></section>
     </main>

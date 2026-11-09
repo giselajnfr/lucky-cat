@@ -6,6 +6,7 @@ import { WIND_LABEL } from "@/components/calculator/HandCalculator";
 import { RecordHand } from "./RecordHand";
 import { BackLink } from "@/components/layout/BackLink";
 import { RoomCode } from "./RoomCode";
+import { HandTiles } from "@/components/mahjong/HandTiles";
 import { fmtScore, scoreTone } from "@/lib/ui/score";
 import { ROUND_TO_WIND, seatWindOf } from "@/lib/game-engine";
 import type { FanDetailRow, GamePlayerRow, GameRow, HandRow } from "@/lib/game/types";
@@ -15,10 +16,12 @@ const ROUND_LABEL = { east: "Timur", south: "Selatan", west: "Barat", north: "Ut
 const STATUS = { in_progress: "Sedang berlangsung", paused: "Dijeda", finished: "Selesai" };
 const METHOD = { self_draw: "Self Draw", discard: "Dari buangan", draw: "Seri" };
 
-export function GameDashboard({ initial, isOwner }: { initial: Full; isOwner: boolean }) {
+/** canPlay: record, edit and undo hands (admin who opened the table, other admins, anyone who joined with the room code). canManage: also pause and finish (owner or admin). */
+export function GameDashboard({ initial, canPlay, canManage }: { initial: Full; canPlay: boolean; canManage: boolean }) {
   const supabase = useMemo(() => createClient(), []);
   const [d, setD] = useState<Full>(initial);
   const [recording, setRecording] = useState(false);
+  const [editing, setEditing] = useState<HandRow | null>(null);
   const [confirm, setConfirm] = useState<null | "finish" | "undo">(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -80,15 +83,15 @@ export function GameDashboard({ initial, isOwner }: { initial: Full; isOwner: bo
       <section aria-label="Papan skor" className="grid grid-cols-2 gap-3">
         {players.map((p) => {
           const lead = leaders.some((l) => l.id === p.id) && hands.length > 0;
-          const isDealer = p.seat_position === game.current_dealer_seat;
+          const isDealer = p.seat_position === game.current_dealer_seat;   // the only highlighted card
           return (
-            <div key={p.id} className={`rounded-2xl border p-4 ${lead ? "border-cream bg-cream text-base" : "border-line bg-card"}`}>
-              <div className={`flex items-center justify-between text-xs ${lead ? "text-base/70" : "text-muted"}`}>
+            <div key={p.id} className={`rounded-2xl border p-4 ${isDealer ? "border-cream bg-cream text-base" : "border-line bg-card"}`}>
+              <div className={`flex items-center justify-between text-xs ${isDealer ? "text-base/70" : "text-muted"}`}>
                 <span>{WIND_LABEL[seatWindOf(p.seat_position, game.current_dealer_seat)]}</span>{isDealer && <b>Dealer</b>}
               </div>
               <p className="mt-1 truncate text-lg font-bold">{p.player_name}</p>
-              <p className={`text-3xl font-extrabold leading-tight ${scoreTone(p.current_score, lead)}`}>{fmtScore(p.current_score)}</p>
-              <p className={`text-xs ${lead ? "text-base/70" : "text-muted"}`}>{wins(p.id)} menang{finished && p.final_rank ? ` · Peringkat ${p.final_rank}` : lead ? " · Memimpin" : ""}</p>
+              <p className={`text-3xl font-extrabold leading-tight ${scoreTone(p.current_score, isDealer)}`}>{fmtScore(p.current_score)}</p>
+              <p className={`text-xs ${isDealer ? "text-base/70" : "text-muted"}`}>{wins(p.id)} menang{finished && p.final_rank ? ` · Peringkat ${p.final_rank}` : lead ? " · Memimpin" : ""}</p>
             </div>
           );
         })}
@@ -98,31 +101,35 @@ export function GameDashboard({ initial, isOwner }: { initial: Full; isOwner: bo
       {lastOver && !finished && <p className="card border-cream text-sm">Ronde terakhir sudah selesai. Kamu bisa mengakhiri game sekarang atau terus bermain.</p>}
       {msg && <p role="alert" className="text-sm font-semibold text-neg">{msg}</p>}
 
-      {isOwner && !finished && (
+      {canPlay && !finished && (
         <div className="space-y-2">
           {game.status === "in_progress" ? <button className="btn-primary" onClick={() => setRecording(true)}>Catat tangan</button>
-            : <button className="btn-primary" disabled={busy} onClick={() => rpc("set_game_paused", { p_game: gid, p_paused: false })}>Lanjutkan game</button>}
-          <div className="grid grid-cols-3 gap-2">
+            : canManage ? <button className="btn-primary" disabled={busy} onClick={() => rpc("set_game_paused", { p_game: gid, p_paused: false })}>Lanjutkan game</button>
+            : <p className="card text-sm text-warn">Game sedang dijeda. Minta admin untuk melanjutkan.</p>}
+          <div className={`grid gap-2 ${canManage ? "grid-cols-3" : "grid-cols-1"}`}>
             <button className="btn-secondary" disabled={busy || hands.length === 0} onClick={() => setConfirm("undo")}>Batalkan tangan</button>
-            <button className="btn-secondary" disabled={busy || game.status !== "in_progress"} onClick={() => rpc("set_game_paused", { p_game: gid, p_paused: true })}>Jeda</button>
-            <button className="btn-secondary !border-neg !text-neg" disabled={busy} onClick={() => setConfirm("finish")}>Akhiri</button>
+            {canManage && <button className="btn-secondary" disabled={busy || game.status !== "in_progress"} onClick={() => rpc("set_game_paused", { p_game: gid, p_paused: true })}>Jeda</button>}
+            {canManage && <button className="btn-secondary !border-neg !text-neg" disabled={busy} onClick={() => setConfirm("finish")}>Akhiri</button>}
           </div>
         </div>
       )}
-      {!isOwner && <p className="text-xs text-muted">Kamu melihat game ini sebagai penonton. Hanya pembuat game yang bisa mencatat tangan.</p>}
+      {!canPlay && <p className="text-xs text-muted">Kamu hanya bisa melihat game ini.</p>}
 
       <section>
         <div className="mb-2 flex items-baseline justify-between"><h2 className="section-label">Riwayat tangan</h2><Link href="/guidebook" className="text-xs font-semibold underline">Aturan HK18</Link></div>
         {hands.length === 0 ? <p className="card text-sm text-muted">Belum ada tangan. Catat tangan pertama saat ada yang menang.</p> : (
           <ol className="space-y-2">{[...hands].reverse().map((h) => (
             <li key={h.id} className="card !p-3 text-sm">
-              <div className="flex justify-between"><b>#{h.hand_number} · {h.winner_player_id ? nameOf(h.winner_player_id) : "Seri"}</b><span>{h.winner_player_id ? `${h.total_fan} faan` : "0"}</span></div>
+              <div className="flex items-center justify-between gap-2"><b>#{h.hand_number} · {h.winner_player_id ? nameOf(h.winner_player_id) : "Seri"}{h.edited_at && <span className="ml-2 text-[11px] font-semibold text-warn">diubah</span>}</b>
+                <span className="flex items-center gap-1"><b>{h.winner_player_id ? `${h.total_fan} faan` : "0"}</b>{canPlay && !finished && <button type="button" className="btn-ghost !min-h-[36px] !px-2 text-xs !text-cream underline" onClick={() => setEditing(h)}>Ubah</button>}</span></div>
               <p className="text-xs text-muted">{METHOD[h.winning_method]}{h.discard_player_id ? ` · dibuang ${nameOf(h.discard_player_id)}` : ""} · Ronde {ROUND_LABEL[h.round_wind as keyof typeof ROUND_LABEL]}</p>
-              {h.hand_fan_details?.length ? <p className="mt-1 text-xs text-muted">{h.hand_fan_details.map((f: FanDetailRow) => `${f.fan_name} +${f.fan_value}`).join(" · ")}</p> : null}
+              <div className="mt-2"><HandTiles detail={h.hand_detail} tiles={h.hand_tiles} width={20} /></div>
+              {h.hand_fan_details?.length ? <p className="mt-2 text-xs text-muted">{h.hand_fan_details.map((f: FanDetailRow) => `${f.fan_name} +${f.fan_value}`).join(" · ")}</p> : null}
             </li>))}</ol>)}
       </section>
 
       {recording && <RecordHand game={game} players={players} handsPlayed={hands.length} onCancel={() => setRecording(false)} onDone={async () => { setRecording(false); await load(); }} />}
+      {editing && <RecordHand key={editing.id} edit={editing} game={game} players={players} handsPlayed={hands.length} onCancel={() => setEditing(null)} onDone={async () => { setEditing(null); await load(); }} />}
 
       {confirm && (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-4 sm:items-center" role="alertdialog" aria-modal="true">

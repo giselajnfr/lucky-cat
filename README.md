@@ -38,3 +38,10 @@ In the Supabase SQL Editor, with your account already set to ADMIN:
 2. Open `/admin`, `/admin/tables` and `/tv`.
 3. With `/tv` open, run `supabase/demo/trigger_hu_demo.sql` to fire a live "HU!" highlight (change `tn` for another table).
 4. When done, run `supabase/demo/remove_demo_data.sql`.
+
+## Rooms, joining and editing hands
+- **Admins open tables.** Admin → Live Tables → *Buka meja* on an empty table, fill in the four players. The table card then shows the **room code**.
+- **Players join with the code** (Beranda → *Gabung dengan kode*, or the shared link). Anyone who joined can record, edit and undo hands; only the owner/admin can pause or finish the game.
+- **Editing a hand** (*Ubah* in the hand history) replays the whole game from hand 1, so dealer, seat winds, payments and every score after it are recomputed. Finished games are locked.
+- Run `supabase/migration_004_rooms_and_edits.sql` after migration 003. It also needs `SUPABASE_SERVICE_ROLE_KEY` on the server (already required for recording hands).
+- Demo-seeded games store tile lists but no hand details, so their hands can be viewed but not edited.
