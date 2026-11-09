@@ -43,6 +43,8 @@ export type GameConfig = {
   /** true: a Chicken Hand may still win if bonus faan (flowers, self draw...) reach the minimum. */
   chickenHandCanWinOnBonusFaan: boolean;
   pointsPerFan: number;         // 1 = points equal faan. No money, no 1.5 multiplier.
+  /** Chicken Hand table: faan are not counted at all and every valid win is worth exactly this many points. null = normal faan scoring. */
+  flatPointsPerWin?: number | null;
   selfDrawRules: { dealerMultiplier: number; nonDealerMultiplier: number };
   discardRules: { dealerMultiplier: number; paymentMode: DiscardPaymentMode };
   progression: { drawKeepsDealer: boolean; dealerWinKeepsDealer: boolean; lastRoundWind: "east" | "south" | "west" | "north" };

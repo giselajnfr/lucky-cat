@@ -22,6 +22,18 @@ export function calculateScore(input: WinningHandInput, opts: ScoreOptions = {})
   const { errors, decompositions } = validateHand(input);
   if (errors.length) return invalid(cfg.minimumFan, errors);
 
+  // Chicken Hand table: no faan, no minimum. Any valid winning hand is worth a flat number of points.
+  if (cfg.flatPointsPerWin != null) {
+    const basePoints = cfg.flatPointsPerWin;
+    const result: ScoringResult = {
+      valid: true, errors: [], meetsMinimum: true, minimumFan: 0, canRecord: true, handDecomposition: decompositions[0],
+      detectedFan: [], excludedFan: [], rawFan: 0, totalFan: 0, basePoints, reviewFlags: [],
+      explanation: [`Chicken Hand: ${basePoints} poin per kemenangan, tanpa faan`],
+    };
+    if (opts.players) result.scoreDistribution = calculateScoreDistribution({ ...opts.players, method: input.winningMethod, basePoints, config: cfg });
+    return result;
+  }
+
   // Score every possible reading of the hand; the best total wins (ties keep the first found).
   const scored = decompositions.map((d) => ({ d, f: calculateFan(buildContext(input, d)) }));
   const best = scored.reduce((a, b) => (b.f.totalFan > a.f.totalFan ? b : a));

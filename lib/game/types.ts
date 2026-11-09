@@ -1,9 +1,17 @@
+export type RulePreset = "chicken" | "beginner" | "advanced" | "custom";
 export type GameStatus = "in_progress" | "paused" | "finished";
 export type GameRow = {
   id: string; room_code: string; owner_id: string; name: string | null; status: GameStatus;
   played_at: string; created_at: string; finished_at: string | null; starting_points: number;
   current_round_wind: "east" | "south" | "west" | "north"; current_dealer_seat: number; dealer_rotations: number;
   min_fan: number; last_round_wind: "east" | "south" | "west" | "north"; rules_id: string;
+  /** Faan cap chosen by the table (null = no cap). */
+  max_fan: number | null;
+  rule_preset: RulePreset;
+  /** Play-time guide set by the admin when opening the room (minutes, null = no clock). Never closes the room. */
+  session_minutes: number | null; session_started_at: string;
+  /** false = the admin opened the room but the players have not entered names / rules yet. */
+  setup_complete: boolean;
 };
 export type GamePlayerRow = {
   id: string; game_id: string; user_id: string | null; player_id: string | null; player_name: string;

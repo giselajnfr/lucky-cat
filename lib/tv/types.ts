@@ -1,6 +1,6 @@
 export type TvPlayer = { name: string; seat: number; score: number };
 export type TvTable = { table_id: string; table_number: number; status: "WAITING" | "PLAYING" | "PAUSED" | "FINISHED";
-  round_wind: string | null; dealer_seat: number | null; hand_number: number | null; players: TvPlayer[] };
+  round_wind: string | null; dealer_seat: number | null; starting_points?: number | null; hand_number: number | null; players: TvPlayer[] };
 export type TvSettings = { mode: "live" | "spotlight" | "leaderboard" | "rotate"; spotlight_table_id: string | null;
   rotation_interval_ms: number; highlight_duration_ms: number; sound_enabled: boolean; animations_enabled: boolean;
   leaderboard_type: "highest_score" | "most_wins" | "highest_fan" };
