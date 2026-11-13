@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/ui/LogoMark";
-import { fmtScore, scoreTone } from "@/lib/ui/score";
+import { AccountMenu } from "@/components/auth/AccountMenu";
+import { GameCard, type GameCardData } from "@/components/game/GameCard";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-const ROUND = { east: "Timur", south: "Selatan", west: "Barat", north: "Utara" } as const;
-type P = { player_name: string; current_score: number };
-const byScore = (a: P, b: P) => b.current_score - a.current_score;
 
 export default async function Home() {
   const supabase = createClient();
@@ -16,13 +14,12 @@ export default async function Home() {
   const isAdmin = prof?.role === "ADMIN";
 
   // RLS limits both queries to games the user owns or has joined.
-  const [{ data: live }, { data: last }] = await Promise.all([
-    supabase.from("games").select("id, name, room_code, status, current_round_wind, starting_points, game_players(player_name, current_score)")
-      .neq("status", "finished").order("played_at", { ascending: false }).limit(2),
-    supabase.from("games").select("id, starting_points, game_players(player_name, current_score)")
-      .eq("status", "finished").order("finished_at", { ascending: false }).limit(1).maybeSingle(),
+  const cols = "id, name, room_code, status, setup_complete, current_round_wind, starting_points, played_at, finished_at, game_players(player_name, current_score), game_hands(count)";
+  const [{ data: live }, { data: done }] = await Promise.all([
+    supabase.from("games").select(cols).neq("status", "finished").order("played_at", { ascending: false }).limit(3),
+    supabase.from("games").select(cols).eq("status", "finished").order("finished_at", { ascending: false }).limit(2),
   ]);
-  const lastPlayers = [...((last?.game_players ?? []) as P[])].sort(byScore).slice(0, 4);
+  const liveGames = (live ?? []) as unknown as GameCardData[], doneGames = (done ?? []) as unknown as GameCardData[];
 
   return (
     <main className="space-y-6">
@@ -30,7 +27,7 @@ export default async function Home() {
         <div className="flex items-center gap-2.5"><LogoMark size="36px" /><span className="text-sm font-bold">Lucky Cat Mahjong</span></div>
         <div className="flex items-center gap-2">
           {isAdmin && <Link href="/admin" className="rounded-full border border-warn px-3 py-1.5 text-xs font-bold text-warn">Admin</Link>}
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card font-bold" aria-label={name}>{name[0]?.toUpperCase()}</span>
+          <AccountMenu name={name} email={user?.email} />
         </div>
       </header>
 
@@ -41,7 +38,7 @@ export default async function Home() {
 
       {/* One primary action; the other two are clearly secondary. */}
       <section className="space-y-3" aria-label="Mulai">
-        <Link href="/game/join" className="btn-primary !min-h-[60px] text-lg">Gabung dengan kode</Link>
+        <Link href="/game/join" className="btn-primary !min-h-[60px]">Gabung dengan kode</Link>
         <div className={`grid gap-3 ${isAdmin ? "grid-cols-2" : "grid-cols-1"}`}>
           <Link href="/quick-score" className="btn-secondary">Hitung skor cepat</Link>
           {isAdmin && <Link href="/admin/tables" className="btn-secondary !border-warn !text-warn">Buka meja (admin)</Link>}
@@ -49,32 +46,19 @@ export default async function Home() {
         <p className="text-xs text-muted">Minta kode ruang dari staf di meja kamu, lalu masukkan di sini.</p>
       </section>
 
-      {live?.length ? (
-        <section>
-          <div className="mb-3 flex items-baseline justify-between"><h2 className="section-label">Sedang berlangsung</h2><Link href="/game" className="text-xs font-semibold underline">Semua</Link></div>
-          <ul className="space-y-3">{live.map((g) => (
-            <li key={g.id}><Link href={`/game/${g.id}`} className="card block !border-l-4 !border-l-pos">
-              <div className="flex items-start justify-between gap-2">
-                <b>{g.name || `Game ${g.room_code}`}</b>
-                <span className={`shrink-0 text-xs font-bold ${g.status === "paused" ? "text-warn" : "text-pos"}`}>{g.status === "paused" ? "Dijeda" : `Ronde ${ROUND[g.current_round_wind as keyof typeof ROUND]}`}</span>
-              </div>
-              <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">{[...(g.game_players as P[])].sort(byScore).map((p) => (
-                <span key={p.player_name}>{p.player_name} <b className={scoreTone(p.current_score, false, g.starting_points)}>{fmtScore(p.current_score)}</b></span>))}</p>
-              <p className="mt-2 text-xs font-bold">Lanjutkan →</p>
-            </Link></li>))}</ul>
-        </section>
-      ) : null}
+      <section aria-label="Game berlangsung">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="section-label">Sedang berlangsung</h2>
+          <Link href="/game" className="text-xs font-semibold text-muted underline">Semua</Link>
+        </div>
+        {liveGames.length ? <ul className="space-y-3">{liveGames.map((g) => <li key={g.id}><GameCard g={g} /></li>)}</ul>
+          : <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">Tidak ada game yang sedang berlangsung. Gabung dengan kode untuk mulai.</p>}
+      </section>
 
-      <section>
-        <div className="mb-3 flex items-baseline justify-between"><h2 className="section-label">Game terakhir</h2><Link href="/game?tab=selesai" className="text-xs font-semibold underline">Lihat semua</Link></div>
-        {lastPlayers.length ? (
-          <Link href={`/history/${last!.id}`}><ol className="grid grid-cols-4 gap-2">{lastPlayers.map((p, i) => (
-            <li key={p.player_name} className={`rounded-xl border px-2 py-2.5 text-center ${i === 0 ? "border-cream bg-cream text-base" : "border-line bg-card"}`}>
-              <p className={`text-[10px] ${i === 0 ? "text-base/70" : "text-muted"}`}>{i + 1}</p>
-              <p className="truncate text-sm font-bold">{p.player_name}</p>
-              <p className={`text-[11px] font-bold ${scoreTone(p.current_score, i === 0, last!.starting_points) || (i === 0 ? "text-base/70" : "text-muted")}`}>{fmtScore(p.current_score)}</p>
-            </li>))}</ol></Link>
-        ) : <p className="card text-sm text-muted">Belum ada game selesai. Hasilnya muncul di sini setelah game pertama berakhir.</p>}
+      <section aria-label="Game selesai" className="mt-2">
+        <div className="mb-3 flex items-baseline justify-between"><h2 className="section-label">Selesai</h2><Link href="/game?tab=selesai" className="text-xs font-semibold text-muted underline">Lihat semua</Link></div>
+        {doneGames.length ? <ul className="space-y-2">{doneGames.map((g) => <li key={g.id}><GameCard g={g} /></li>)}</ul>
+          : <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">Belum ada game selesai. Hasilnya muncul di sini setelah game berakhir.</p>}
       </section>
     </main>
   );

@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { HandView } from "@/components/mahjong/HandView";
 import { Tile } from "@/components/mahjong/Tile";
-import { ADDITIONAL_RULES, HK18_RULES, PATTERN_RULES, REVIEW_NOTES, exampleToInput, parseTiles } from "@/lib/scoring";
+import { ADDITIONAL_RULES, HK18_RULES, PATTERN_RULES, exampleToInput, parseTiles } from "@/lib/scoring";
 import type { FanRuleConfig } from "@/lib/scoring";
 
 const ROUND_NAME: Record<string, string> = { east: "Timur", south: "Selatan", west: "Barat", north: "Utara" };
 const WIND = { E: "Timur", S: "Selatan", W: "Barat", N: "Utara" } as const;
-const row = (s: string, w = 28) => <div className="flex flex-wrap gap-0.5">{parseTiles(s).map((t, i) => <Tile key={i} t={t} width={w} />)}</div>;
+/** A row of tiles: 46px wide, wrapped into even lines (9 tiles = 5 + 4, 8 = 4 + 4) instead of a long row with leftovers. */
+const row = (s: string, w = 46) => {
+  const tiles = parseTiles(s); const per = tiles.length <= 5 ? tiles.length : Math.ceil(tiles.length / 2);
+  return <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${per}, ${w}px)` }}>{tiles.map((t, i) => <Tile key={i} t={t} width={w} />)}</div>;
+};
 const H2 = ({ id, children }: { id: string; children: React.ReactNode }) => <h2 id={id} className="mb-3 scroll-mt-4 text-xl">{children}</h2>;
 
 function RuleCard({ r }: { r: FanRuleConfig }) {
@@ -19,7 +23,7 @@ function RuleCard({ r }: { r: FanRuleConfig }) {
       <p className="text-sm">{r.summary}</p>
       <ul className="list-disc space-y-0.5 pl-5 text-sm text-muted">{r.conditions.map((c) => <li key={c}>{c}</li>)}</ul>
       {r.needsInput && <p className="text-xs text-muted">Perlu diisi pemain: <b className="text-cream">{r.needsInput}</b></p>}
-      {ex && (<div><p className="mb-1.5 text-xs font-semibold text-muted">Contoh{ctx ? ` (${ctx})` : ""}</p><HandView concealed={ex.concealedTiles} melds={ex.melds} winningTile={ex.winningTile} flowers={ex.flowers} width={22} /></div>)}
+      {ex && (<div><p className="mb-1.5 text-xs font-semibold text-muted">Contoh{ctx ? ` (${ctx})` : ""}</p><HandView concealed={ex.concealedTiles} melds={ex.melds} winningTile={ex.winningTile} flowers={ex.flowers} width={32} balanced /></div>)}
     </article>
   );
 }
@@ -30,7 +34,7 @@ export default function Page() {
     <main className="space-y-8">
       <header><h1 className="text-[1.75rem]">Aturan rumah HK18</h1><p className="mt-1 text-sm text-muted">Panduan Mahjong untuk pemula dan pemain lama. Nilai faan di halaman ini diambil dari konfigurasi yang sama dengan kalkulator.</p>
         <nav className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1 text-sm font-semibold" aria-label="Lompat ke">
-          {[["dasar", "Dasar"], ["pola", "Pola tangan"], ["tambahan", "Faan tambahan"], ["aturan", "Aturan lain"], ["konfirmasi", "Perlu konfirmasi"]].map(([id, l]) => <a key={id} href={`#${id}`} className="shrink-0 rounded-full border border-line bg-card px-3.5 py-2">{l}</a>)}</nav>
+          {[["dasar", "Dasar"], ["pola", "Pola tangan"], ["tambahan", "Faan tambahan"], ["aturan", "Aturan lain"]].map(([id, l]) => <a key={id} href={`#${id}`} className="shrink-0 rounded-full border border-line bg-card px-3.5 py-2">{l}</a>)}</nav>
         <div className="mt-3 grid grid-cols-2 gap-2"><Link href="/quick-score" className="btn-secondary">Hitung skor</Link><Link href="/game" className="btn-secondary">Game Tracker</Link></div></header>
 
       <section><H2 id="dasar">Dasar Mahjong</H2>
@@ -62,24 +66,14 @@ export default function Page() {
         <div className="card space-y-2 text-sm"><h3>Cara faan dijumlahkan</h3>
           <ul className="list-disc space-y-1 pl-5"><li>Pola yang berdiri sendiri-sendiri dijumlahkan, misalnya Pure Straight + Half Flush.</li><li>Pola yang sudah tercakup pola lain tidak dihitung dua kali. Contoh: All Honors sudah mencakup All Pongs dan Mixed Orphans; Full Flush menggantikan Half Flush.</li><li>Hasil akhir ditampilkan dalam poin/faan saja: tanpa uang dan tanpa pengali 1,5. Poin = faan.</li></ul></div>
         <div className="card space-y-2 text-sm"><h3>Self Draw vs menang dari buangan</h3>
-          <p>Self Draw memberi +1 faan dan <b>dibayar oleh ketiga lawan</b>. Menang dari buangan <b>dibayar oleh pembuang kartu</b>. Pada tangan yang tertutup, kemenangan dari buangan mendapat Concealed Hand +1, sedangkan Self Draw mendapat Self Draw +1 (tidak keduanya).</p></div>
+          <p>Self Draw memberi +1 faan dan <b>dibayar oleh ketiga lawan</b>. Menang dari buangan <b>dibayar oleh pembuang kartu</b>. Pada tangan yang tertutup, kemenangan dari buangan mendapat Concealed Hand +1, sedangkan Self Draw mendapat Self Draw +1 (tidak keduanya). Seven Pairs, Nine Gates, dan Thirteen Orphans sudah termasuk Concealed Hand, jadi tidak ditambah lagi.</p></div>
         <div className="card space-y-2 text-sm"><h3>Angin kursi vs angin ronde</h3>
-          <p><b>Angin kursi</b> mengikuti posisi pemain terhadap dealer: dealer = Timur, lalu Selatan, Barat, Utara. <b>Angin ronde</b> adalah angin ronde yang sedang berjalan. Pong angin yang cocok dengan salah satunya +1; jika sama (mis. Timur di ronde Timur) dua-duanya dihitung, total +2.</p></div>
+          <p><b>Angin kursi</b> mengikuti posisi pemain terhadap dealer: dealer = Timur, lalu Selatan, Barat, Utara. <b>Angin ronde</b> adalah angin ronde yang sedang berjalan. Pong angin yang cocok dengan salah satunya +1; jika sama (mis. Timur di ronde Timur) dua-duanya dihitung, total +2. Pada Little Wind dan Great Wind, faan angin kursi dan angin ronde sudah termasuk dan tidak dihitung lagi.</p></div>
         <div className="card space-y-2 text-sm"><h3>Bunga dan Musim</h3>
           <p>Nomor bunga atau musim yang sama dengan nomor kursi (Timur 1, Selatan 2, Barat 3, Utara 4) memberi +1 faan per kartu. Musim: 1 Semi, 2 Panas, 3 Gugur, 4 Dingin. Tanpa bunga sama sekali memberi No Flower +1.</p></div>
         <div className="card space-y-2 text-sm"><h3>Giliran dealer dan ronde</h3>
           <ul className="list-disc space-y-1 pl-5"><li>Dealer menang: {p.dealerWinKeepsDealer ? "dealer tetap" : "dealer berpindah"}.</li><li>Tangan seri: {p.drawKeepsDealer ? "dealer tetap" : "dealer berpindah"}.</li><li>Jika orang lain menang, dealer pindah ke kursi berikutnya dan angin kursi semua pemain ikut bergeser.</li><li>Setelah keempat pemain pernah menjadi dealer, angin ronde berganti: Timur → Selatan → Barat → Utara.</li><li>Game berakhir setelah ronde {ROUND_NAME[p.lastRoundWind]} selesai (bisa diubah saat membuat game).</li></ul></div>
-        <div className="card space-y-2 text-sm"><h3>Tangan khusus</h3>
-          <p><b>Seven Pairs</b> (7 pasangan berbeda) dan <b>Thirteen Orphans</b> tidak mengikuti bentuk 4 set + 1 pasangan. Kalkulator mengenalinya otomatis dan tidak memaksanya menjadi set biasa.</p>
-          <div><p className="mb-1 text-xs text-muted">Thirteen Orphans</p>{row("1m 9m 1p 9p 1s 9s E S W N RD GD WD 1m", 22)}</div></div>
       </section>
-
-      <section id="konfirmasi" className="scroll-mt-4"><H2 id="konfirmasi-h">Perlu konfirmasi aturan rumah</H2>
-        <div className="card space-y-2 text-sm text-muted"><p>Tabel HK18 tidak menjelaskan beberapa hal berikut, jadi aplikasi memakai nilai bawaan yang bisa diubah di konfigurasi. Tidak ada aturan baru yang dibuat diam-diam.</p>
-          <ul className="list-disc space-y-1.5 pl-5">{REVIEW_NOTES.map((n) => <li key={n.id}>{n.note}</li>)}
-            <li>Pembayaran antar pemain: pengali dealer 1 dan tanpa pembagian pembayaran (pembuang membayar penuh). Ubah di <code>selfDrawRules</code> / <code>discardRules</code>.</li>
-            <li>Pair untuk All Chows harus kartu biasa (bukan naga, angin kursi, atau angin ronde).</li>
-            <li>Seven Pairs mewajibkan 7 pasangan berbeda; empat kartu sama tidak dihitung dua pasangan.</li></ul></div></section>
     </main>
   );
 }

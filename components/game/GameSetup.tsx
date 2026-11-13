@@ -1,12 +1,9 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { HK18_RULES } from "@/lib/scoring";
 import { CAP_CHOICES, MAX_START_POINTS, PRESETS, START_POINT_CHOICES, digits } from "@/lib/game/presets";
 import type { RosterPlayer, RulePreset } from "@/lib/game/types";
 
-const ROUNDS = ["east", "south", "west", "north"] as const;
-const ROUND_LABEL = { east: "Timur", south: "Selatan", west: "Barat", north: "Utara" };
 // Seats 0..3 are East, South, West, North. Placed around the table the way people sit: West on top, North left, South right, East at the bottom.
 const SEATS = [
   { seat: 0, char: "東", letter: "E", name: "Timur" },
@@ -24,13 +21,11 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
   const [seats, setSeats] = useState<Seat[]>(() => SEATS.map(() => ({ playerId: null, name: "" })));
   const [active, setActive] = useState<number | null>(null);
   const [preset, setPreset] = useState<Exclude<RulePreset, "custom"> | null>(null);
-  const [startChoice, setStartChoice] = useState<number | "other">(0);
+  const [startChoice, setStartChoice] = useState<number | "other">(1000);   // default 1.000
   const [startOther, setStartOther] = useState("");
   const [capOn, setCapOn] = useState(false);
   const [capChoice, setCapChoice] = useState<number | "other">(CAP_CHOICES[1]);
   const [capOther, setCapOther] = useState("");
-  const [round, setRound] = useState<(typeof ROUNDS)[number]>("east");
-  const [last, setLast] = useState<(typeof ROUNDS)[number]>(HK18_RULES.progression.lastRoundWind);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,7 +60,7 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
     e.preventDefault(); if (!ready || !preset) return;
     setBusy(true); setError(null);
     const { error } = await supabase.rpc("setup_game", {
-      p_game: gameId, p_preset: preset, p_max_fan: capValue, p_starting_points: startPoints, p_round_wind: round, p_last_round_wind: last,
+      p_game: gameId, p_preset: preset, p_max_fan: capValue, p_starting_points: startPoints,
       p_players: seats.map((s, seat) => (s.playerId ? { seat, player_id: s.playerId } : { seat, name: s.name.trim() })),
     });
     if (error) {
@@ -166,13 +161,6 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
           <p className="mt-2 text-xs text-muted">{capValue ? `Tangan bernilai lebih dari ${capValue} faan tetap dibayar sebagai ${capValue} faan.` : "Faan dibayar penuh, berapa pun nilainya."}</p>
         </div>}
 
-        <details className="rounded-xl border border-line bg-base/30 p-3">
-          <summary className="cursor-pointer text-sm font-semibold">Opsi lanjutan: ronde</summary>
-          <div className="mt-3 space-y-3">
-            <div><p className="mb-1.5 text-xs font-semibold text-muted">Ronde awal</p><div className="grid grid-cols-4 gap-2">{ROUNDS.map((r) => <button type="button" key={r} className={chip(round === r)} onClick={() => setRound(r)}>{ROUND_LABEL[r]}</button>)}</div></div>
-            <div><p className="mb-1.5 text-xs font-semibold text-muted">Game berakhir setelah ronde</p><div className="grid grid-cols-4 gap-2">{ROUNDS.map((r) => <button type="button" key={r} className={chip(last === r)} onClick={() => setLast(r)}>{ROUND_LABEL[r]}</button>)}</div></div>
-          </div>
-        </details>
       </section>
 
       {error && <p role="alert" className="text-sm font-semibold text-neg">{error}</p>}

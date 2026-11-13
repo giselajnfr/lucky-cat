@@ -35,6 +35,21 @@ const dot = (x: number, y: number, r: number, c: string) =>
 const stick = (x: number, y: number, c: string, h = 16) =>
   `<rect x="${x - 3.2}" y="${y - h / 2}" width="6.4" height="${h}" rx="3" fill="${c}"/><rect x="${x - 3.2}" y="${y - 1}" width="6.4" height="2" fill="#FBF4E2" opacity=".85"/>`;
 
+
+// ---- Flower and season pictures (drawn in the 60 x 80 tile space, picture area about y 8 to 56) ----
+const BROWN = "#7A4B2A", PINK = "#D2566B", GOLD = "#E0A82E", ORANGE = "#E58A1F", MAPLE = "#C8561F", ICE = "#2A5CA8", LEAF = "#3E9A63";
+/** Five-petal blossom */
+const blossom = (x: number, y: number, r: number, petal: string, heart = GOLD) =>
+  [0, 1, 2, 3, 4].map((i) => { const a = ((-90 + i * 72) * Math.PI) / 180; return `<circle cx="${(x + Math.cos(a) * r * 0.68).toFixed(1)}" cy="${(y + Math.sin(a) * r * 0.68).toFixed(1)}" r="${(r * 0.55).toFixed(1)}" fill="${petal}"/>`; }).join("") + `<circle cx="${x}" cy="${y}" r="${(r * 0.3).toFixed(1)}" fill="${heart}"/>`;
+const plum = () => `<path d="M8 54 Q22 44 32 32 T50 12" fill="none" stroke="${BROWN}" stroke-width="2.8" stroke-linecap="round"/><path d="M24 43 Q28 47 36 46 M33 31 Q30 23 22 22" fill="none" stroke="${BROWN}" stroke-width="1.8" stroke-linecap="round"/>${blossom(20, 24, 7, PINK)}${blossom(41, 20, 6.5, PINK)}${blossom(40, 42, 7.5, PINK)}${blossom(15, 45, 5, PINK)}`;
+const orchid = () => `<path d="M20 55 Q10 34 24 11" fill="none" stroke="${LEAF}" stroke-width="3.4" stroke-linecap="round"/><path d="M23 55 Q30 32 47 20" fill="none" stroke="${LEAF}" stroke-width="3.4" stroke-linecap="round"/><path d="M26 55 Q26 40 40 33" fill="none" stroke="${GREEN}" stroke-width="2.8" stroke-linecap="round"/><path d="M28 55 Q31 38 33 24" fill="none" stroke="${BROWN}" stroke-width="1.4" stroke-linecap="round"/>${blossom(33, 21, 6.5, "#B04A8A", "#F4D27A")}${blossom(37, 34, 5, "#B04A8A", "#F4D27A")}`;
+const chrysanthemum = () => Array.from({ length: 16 }, (_, i) => `<ellipse cx="30" cy="20" rx="2.5" ry="8.5" fill="${i % 2 ? "#C9821A" : GOLD}" transform="rotate(${i * 22.5} 30 30)"/>`).join("") + `<circle cx="30" cy="30" r="5.5" fill="${RED}"/><circle cx="30" cy="30" r="2" fill="${GOLD}"/><path d="M30 44 L30 56" stroke="${GREEN}" stroke-width="2.4" stroke-linecap="round"/><path d="M30 52 Q20 52 15 46 Q25 45 30 52Z M30 52 Q40 52 45 46 Q35 45 30 52Z" fill="${LEAF}"/>`;
+const bamboo = () => [[20, 16, 56], [32, 9, 56], [44, 20, 56]].map(([x, y0, y1]) => `<rect x="${x - 2.8}" y="${y0}" width="5.6" height="${y1 - y0}" rx="2.6" fill="${GREEN}"/>${[0.3, 0.6, 0.85].map((f) => `<rect x="${x - 3.6}" y="${(y0 + (y1 - y0) * f).toFixed(1)}" width="7.2" height="2.2" rx="1" fill="#1F5A38"/>`).join("")}`).join("") + `<path d="M33 22 Q43 15 50 19 Q41 26 33 22Z M31 30 Q21 24 13 27 Q22 34 31 30Z M45 30 Q53 27 56 32 Q49 36 45 30Z" fill="${LEAF}"/>`;
+const spring = () => `<path d="M14 56 H46" stroke="${BROWN}" stroke-width="3" stroke-linecap="round"/><path d="M30 56 Q30 44 30 30" fill="none" stroke="${GREEN}" stroke-width="3" stroke-linecap="round"/><path d="M30 42 Q14 42 11 24 Q28 24 30 42Z" fill="${LEAF}"/><path d="M30 34 Q46 34 49 15 Q32 15 30 34Z" fill="${GREEN}"/><circle cx="30" cy="27" r="3.2" fill="${PINK}"/>`;
+const summer = () => `<circle cx="30" cy="32" r="11" fill="${ORANGE}"/><circle cx="30" cy="32" r="6" fill="#F7C95C"/>` + Array.from({ length: 12 }, (_, i) => `<path d="M30 14 L30 8" stroke="${ORANGE}" stroke-width="3" stroke-linecap="round" transform="rotate(${i * 30} 30 32)"/>`).join("");
+const autumn = () => `<path d="M30 9 L34 19 L42 14 L40 25 L51 25 L44 33 L49 42 L38 40 L36 48 L30 43 L24 48 L22 40 L11 42 L16 33 L9 25 L20 25 L18 14 L26 19 Z" fill="${MAPLE}"/><path d="M30 43 L30 57 M30 40 L30 18 M30 34 L20 27 M30 34 L40 27" stroke="#F3C27A" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="M30 43 L30 57" stroke="${BROWN}" stroke-width="2.4" stroke-linecap="round"/>`;
+const winter = () => [0, 60, 120].map((r) => `<g transform="rotate(${r} 30 32)" stroke="${ICE}" stroke-width="2.6" stroke-linecap="round" fill="none"><path d="M30 10 L30 54"/><path d="M30 18 L24 12 M30 18 L36 12 M30 46 L24 52 M30 46 L36 52"/></g>`).join("") + `<circle cx="30" cy="32" r="3.4" fill="${ICE}"/>`;
+
 function face(t: string): string {
   if (/^[1-9][msp]$/.test(t)) {
     const n = Number(t[0]), suit = t[1];
@@ -55,10 +70,11 @@ function face(t: string): string {
   if (t === "WD") return `<rect x="12" y="16" width="36" height="48" rx="5" fill="none" stroke="${BLUE}" stroke-width="3.4"/><rect x="18" y="22" width="24" height="36" rx="3" fill="none" stroke="${BLUE}" stroke-width="1.4"/>`;
   const b = /^([FS])([1-4])$/.exec(t);
   if (b) {
-    const n = Number(b[2]);
-    const glyph = b[1] === "F" ? ["梅", "蘭", "菊", "竹"][n - 1] : ["春", "夏", "秋", "冬"][n - 1];
-    const c = b[1] === "F" ? RED : GREEN;
-    return text(glyph, 30, 46, 34, c) + `<circle cx="30" cy="64" r="7" fill="none" stroke="${c}" stroke-width="1.4"/>` + text(String(n), 30, 68, 11, c, 800);
+    // Flowers and seasons are drawn pictures. The small corner character names the tile and the circled number is the seat number.
+    const n = Number(b[2]), isFlower = b[1] === "F", c = isFlower ? RED : GREEN;
+    const glyph = isFlower ? ["梅", "蘭", "菊", "竹"][n - 1] : ["春", "夏", "秋", "冬"][n - 1];
+    const art = isFlower ? [plum, orchid, chrysanthemum, bamboo][n - 1]() : [spring, summer, autumn, winter][n - 1]();
+    return art + text(glyph, 11, 17, 12, c, 800) + `<circle cx="30" cy="66" r="6.5" fill="none" stroke="${c}" stroke-width="1.3"/>` + text(String(n), 30, 70, 10, c, 800);
   }
   return text("?", 30, 50, 30, INK);
 }

@@ -47,11 +47,19 @@ In the Supabase SQL Editor, with your account already set to ADMIN:
 **2. Players join with the code** (Beranda → *Gabung dengan kode*, or the shared link) and the first screen is the table setup:
 - type the four player names around the table (East deals first; names from your earlier games are suggested),
 - pick the rule book: **Chicken Hand** (no faan: every valid win is 1 point), **Beginner** (minimum 3 faan) or **Advanced** (minimum 5 faan),
-- pick the **starting points** (0 / 1.000 / 5.000 / 10.000 / any number) and whether to use a **faan cap** (8 / 10 / 13 / custom). A hand worth more than the cap is paid as the cap,
-- *Mulai sesi*. The first player to submit wins; everybody else at the table sees the same scoreboard live. Rounds (start / last) are under *Opsi lanjutan*.
+- pick the **starting points** (default 1.000; or 0 / 5.000 / 10.000 / any number) and whether to use a **faan cap** (8 / 10 / 13 / custom). A hand worth more than the cap is paid as the cap,
+- *Mulai sesi*. The first player to submit wins; everybody else at the table sees the same scoreboard live. 
 
 **3. Playing.** Anyone who joined can record, edit and undo hands; only the owner/admin can pause or finish the game.
 - **Editing a hand** (*Ubah* in the hand history) replays the whole game from hand 1, so dealer, seat winds, payments and every score after it are recomputed. Finished games are locked.
+- **Editing hands:** every hand has an **Ubah** button, also after the game is finished. Saving replays the whole game from hand 1 (dealer, seat winds, payments, later scores) and, for a finished game, recalculates the final ranking. The finished-game summary links to it (*Lihat dan ubah tangan*).
+- **Finishing:** the game never ends by itself. Anyone at the table can press **Akhiri game** at any time (a dialog shows the current ranking first); final ranks are saved and the game is locked. There is no Jeda (pause) button any more. The old "game ends after round" choice was removed from the setup screen.
+- **Logout:** tap the avatar on the home screen (*Keluar dari akun*), or *Keluar* in the admin sidebar.
+- **House scoring rules (confirmed):** Little/Great Dragon do not count each Dragon Pong again; Little/Great Wind do not count Seat Wind or Round Wind again; Seven Pairs, Nine Gates and Thirteen Orphans already include Concealed Hand, so it is not added; Chicken Hand may still win when bonus faan reach the minimum. The two stacking switches are in `lib/scoring/hk18Rules.ts` (`dragonPongStacksWithDragonHands`, `windPongStacksWithWindHands`, both `false`).
+- **Flower and season tiles** are drawn pictures (plum, orchid, chrysanthemum, bamboo, spring sprout, sun, maple leaf, snowflake) in `components/mahjong/tileArt.ts`, with the character in the corner and the circled seat number below.
+- **Quick-score codes:** *Hitung skor cepat* asks for a 6-character code that an admin generates in Admin → *Kode Kalkulator* (label, validity 3 jam to 30 hari, max number of people, copy, revoke). Players enter it once and keep access until it expires or is revoked; admins never need one. Run `supabase/migration_006_quick_score_codes.sql`. The calculator itself runs in the browser, so the code controls who is offered the page; it is not a secret-protecting barrier.
+- **Entering tiles:** the calculator takes ONE flat list of tiles (no Chow / Pong / Kong buttons). Chows and pongs are found by the scoring engine. A kong is recognised from the count: 14 tiles = no kong, 15 = one four-of-a-kind is a kong, 16 = two, up to 18 (`lib/scoring/inferMelds.ts`). If several four-of-a-kinds could be the kong, the best-scoring reading wins.
+- **Opened sets:** because the list is flat, the app cannot see which sets were taken from a discard. The *Tangan tertutup* row under *Poin tambahan* is a checkbox (on by default for discard wins); untick it when any set was taken from a discard. It is stored with the hand (`openMelds`) so edits and replays stay correct.
 - The minimum faan and the cap are stored per game and enforced on the server (the browser only previews).
 - Run `supabase/migration_005_room_setup_and_clock.sql` after migration 004. It also needs `SUPABASE_SERVICE_ROLE_KEY` on the server (already required for recording hands).
 - Demo-seeded games store tile lists but no hand details, so their hands can be viewed but not edited.

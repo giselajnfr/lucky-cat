@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BackLink } from "@/components/layout/BackLink";
 import { fmtScore, scoreTone } from "@/lib/ui/score";
 import { notFound } from "next/navigation";
@@ -31,6 +32,7 @@ export default async function Page({ params }: { params: { id: string } }) {
     <main className="space-y-5">
       <div><BackLink href="/game?tab=selesai" label="Game selesai" /><h1 className="text-[1.6rem]">{(game as { name?: string | null }).name || `Game ${game.room_code}`}</h1>
         <p className="text-xs text-muted">{new Date(game.played_at).toLocaleString("id-ID", { dateStyle: "long", timeStyle: "short" })}{sum.durationMinutes != null ? ` · ${sum.durationMinutes} menit` : ""} · {sum.totalHands} tangan · {game.status === "finished" ? "Selesai" : "Belum selesai"}</p></div>
+      <Link href={`/game/${game.id}`} className="btn-secondary">Lihat dan ubah tangan</Link>
       <section className="card"><h2 className="section-label mb-3">Peringkat akhir</h2>
         <ol className="space-y-2">{sum.rankings.map((r) => (<li key={r.id} className="flex items-center justify-between rounded-xl bg-base/40 px-3 py-2.5"><span><b className="mr-2">{r.rank}</b>{r.player_name}<span className="ml-2 text-xs text-muted">{r.wins} menang</span></span><b><span className={scoreTone(r.current_score, false, game.starting_points)}>{fmtScore(r.current_score)}</span></b></li>))}</ol></section>
       <section className="card"><h2 className="section-label mb-3">Perkembangan skor</h2><LineChart series={prog.series.map((x) => ({ name: x.name, values: x.values }))} /></section>
@@ -41,7 +43,7 @@ export default async function Page({ params }: { params: { id: string } }) {
           <li key={x.id} className="card space-y-2 text-sm">
             <div className="flex justify-between"><b>#{x.hand_number} · {x.winner_player_id ? name(x.winner_player_id) : "Seri"}</b><b>{x.winner_player_id ? `${x.total_fan} faan` : "—"}</b></div>
             <p className="text-xs text-muted">{METHOD[x.winning_method as keyof typeof METHOD]}{x.discard_player_id ? ` · dibuang ${name(x.discard_player_id)}` : ""}{d ? ` · kursi ${d.seatWind}` : ""}</p>
-            <HandTiles detail={d} tiles={x.hand_tiles} width={22} />
+            <HandTiles detail={d} tiles={x.hand_tiles} width={30} />
             {x.hand_fan_details?.length > 0 && <ul className="divide-y divide-line/50">{x.hand_fan_details.map((f: { fan_name: string; fan_value: number }) => <li key={f.fan_name} className="flex justify-between py-1.5"><span>{f.fan_name}</span><b>+{f.fan_value}</b></li>)}</ul>}
           </li>); })}</ol></section>
     </main>

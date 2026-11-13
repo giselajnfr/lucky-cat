@@ -22,7 +22,7 @@ function storedOutcome(h: StoredRow): Outcome | { error: string } {
   return { type: "win", hand: {
     winnerId: h.winner_player_id, discarderId: h.discard_player_id ?? undefined, method: h.winning_method === "self_draw" ? "SELF_DRAW" : "DISCARD",
     concealedTiles: d.concealed as PlayTile[], melds: d.melds as Meld[], winningTile: d.winningTile as PlayTile, flowers: d.flowers as BonusTile[],
-    isLastTile: d.isLastTile, isRobbingKong: d.isRobbingKong,
+    isLastTile: d.isLastTile, isRobbingKong: d.isRobbingKong, openMelds: d.openMelds ?? d.melds.some((m) => m.exposed),
   } };
 }
 
@@ -48,7 +48,6 @@ export async function PATCH(req: Request, { params }: { params: { id: string; ha
   const g = game as GameRow & { game_players: GamePlayerRow[] };
   const { data: canPlay } = await supabase.rpc("can_play_game", { gid: g.id });
   if (!canPlay) return err(403, "Gabung dengan kode ruang dulu untuk mengubah tangan");
-  if (g.status === "finished") return err(409, "Game sudah selesai, tangan tidak bisa diubah lagi");
 
   const { data: rows } = await supabase.from("game_hands")
     .select("id, hand_number, winner_player_id, discard_player_id, winning_method, hand_detail, state_before").eq("game_id", g.id).order("hand_number");

@@ -68,7 +68,7 @@ end $$;
 -- The server ignores any other number.
 -- Allowed for the admin who opened the room, any admin, and anyone who joined with the room code. Only the first call wins.
 create or replace function public.setup_game(
-  p_game uuid, p_players jsonb, p_preset text, p_max_fan int default null, p_starting_points int default 0,
+  p_game uuid, p_players jsonb, p_preset text, p_max_fan int default null, p_starting_points int default 1000,
   p_round_wind text default 'east', p_last_round_wind text default 'north'
 ) returns void language plpgsql security definer set search_path = public as $$
 declare g public.games; x jsonb; pid uuid; pname text; puser uuid; seats int[] := '{}'; pids uuid[] := '{}'; minf int;
@@ -134,4 +134,78 @@ select ct.id as table_id, ct.table_number, ct.status,
   g.starting_points as starting_points
 from public.cafe_tables ct left join public.games g on g.id = ct.current_game_id;
 
+notify pgrst, 'reload schema';
+
+-- ============ 5. Finish a game at any time ============
+-- Anyone who can play the game (owner, any admin, anyone who joined with the room code) may end it whenever the table
+-- wants to stop. It does not have to wait for the last round. Final ranks are saved; a finished game is locked.
+create or replace function public.finish_game(p_game uuid) returns void language plpgsql security definer set search_path = public as $$
+declare g public.games;
+begin
+  select * into g from public.games where id = p_game for update;     -- row lock: two simultaneous requests cannot both finish it
+  if g.id is null or not public.can_play_game(p_game) then raise exception 'Not allowed'; end if;
+  if g.status = 'finished' then raise exception 'Game is already finished'; end if;
+  if not g.setup_complete then raise exception 'Set up the table before finishing the game'; end if;
+  update public.games set status = 'finished', finished_at = now() where id = p_game;
+  update public.game_players gp set final_rank = r.rk
+    from (select id, rank() over (order by current_score desc) rk from public.game_players where game_id = p_game) r where gp.id = r.id;
+end $$;
+grant execute on function public.finish_game(uuid) to authenticated;
+notify pgrst, 'reload schema';
+
+-- ============ 6. Editing a hand also works on a finished game (final ranking is recalculated) ============
+create or replace function public.replace_game_hands_internal(p_user uuid, p_game uuid, p_expected int, p_hands jsonb, p_final jsonb)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare g public.games; h jsonb; cnt int; hid uuid; chg_sum int; changed int;
+begin
+  select * into g from games where id = p_game for update;
+  if g.id is null then raise exception 'Game not found'; end if;
+  if not (g.owner_id = p_user or exists (select 1 from game_members where game_id = p_game and user_id = p_user)
+          or exists (select 1 from profiles where id = p_user and role = 'ADMIN')) then raise exception 'Not allowed'; end if;
+
+  select count(*) into cnt from game_hands where game_id = p_game;
+  if cnt <> p_expected or jsonb_array_length(p_hands) <> cnt then raise exception 'Another hand was recorded first. Refresh and try again.'; end if;
+
+  delete from score_transactions where game_id = p_game;
+  delete from hand_fan_details where hand_id in (select id from game_hands where game_id = p_game);
+
+  for h in select * from jsonb_array_elements(p_hands) loop
+    hid := (h->>'id')::uuid;
+    if h->>'winning_method' not in ('self_draw','discard','draw') then raise exception 'Invalid winning method'; end if;
+    if (h->>'winning_method' = 'draw') <> (h->>'winner_player_id' is null) then raise exception 'A draw has no winner and a win needs one'; end if;
+    if h->>'winning_method' = 'discard' and (h->>'discard_player_id' is null or h->>'discard_player_id' = h->>'winner_player_id') then raise exception 'Invalid discarding player'; end if;
+    if h->>'winning_method' <> 'draw' and (h->>'total_fan')::int < g.min_fan then raise exception 'Hand % does not meet the minimum faan', h->>'hand_number'; end if;
+    select coalesce(sum((x->>'change')::int), 0) into chg_sum from jsonb_array_elements(h->'changes') x;
+    if chg_sum <> 0 then raise exception 'Score changes must balance to zero'; end if;
+
+    update game_hands set round_wind = h->>'round_wind', dealer_player_id = (h->>'dealer_player_id')::uuid,
+      winner_player_id = (h->>'winner_player_id')::uuid, winning_method = h->>'winning_method', discard_player_id = (h->>'discard_player_id')::uuid,
+      total_fan = (h->>'total_fan')::int, final_points = (h->>'final_points')::int, hand_tiles = h->'hand_tiles', hand_detail = h->'hand_detail',
+      state_before = h->'state_before', edited_at = case when (h->>'edited')::boolean then now() else edited_at end
+    where id = hid and game_id = p_game;
+    if not found then raise exception 'Hand not found in this game'; end if;
+
+    insert into hand_fan_details (hand_id, fan_name, fan_value, fan_id, category)
+      select hid, f->>'name', (f->>'fan')::int, f->>'id', f->>'category' from jsonb_array_elements(h->'fans') f;
+    insert into score_transactions (game_id, hand_id, player_id, points_change, score_after)
+      select p_game, hid, (c->>'player_id')::uuid, (c->>'change')::int, (c->>'score_after')::int from jsonb_array_elements(h->'changes') c;
+  end loop;
+
+  -- ONE statement for all players (the scores trigger then emits a single SCORE_UPDATED).
+  update game_players gp set current_score = s.score
+    from jsonb_to_recordset(p_final->'scores') as s(player_id uuid, score int) where gp.id = s.player_id and gp.game_id = p_game;
+  get diagnostics changed = row_count;
+  if changed <> 4 then raise exception 'Final scores must cover all four players'; end if;
+
+  update games set current_round_wind = p_final->>'round_wind', current_dealer_seat = (p_final->>'dealer_seat')::int,
+    dealer_rotations = (p_final->>'dealer_rotations')::int where id = p_game;
+  -- A finished game stays editable (a hand was entered wrong, or the table ended it by mistake): its final ranking follows the new scores.
+  if g.status = 'finished' then
+    update game_players gp set final_rank = r.rk
+      from (select id, rank() over (order by current_score desc) rk from game_players where game_id = p_game) r where gp.id = r.id;
+  end if;
+  return jsonb_build_object('hands', cnt);
+end $$;
+revoke all on function public.replace_game_hands_internal(uuid, uuid, int, jsonb, jsonb) from public, anon, authenticated;
+grant execute on function public.replace_game_hands_internal(uuid, uuid, int, jsonb, jsonb) to service_role;
 notify pgrst, 'reload schema';

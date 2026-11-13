@@ -29,7 +29,7 @@ export function RecordHand({ game, players, handsPlayed, edit, onDone, onCancel 
   const cfg = useMemo(() => configForGame(game), [game]);
   const state = useMemo(() => stateOfGame(viewGame, edit ? edit.hand_number - 1 : handsPlayed), [viewGame, edit, handsPlayed]);
   const d = edit?.hand_detail;
-  const calcInitial: CalcInitial | undefined = d?.concealed ? { concealed: d.concealed as PlayTile[], melds: d.melds as Meld[], flowers: d.flowers as BonusTile[], winningTile: d.winningTile as PlayTile, lastTile: !!d.isLastTile, robbing: !!d.isRobbingKong } : undefined;
+  const calcInitial: CalcInitial | undefined = d?.concealed ? { concealed: d.concealed as PlayTile[], melds: d.melds as Meld[], flowers: d.flowers as BonusTile[], winningTile: d.winningTile as PlayTile, lastTile: !!d.isLastTile, robbing: !!d.isRobbingKong, openMelds: d.openMelds ?? d.melds.some((m) => m.exposed) } : undefined;
   const seated: SeatedPlayer[] = useMemo(() => players.map((p) => ({ id: p.id, seat: p.seat_position, name: p.player_name, score: p.current_score })), [players]);
   const bySeat = [...players].sort((a, b) => a.seat_position - b.seat_position);
   const winner = players.find((p) => p.id === winnerId);
@@ -39,7 +39,7 @@ export function RecordHand({ game, players, handsPlayed, edit, onDone, onCancel 
     if (!payload || !winner || !method) return null;
     const r = scoreHandForGame(state, seated, { winnerId: winner.id, discarderId: method === "DISCARD" ? discarderId ?? undefined : undefined, method,
       concealedTiles: payload.input.concealedTiles, melds: payload.input.melds, winningTile: payload.input.winningTile, flowers: payload.input.flowers,
-      isLastTile: payload.input.isLastTile, isRobbingKong: payload.input.isRobbingKong }, cfg);
+      isLastTile: payload.input.isLastTile, isRobbingKong: payload.input.isRobbingKong, openMelds: payload.input.hasOpenMelds }, cfg);
     return r;
   }, [payload, winner, method, discarderId, state, seated, cfg]);
 
@@ -48,7 +48,7 @@ export function RecordHand({ game, players, handsPlayed, edit, onDone, onCancel 
     const base = { requestId, expectedHand: edit ? handsPlayed : handsPlayed + 1 };   // editing: the number of hands this screen shows
     const body = kind === "draw" ? { ...base, type: "draw" } : { ...base, type: "win", winnerId, discarderId: method === "DISCARD" ? discarderId : undefined, method,
       concealedTiles: payload!.input.concealedTiles, melds: payload!.input.melds, winningTile: payload!.input.winningTile, flowers: payload!.input.flowers,
-      isLastTile: payload!.input.isLastTile, isRobbingKong: payload!.input.isRobbingKong };
+      isLastTile: payload!.input.isLastTile, isRobbingKong: payload!.input.isRobbingKong, openMelds: payload!.input.hasOpenMelds === true };
     try {
       const res = await fetch(edit ? `/api/games/${game.id}/hands/${edit.id}` : `/api/games/${game.id}/hands`, { method: edit ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const json = await res.json().catch(() => ({}));
@@ -71,6 +71,7 @@ export function RecordHand({ game, players, handsPlayed, edit, onDone, onCancel 
         <div className="flex items-center justify-between"><h2 className="text-xl">{edit ? `Ubah tangan #${edit.hand_number}` : `Tangan #${handsPlayed + 1}`}</h2><button type="button" className="text-sm underline" onClick={onCancel}>Batal</button></div>
         <p className="text-sm text-muted">Ronde {WIND_LABEL[ROUND_TO_WIND[viewGame.current_round_wind]]} · Dealer {players.find((p) => p.seat_position === viewGame.current_dealer_seat)?.player_name}</p>
 
+        {edit && game.status === "finished" && <p className="card !border-warn text-sm"><b className="text-warn">Game sudah selesai:</b> setelah disimpan, skor akhir dan peringkat dihitung ulang.</p>}
         {edit && edit.hand_number < handsPlayed && <p className="card !border-warn text-sm"><b className="text-warn">Perhatian:</b> mengubah tangan ini menghitung ulang dealer, ronde, dan skor semua tangan sesudahnya.</p>}
 
         <section className="card space-y-2"><h3 className="section-label">Hasil tangan</h3>

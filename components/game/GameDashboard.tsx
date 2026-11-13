@@ -115,10 +115,10 @@ export function GameDashboard({ initial, canPlay, canManage }: { initial: Full; 
           {game.status === "in_progress" ? <button className="btn-primary" onClick={() => setRecording(true)}>Catat tangan</button>
             : canManage ? <button className="btn-primary" disabled={busy} onClick={() => rpc("set_game_paused", { p_game: gid, p_paused: false })}>Lanjutkan game</button>
             : <p className="card text-sm text-warn">Game sedang dijeda. Minta admin untuk melanjutkan.</p>}
-          <div className={`grid gap-2 ${canManage ? "grid-cols-3" : "grid-cols-1"}`}>
+          <div className="grid grid-cols-2 gap-2">
             <button className="btn-secondary" disabled={busy || hands.length === 0} onClick={() => setConfirm("undo")}>Batalkan tangan</button>
-            {canManage && <button className="btn-secondary" disabled={busy || game.status !== "in_progress"} onClick={() => rpc("set_game_paused", { p_game: gid, p_paused: true })}>Jeda</button>}
-            {canManage && <button className="btn-secondary !border-neg !text-neg" disabled={busy} onClick={() => setConfirm("finish")}>Akhiri</button>}
+            {/* Finish whenever the table wants to stop: no need to wait for the last round. Any player at the table can do it. */}
+            <button className="btn-secondary !border-neg !text-neg" disabled={busy} onClick={() => setConfirm("finish")}>Akhiri game</button>
           </div>
         </div>
       )}
@@ -126,13 +126,14 @@ export function GameDashboard({ initial, canPlay, canManage }: { initial: Full; 
 
       <section>
         <div className="mb-2 flex items-baseline justify-between"><h2 className="section-label">Riwayat tangan</h2><Link href="/guidebook" className="text-xs font-semibold underline">Aturan HK18</Link></div>
+        {finished && canPlay && hands.length > 0 && <p className="mb-2 text-xs text-muted">Game sudah selesai. Tangan masih bisa diubah lewat <b className="text-cream">Ubah</b>: skor dan peringkat akhir dihitung ulang.</p>}
         {hands.length === 0 ? <p className="card text-sm text-muted">Belum ada tangan. Catat tangan pertama saat ada yang menang.</p> : (
           <ol className="space-y-2">{[...hands].reverse().map((h) => (
             <li key={h.id} className="card !p-3 text-sm">
               <div className="flex items-center justify-between gap-2"><b>#{h.hand_number} · {h.winner_player_id ? nameOf(h.winner_player_id) : "Seri"}{h.edited_at && <span className="ml-2 text-[11px] font-semibold text-warn">diubah</span>}</b>
-                <span className="flex items-center gap-1"><b>{h.winner_player_id ? (game.rule_preset === "chicken" ? `${h.final_points} poin` : `${h.total_fan} faan`) : "0"}</b>{canPlay && !finished && <button type="button" className="btn-ghost !min-h-[36px] !px-2 text-xs !text-cream underline" onClick={() => setEditing(h)}>Ubah</button>}</span></div>
+                <span className="flex items-center gap-1"><b>{h.winner_player_id ? (game.rule_preset === "chicken" ? `${h.final_points} poin` : `${h.total_fan} faan`) : "0"}</b>{canPlay && <button type="button" className="btn-ghost !min-h-[36px] !px-2 text-xs !text-cream underline" onClick={() => setEditing(h)}>Ubah</button>}</span></div>
               <p className="text-xs text-muted">{METHOD[h.winning_method]}{h.discard_player_id ? ` · dibuang ${nameOf(h.discard_player_id)}` : ""} · Ronde {ROUND_LABEL[h.round_wind as keyof typeof ROUND_LABEL]}</p>
-              <div className="mt-2"><HandTiles detail={h.hand_detail} tiles={h.hand_tiles} width={20} /></div>
+              <div className="mt-2"><HandTiles detail={h.hand_detail} tiles={h.hand_tiles} width={34} /></div>
               {h.hand_fan_details?.length ? <p className="mt-2 text-xs text-muted">{h.hand_fan_details.map((f: FanDetailRow) => `${f.fan_name} +${f.fan_value}`).join(" · ")}</p> : null}
             </li>))}</ol>)}
       </section>
@@ -146,7 +147,12 @@ export function GameDashboard({ initial, canPlay, canManage }: { initial: Full; 
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-4 sm:items-center" role="alertdialog" aria-modal="true">
           <div className="w-full max-w-sm rounded-2xl border border-line bg-card p-5">
             <h2 className="text-lg">{confirm === "finish" ? "Akhiri game ini?" : `Batalkan tangan #${hands.length}?`}</h2>
-            <p className="mt-1 text-sm text-muted">{confirm === "finish" ? "Skor akhir dan peringkat disimpan. Game yang sudah selesai tidak bisa diubah lagi." : "Skor, dealer, dan ronde dikembalikan seperti sebelum tangan itu."}</p>
+            <p className="mt-1 text-sm text-muted">{confirm === "finish" ? "Kamu bisa mengakhiri kapan saja, tidak perlu menunggu ronde terakhir. Skor akhir dan peringkat disimpan. Game yang sudah selesai tidak bisa diubah lagi." : "Skor, dealer, dan ronde dikembalikan seperti sebelum tangan itu."}</p>
+            {confirm === "finish" && (
+              <ol className="mt-3 space-y-1 rounded-xl bg-base/40 p-3 text-sm" aria-label="Peringkat saat ini">
+                {[...players].sort((a, b) => b.current_score - a.current_score).map((p, i) => (
+                  <li key={p.id} className="flex items-center justify-between"><span><span className="mr-2 text-muted">{i + 1}</span>{p.player_name}</span><b className={scoreTone(p.current_score, false, game.starting_points)}>{fmtScore(p.current_score)}</b></li>))}
+              </ol>)}
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button className="btn-secondary" onClick={() => setConfirm(null)}>Kembali</button>
               <button className="btn-danger" disabled={busy} onClick={() => rpc(confirm === "finish" ? "finish_game" : "undo_last_hand", { p_game: gid })}>{confirm === "finish" ? "Akhiri" : "Batalkan"}</button>
