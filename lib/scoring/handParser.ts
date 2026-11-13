@@ -8,7 +8,7 @@ export function buildContext(input: WinningHandInput, d: HandDecomposition): Sco
     allTiles: [...input.concealedTiles, ...input.melds.flatMap((m) => m.tiles)],
     flowers: input.flowers, method: input.winningMethod, seatWind: input.winnerSeatWind,
     roundWind: input.roundWind, isDealer: input.isDealer, winningTile: input.winningTile,
-    declaredMelds: input.melds, isLastTile: !!input.isLastTile, isRobbingKong: !!input.isRobbingKong, config: input.gameConfig,
+    declaredMelds: input.melds, openHand: !!input.hasOpenMelds || input.melds.some((m) => m.exposed), isLastTile: !!input.isLastTile, isRobbingKong: !!input.isRobbingKong, config: input.gameConfig,
   };
 }
 

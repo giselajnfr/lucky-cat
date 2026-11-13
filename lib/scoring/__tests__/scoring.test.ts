@@ -195,19 +195,51 @@ describe("hand patterns", () => {
   });
 });
 
-describe("explicit stacking toggles (review items)", () => {
+describe("limit hands already include what they are made of (house rules)", () => {
   const dragons = hand("RD RD RD GD GD GD 123m 456p WD WD");
-  it("default stacks dragon pongs with Little Dragon and flags it for review", () => {
-    const r = calculateScore(dragons); expect(fanOf(r, "little-dragon")).toBe(5); expect(fanOf(r, "dragon-pong")).toBe(2); expect(r.reviewFlags.length).toBeGreaterThan(0);
+  it("Little Dragon does not count each Dragon Pong again", () => {
+    const r = calculateScore(dragons); expect(fanOf(r, "little-dragon")).toBe(5); expect(ids(r)).not.toContain("dragon-pong"); expect(r.excludedFan[0].byId).toBe("little-dragon");
   });
-  it("can be switched off in the configuration", () => {
-    const r = calculateScore({ ...dragons, gameConfig: { ...CFG, dragonPongStacksWithDragonHands: false } });
-    expect(ids(r)).not.toContain("dragon-pong"); expect(r.excludedFan[0].byId).toBe("little-dragon");
+  it("Great Dragon does not count each Dragon Pong again", () => {
+    const r = calculateScore(hand("RD RD RD GD GD GD WD WD WD 123m 55p", { winningTile: "5p" }));
+    expect(ids(r)).toContain("great-dragon"); expect(ids(r)).not.toContain("dragon-pong");
   });
-  it("wind toggle", () => {
-    const w = hand("EEE SSS WWW NNN 55p", { winnerSeatWind: "E", winningTile: "5p" });
-    expect(ids(calculateScore(w))).toContain("seat-wind");
-    expect(ids(calculateScore({ ...w, gameConfig: { ...CFG, windPongStacksWithWindHands: false } }))).not.toContain("seat-wind");
+  it("Little Wind does not count Seat Wind or Round Wind again", () => {
+    const w = hand("EEE SSS WWW 123m NN", { winnerSeatWind: "E", roundWind: "S", winningTile: "N" });
+    const r = calculateScore(w); expect(ids(r)).toContain("little-wind"); expect(ids(r)).not.toContain("seat-wind"); expect(ids(r)).not.toContain("round-wind");
+  });
+  it("Great Wind does not count Seat Wind or Round Wind again", () => {
+    const r = calculateScore(hand("EEE SSS WWW NNN 55p", { winnerSeatWind: "E", roundWind: "E", winningTile: "5p" }));
+    expect(ids(r)).toContain("great-wind"); expect(ids(r)).not.toContain("seat-wind"); expect(ids(r)).not.toContain("round-wind");
+  });
+  it("a normal wind pong still counts when no Little/Great Wind is made", () => {
+    const r = calculateScore(hand("EEE 123m 456p 789s 55p", { winnerSeatWind: "E", roundWind: "E", winningTile: "5p" }));
+    expect(fanOf(r, "seat-wind")).toBe(1); expect(fanOf(r, "round-wind")).toBe(1);
+  });
+  it("the stacking can still be switched back on in the configuration", () => {
+    const r = calculateScore({ ...dragons, gameConfig: { ...CFG, dragonPongStacksWithDragonHands: true } });
+    expect(fanOf(r, "dragon-pong")).toBe(2);
+  });
+});
+
+describe("Concealed Hand is already included in Seven Pairs, Nine Gates and Thirteen Orphans", () => {
+  it("Seven Pairs from a discard gets no Concealed Hand", () => {
+    const r = calculateScore(hand("11m 33m 55p 77p 99s 22s EE", { winningTile: "E" }));
+    expect(ids(r)).toContain("seven-pairs"); expect(ids(r)).not.toContain("concealed-hand");
+  });
+  it("Nine Gates from a discard gets no Concealed Hand", () => {
+    const r = calculateScore(hand("1112345678999m 5m", { winningTile: "5m" }));
+    expect(ids(r)).toContain("nine-gates"); expect(ids(r)).not.toContain("concealed-hand");
+  });
+  it("Thirteen Orphans from a discard gets no Concealed Hand", () => {
+    const r = calculateScore(hand("1m 9m 1p 9p 1s 9s E S W N RD GD WD 1m", { winningTile: "1m" }));
+    expect(ids(r)).toContain("thirteen-orphans"); expect(ids(r)).not.toContain("concealed-hand");
+  });
+  it("an ordinary closed hand still gets Concealed Hand on a discard win", () => {
+    expect(ids(calculateScore(hand("123m 456p 789s 234s 55p", { winningTile: "5p" })))).toContain("concealed-hand");
+  });
+  it("Chicken Hand can still win on bonus faan alone (confirmed house rule)", () => {
+    expect(CFG.chickenHandCanWinOnBonusFaan).toBe(true);
   });
 });
 

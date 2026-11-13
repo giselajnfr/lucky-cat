@@ -12,7 +12,7 @@ const dragonSets = (c: ScoringContext) => setsOf(c, isDragon).length;
 const windSets = (c: ScoringContext) => setsOf(c, isWind).length;
 
 function nineGates(c: ScoringContext): boolean {
-  if (!std(c) || c.declaredMelds.length > 0 || c.allTiles.length !== 14) return false;
+  if (!std(c) || c.declaredMelds.length > 0 || c.openHand || c.allTiles.length !== 14) return false;
   if (suits(c).size !== 1 || c.allTiles.some(isHonor)) return false;
   const n = countTiles(c.allTiles.map((t) => String(rankOf(t))));
   const base: Record<string, number> = { "1": 3, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, "9": 3 };
@@ -50,5 +50,5 @@ export const PATTERN_CHECKS: Record<string, Check> = {
   "last-tile": (c) => c.isLastTile,
   "robbing-kong": (c) => c.isRobbingKong && c.method === "DISCARD",
   // Discard win only: on a self draw, Self Draw is awarded instead (never both).
-  "concealed-hand": (c) => c.method === "DISCARD" && c.declaredMelds.every((m) => !m.exposed),
+  "concealed-hand": (c) => c.method === "DISCARD" && !c.openHand,
 };

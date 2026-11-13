@@ -20,7 +20,7 @@ export function parseHandRequest(body: unknown): { ok: true; value: HandRequest 
   if (type === "draw") return { ok: true, value: { type: "draw", requestId, expectedHand: expectedHand as number } };
   if (type !== "win") return { ok: false, error: "type must be 'win' or 'draw'" };
 
-  const { winnerId, discarderId, method, winningTile, flowers, isLastTile, isRobbingKong } = body;
+  const { winnerId, discarderId, method, winningTile, flowers, isLastTile, isRobbingKong, openMelds } = body;
   if (typeof winnerId !== "string" || !UUID.test(winnerId)) return { ok: false, error: "winnerId is required" };
   if (method !== "SELF_DRAW" && method !== "DISCARD") return { ok: false, error: "method must be SELF_DRAW or DISCARD" };
   if (discarderId !== undefined && discarderId !== null && (typeof discarderId !== "string" || !UUID.test(discarderId))) return { ok: false, error: "discarderId is invalid" };
@@ -37,6 +37,6 @@ export function parseHandRequest(body: unknown): { ok: true; value: HandRequest 
   // NOTE: no totals, fan or score changes are accepted from the client — the server derives them.
   return { ok: true, value: { type: "win", requestId, expectedHand: expectedHand as number, hand: {
     winnerId, discarderId: (discarderId as string | null | undefined) ?? undefined, method, concealedTiles: concealed, melds,
-    winningTile, flowers: flowers as BonusTile[], isLastTile: isLastTile === true, isRobbingKong: isRobbingKong === true,
+    winningTile, flowers: flowers as BonusTile[], isLastTile: isLastTile === true, isRobbingKong: isRobbingKong === true, openMelds: openMelds === true,
   } } };
 }

@@ -4,7 +4,7 @@ import { ALL_PLAY_TILES, countTiles, isHonor, isTerminal } from "./tiles";
 /** Special hands live apart from the standard 4-sets+pair validator. Enabled via GameConfig.specialHands. */
 export function detectSpecialHands(input: WinningHandInput): HandDecomposition[] {
   const { concealedTiles: t, melds, gameConfig: cfg } = input;
-  if (melds.length > 0 || t.length !== 14) return [];
+  if (melds.length > 0 || input.hasOpenMelds || t.length !== 14) return [];
   const counts = countTiles(t);
   const found: HandDecomposition[] = [];
   if (cfg.specialHands.sevenPairs && Object.values(counts).length === 7 && Object.values(counts).every((n) => n === 2))

@@ -13,8 +13,8 @@ export const HK18_RULES = {
   enableFlowers: true,
   specialHands: { sevenPairs: true, thirteenOrphans: true },
   allChowsRequiresPlainPair: true,
-  dragonPongStacksWithDragonHands: true,
-  windPongStacksWithWindHands: true,
+  dragonPongStacksWithDragonHands: false,   // Little / Great Dragon already include each dragon pong
+  windPongStacksWithWindHands: false,       // Little / Great Wind already include each wind pong (seat and round wind too)
   chickenHandCanWinOnBonusFaan: true,
   pointsPerFan: 1,
   progression: { drawKeepsDealer: true, dealerWinKeepsDealer: true, lastRoundWind: "north" as const },
@@ -55,29 +55,29 @@ export const FAN_TABLE: FanRuleConfig[] = [
     ["Hanya satu jenis angka", "Tidak ada kartu kehormatan"],
     { hand: "123m 456m 789m 234m 55m", win: "5m" }, ["half-flush"]),
   p("little-dragon", "Little Dragon", 5, "Dua pong naga dan pasangan dari naga ketiga.",
-    ["Pong/kong dua naga berbeda", "Pasangan adalah naga ketiga"],
+    ["Pong/kong dua naga berbeda", "Pasangan adalah naga ketiga", "Dragon Pong tidak dihitung lagi (sudah termasuk)"],
     { hand: "RD RD RD GD GD GD 123m 456p WD WD", win: "WD" }, ["dragon-pong:cfg"]),
   p("great-dragon", "Great Dragon", 8, "Pong/kong ketiga naga (Merah, Hijau, Putih).",
-    ["Pong/kong dari ketiga naga"],
+    ["Pong/kong dari ketiga naga", "Dragon Pong tidak dihitung lagi (sudah termasuk)"],
     { hand: "RD RD RD GD GD GD WD WD WD 123m 55p", win: "5p" }, ["little-dragon", "dragon-pong:cfg"]),
   p("little-wind", "Little Wind", 10, "Tiga pong angin dan pasangan dari angin keempat.",
-    ["Pong/kong tiga angin berbeda", "Pasangan adalah angin keempat"],
+    ["Pong/kong tiga angin berbeda", "Pasangan adalah angin keempat", "Seat Wind dan Round Wind tidak dihitung lagi (sudah termasuk)"],
     { hand: "EEE SSS WWW 123m NN", win: "N" }, ["wind-pong:cfg"]),
   p("great-wind", "Great Wind", 13, "Pong/kong keempat angin (Timur, Selatan, Barat, Utara).",
-    ["Pong/kong dari keempat angin"],
+    ["Pong/kong dari keempat angin", "Seat Wind dan Round Wind tidak dihitung lagi (sudah termasuk)"],
     { hand: "EEE SSS WWW NNN 55p", win: "5p" }, ["little-wind", "all-pongs", "wind-pong:cfg"]),
   p("seven-pairs", "Seven Pairs", 4, "Tujuh pasangan berbeda. Tidak mengikuti bentuk 4 set + 1 pasangan.",
-    ["7 pasangan, masing-masing kartu berbeda", "Tidak ada meld", "4 kartu sama tidak dihitung sebagai 2 pasangan"],
-    { hand: "11m 33m 55p 77p 99s 22s EE", win: "E" }),
+    ["7 pasangan, masing-masing kartu berbeda", "Tidak ada meld", "4 kartu sama tidak dihitung sebagai 2 pasangan", "Concealed Hand tidak dihitung lagi (sudah termasuk)"],
+    { hand: "11m 33m 55p 77p 99s 22s EE", win: "E" }, ["concealed-hand"]),
   p("all-honors", "All Honors", 10, "Seluruh tangan hanya angin dan naga.",
     ["Semua kartu adalah angin atau naga"],
     { hand: "EEE SSS RD RD RD GD GD GD WD WD", win: "WD" }, ["mixed-orphans", "all-pongs"]),
   p("nine-gates", "Nine Gates / Heavenly Gates", 15, "Tangan tertutup satu jenis: 1112345678999 ditambah satu kartu sejenis.",
-    ["Tanpa meld sama sekali", "Satu jenis angka", "Susunan 111 2345678 999 + 1 kartu apa pun dari jenis itu"],
-    { hand: "1112345678999m 5m", win: "5m" }, ["full-flush", "pure-straight"]),
+    ["Tanpa meld sama sekali", "Satu jenis angka", "Susunan 111 2345678 999 + 1 kartu apa pun dari jenis itu", "Concealed Hand tidak dihitung lagi (sudah termasuk)"],
+    { hand: "1112345678999m 5m", win: "5m" }, ["full-flush", "pure-straight", "concealed-hand"]),
   p("thirteen-orphans", "Thirteen Orphans", 13, "Satu dari tiap kartu ujung dan kehormatan (13 jenis), ditambah satu kartu duplikat. Tidak mengikuti bentuk 4 set + 1 pasangan.",
-    ["Memiliki ke-13 kartu ujung/kehormatan", "Satu di antaranya berpasangan", "Tidak ada meld"],
-    { hand: "1m 9m 1p 9p 1s 9s E S W N RD GD WD 1m", win: "1m" }, ["mixed-orphans"]),
+    ["Memiliki ke-13 kartu ujung/kehormatan", "Satu di antaranya berpasangan", "Tidak ada meld", "Concealed Hand tidak dihitung lagi (sudah termasuk)"],
+    { hand: "1m 9m 1p 9p 1s 9s E S W N RD GD WD 1m", win: "1m" }, ["mixed-orphans", "concealed-hand"]),
   p("four-kongs", "Four Kongs", 12, "Empat kong (tertutup atau terbuka) ditambah satu pasangan.",
     ["4 set semuanya kong"],
     { hand: "55s", melds: "+K:1m +K:RD K:9p +K:E", win: "5s" }, ["all-pongs"]),
@@ -108,24 +108,15 @@ export const FAN_TABLE: FanRuleConfig[] = [
     ["Menang dari kartu tambahan kong lawan", "Hanya untuk kemenangan dari buangan"],
     { hand: "123m 456p 789s 111p 55s", win: "5s", method: "DISCARD", robbingKong: true }, { needsInput: "Apakah ini merampas kong" }),
   a("concealed-hand", "Concealed Hand", 1, "Menang dari buangan tanpa meld terbuka. Pada Self Draw yang dihitung adalah Self Draw, bukan Concealed Hand.",
-    ["Menang dari buangan", "Tidak ada meld terbuka (kong tertutup boleh)", "Tidak dihitung bersama Self Draw"],
+    ["Menang dari buangan", "Tidak ada meld terbuka (kong tertutup boleh)", "Tidak dihitung bersama Self Draw", "Tidak dihitung bersama Seven Pairs, Nine Gates, dan Thirteen Orphans (sudah termasuk)"],
     { hand: "123m 456p 789s 111p 55s", win: "5s", method: "DISCARD" }, { needsInput: "Meld mana yang terbuka" }),
 ];
 
 /**
- * Judgement calls the HK18 table does not spell out. Each is shown on the House Rules page and,
- * when a scored hand triggers one, attached to the result so it can be reviewed.
+ * Judgement calls that still need the house to confirm. Everything has been confirmed (stacking, Chicken Hand,
+ * special hands), so this is empty. Add { id, when: [fan ids], note } here to attach a review note to a scored hand.
  */
-export const REVIEW_NOTES: { id: string; when: string[]; note: string }[] = [
-  { id: "dragon-stack", when: ["little-dragon", "dragon-pong"], note: "Little Dragon dan Dragon Pong dihitung bersama. Ubah dragonPongStacksWithDragonHands jika aturan rumah menganggapnya sudah termasuk." },
-  { id: "dragon-stack-great", when: ["great-dragon", "dragon-pong"], note: "Great Dragon dan Dragon Pong dihitung bersama (sama seperti di atas)." },
-  { id: "wind-stack", when: ["little-wind", "seat-wind"], note: "Little Wind dan Seat Wind dihitung bersama. Ubah windPongStacksWithWindHands jika dianggap sudah termasuk." },
-  { id: "wind-stack-round", when: ["little-wind", "round-wind"], note: "Little Wind dan Round Wind dihitung bersama." },
-  { id: "wind-stack-great", when: ["great-wind", "seat-wind"], note: "Great Wind dan Seat/Round Wind dihitung bersama." },
-  { id: "chicken", when: ["chicken-hand"], note: "Chicken Hand (tanpa pola) tetap boleh menang jika faan tambahan mencapai minimum. Ubah chickenHandCanWinOnBonusFaan jika aturan rumah melarangnya." },
-  { id: "last-tile", when: ["last-tile"], note: "Last Tile diisi manual oleh pemain; definisi persis (kartu terakhir tumpukan) perlu dikonfirmasi." },
-  { id: "nine-gates-concealed", when: ["nine-gates", "concealed-hand"], note: "Nine Gates sudah tertutup; Concealed Hand tetap dihitung karena tabel tidak melarangnya. Mohon konfirmasi." },
-];
+export const REVIEW_NOTES: { id: string; when: string[]; note: string }[] = [];
 
 export const DEFAULT_GAME_CONFIG: GameConfig = {
   ...HK18_RULES,

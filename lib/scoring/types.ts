@@ -37,7 +37,7 @@ export type GameConfig = {
   enableFlowers: boolean;
   specialHands: { sevenPairs: boolean; thirteenOrphans: boolean };
   allChowsRequiresPlainPair: boolean;
-  /** Review items: see REVIEW_NOTES. false = limit-style hands already include these. */
+  /** false = Little/Great Dragon and Little/Great Wind already include the single pongs, so those are not counted again. */
   dragonPongStacksWithDragonHands: boolean;
   windPongStacksWithWindHands: boolean;
   /** true: a Chicken Hand may still win if bonus faan (flowers, self draw...) reach the minimum. */
@@ -63,12 +63,14 @@ export type WinningHandInput = {
   isLastTile?: boolean;
   isRobbingKong?: boolean;
   gameConfig: GameConfig;
+  /** The tiles are entered as one flat list, so the app cannot see which sets were taken from a discard. The player says so here. */
+  hasOpenMelds?: boolean;
 };
 
 export type ScoringContext = {
   kind: HandKind; sets: Meld[]; pair: PlayTile[]; allTiles: PlayTile[]; flowers: BonusTile[];
   method: WinMethod; seatWind: Wind; roundWind: Wind; isDealer: boolean; winningTile: PlayTile;
-  declaredMelds: Meld[]; isLastTile: boolean; isRobbingKong: boolean; config: GameConfig;
+  declaredMelds: Meld[]; /** any set taken from a discard (declared exposed meld, or flagged by the player) */ openHand: boolean; isLastTile: boolean; isRobbingKong: boolean; config: GameConfig;
 };
 
 export type DetectedFan = { id: string; name: string; fan: number; category: RuleCategory; count: number };

@@ -20,7 +20,7 @@ export type GamePlayerRow = {
 export type FanDetailRow = { fan_name: string; fan_value: number; fan_id: string | null; category: "pattern" | "additional" | null };
 export type HandDetail = {
   concealed: string[]; melds: { type: string; tiles: string[]; exposed: boolean }[]; winningTile: string; flowers: string[];
-  seatWind: string; roundWind: string; isLastTile?: boolean; isRobbingKong?: boolean; reviewFlags?: string[]; game_over?: boolean;
+  seatWind: string; roundWind: string; isLastTile?: boolean; isRobbingKong?: boolean; openMelds?: boolean; reviewFlags?: string[]; game_over?: boolean;
 };
 export type HandRow = {
   id: string; game_id: string; hand_number: number; round_wind: string; dealer_player_id: string; winner_player_id: string | null;

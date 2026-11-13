@@ -36,7 +36,7 @@ export function buildHandRecord(state: GameState, players: SeatedPlayer[], outco
     handTiles: [...sortTiles(h.concealedTiles), ...h.melds.flatMap((m) => m.tiles), ...h.flowers],
     handDetail: {
       concealed: h.concealedTiles, melds: h.melds, winningTile: h.winningTile, flowers: h.flowers,
-      seatWind: scored.seatWind, roundWind: state.roundWind, isLastTile: !!h.isLastTile, isRobbingKong: !!h.isRobbingKong,
+      seatWind: scored.seatWind, roundWind: state.roundWind, isLastTile: !!h.isLastTile, isRobbingKong: !!h.isRobbingKong, openMelds: !!h.openMelds,
       reviewFlags: scored.result.reviewFlags, game_over: next.gameOver,
     },
     fans: scored.result.detectedFan.map((f) => ({ id: f.id, name: f.name, fan: f.fan, category: f.category ?? null })),
