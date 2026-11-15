@@ -11,6 +11,12 @@ export type HandKind = "STANDARD" | "SEVEN_PAIRS" | "THIRTEEN_ORPHANS";
 export type HandDecomposition = { kind: HandKind; sets: Meld[]; pair: PlayTile[] };
 export type WinMethod = "SELF_DRAW" | "DISCARD";
 
+/** How the winning tile completed the hand. single = pair (eyes) wait, closed = middle of a chow, edge = 3 of 123 / 7 of 789, twoSided = open-ended chow wait, dualPung = waiting on two pungs. */
+export type WaitType = "single" | "closed" | "edge" | "twoSided" | "dualPung";
+export type RulesetId = "classic" | "new6" | "new18";
+/** A conflict: when `rule` is detected, the rules in `supersedes` are NOT counted (they are already included, or the two may not stack). */
+export type RuleConflict = { rule: string; supersedes: string[]; reason: string };
+
 export type DiscardPaymentMode = "DISCARDER_PAYS_ALL" | "DISCARDER_FULL_OTHERS_HALF";
 export type RuleCategory = "pattern" | "additional";
 
@@ -49,6 +55,13 @@ export type GameConfig = {
   discardRules: { dealerMultiplier: number; paymentMode: DiscardPaymentMode };
   progression: { drawKeepsDealer: boolean; dealerWinKeepsDealer: boolean; lastRoundWind: "east" | "south" | "west" | "north" };
   fanTable?: FanRuleConfig[];
+  /** Set by a ruleset (lib/scoring/rulesets.ts). Absent = the legacy single HK18 table. */
+  rulesetId?: RulesetId;
+  rulesetName?: string;
+  /** Extra stacking/conflict rules of the ruleset, applied on top of each rule's own `excludes`. */
+  conflicts?: RuleConflict[];
+  /** "pair": Single Wait = the winning tile completed the pair (eyes). "only-one-tile": the hand could be completed by exactly one tile. */
+  singleWaitMode?: "pair" | "only-one-tile";
 };
 
 export type WinningHandInput = {
@@ -70,10 +83,11 @@ export type WinningHandInput = {
 export type ScoringContext = {
   kind: HandKind; sets: Meld[]; pair: PlayTile[]; allTiles: PlayTile[]; flowers: BonusTile[];
   method: WinMethod; seatWind: Wind; roundWind: Wind; isDealer: boolean; winningTile: PlayTile;
+  waits: WaitType[]; /** every way the winning tile could have completed this reading (see waits.ts) */ completingTiles: number | null;
   declaredMelds: Meld[]; /** any set taken from a discard (declared exposed meld, or flagged by the player) */ openHand: boolean; isLastTile: boolean; isRobbingKong: boolean; config: GameConfig;
 };
 
-export type DetectedFan = { id: string; name: string; fan: number; category: RuleCategory; count: number };
+export type DetectedFan = { id: string; name: string; fan: number; category: RuleCategory; count: number; /** why it qualified, in plain language */ why?: string };
 export type ScoreDistribution = {
   winner: { playerId: string; points: number };
   payments: { playerId: string; points: number }[]; // points = amount paid
@@ -87,8 +101,10 @@ export type ScoringResult = {
   reason?: string;
   handDecomposition?: HandDecomposition;
   detectedFan: DetectedFan[];
-  excludedFan: { id: string; name: string; byId: string }[];
+  excludedFan: { id: string; name: string; byId: string; reason?: string }[];
   rawFan: number; totalFan: number; basePoints: number;
+  /** Cap of the game (null = none) and the ruleset that produced this score, for the transparent breakdown. */
+  maximumFan?: number | null; rulesetId?: RulesetId; rulesetName?: string; waits?: WaitType[];
   reviewFlags: string[];
   scoreDistribution?: ScoreDistribution;
   explanation: string[];

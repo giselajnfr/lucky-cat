@@ -1,5 +1,6 @@
 import type { BonusTile, HandDecomposition, Meld, PlayTile, RuleExample, ScoringContext, SetType, WinningHandInput } from "./types";
 import { DEFAULT_GAME_CONFIG } from "./hk18Rules";
+import { completingTileCount, waitTypes } from "./waits";
 
 /** Build the context that fan rules inspect, for one candidate decomposition. */
 export function buildContext(input: WinningHandInput, d: HandDecomposition): ScoringContext {
@@ -8,6 +9,7 @@ export function buildContext(input: WinningHandInput, d: HandDecomposition): Sco
     allTiles: [...input.concealedTiles, ...input.melds.flatMap((m) => m.tiles)],
     flowers: input.flowers, method: input.winningMethod, seatWind: input.winnerSeatWind,
     roundWind: input.roundWind, isDealer: input.isDealer, winningTile: input.winningTile,
+    waits: waitTypes(input, d), completingTiles: input.gameConfig.singleWaitMode === "only-one-tile" ? completingTileCount(input) : null,
     declaredMelds: input.melds, openHand: !!input.hasOpenMelds || input.melds.some((m) => m.exposed), isLastTile: !!input.isLastTile, isRobbingKong: !!input.isRobbingKong, config: input.gameConfig,
   };
 }

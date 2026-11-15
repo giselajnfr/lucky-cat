@@ -1,6 +1,7 @@
 import { calculateFan } from "./fanDetector";
 import { buildContext } from "./handParser";
 import { validateHand } from "./handValidator";
+import { waitTypes } from "./waits";
 import { calculatePoints, calculateScoreDistribution } from "./pointCalculator";
 import type { ScoringResult, WinningHandInput } from "./types";
 
@@ -50,6 +51,7 @@ export function calculateScore(input: WinningHandInput, opts: ScoreOptions = {})
     reason: meetsMinimum ? undefined : "Winning hand does not meet the minimum faan requirement",
     handDecomposition: best.d, detectedFan: best.f.detected, excludedFan: best.f.excludedFan,
     rawFan: best.f.rawFan, totalFan: best.f.totalFan, basePoints, reviewFlags: best.f.reviewFlags, explanation,
+    maximumFan: cfg.maximumFan, rulesetId: cfg.rulesetId, rulesetName: cfg.rulesetName, waits: waitTypes(input, best.d),
   };
   if (opts.players && meetsMinimum)
     result.scoreDistribution = calculateScoreDistribution({ ...opts.players, method: input.winningMethod, basePoints, config: cfg });

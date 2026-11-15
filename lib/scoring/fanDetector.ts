@@ -1,5 +1,5 @@
 import { FAN_TABLE, REVIEW_NOTES } from "./hk18Rules";
-import { PATTERN_CHECKS } from "./hk18Patterns";
+import { PATTERN_CHECKS, PATTERN_WHY } from "./hk18Patterns";
 import type { DetectedFan, ScoringContext } from "./types";
 
 const FLOWER_IDS = ["suitable-flower", "no-flower"];
@@ -18,13 +18,19 @@ export function detectFan(ctx: ScoringContext) {
         if (x === "wind-pong:cfg") return cfg.windPongStacksWithWindHands ? [] : ["seat-wind", "round-wind"];
         return [x];
       });
-      hits.push({ id: r.id, name: r.name, fan: r.fan * n, category: r.category, count: n, excludes });
+      hits.push({ id: r.id, name: r.name, fan: r.fan * n, category: r.category, count: n, excludes, why: (PATTERN_WHY[r.id]?.(ctx)) ?? r.summary });
     }
   }
   const excludedBy = new Map<string, string>();
+  const reasons = new Map<string, string>();
   for (const h of hits) for (const x of h.excludes) if (!excludedBy.has(x)) excludedBy.set(x, h.id);
+  // Ruleset-level conflicts (only when the rule that supersedes actually scored).
+  for (const cf of cfg.conflicts ?? []) {
+    if (!hits.some((h) => h.id === cf.rule)) continue;
+    for (const x of cf.supersedes) { if (!excludedBy.has(x)) excludedBy.set(x, cf.rule); if (!reasons.has(x)) reasons.set(x, cf.reason); }
+  }
   const kept = hits.filter((h) => !excludedBy.has(h.id));
-  const excludedFan = hits.filter((h) => excludedBy.has(h.id)).map((h) => ({ id: h.id, name: h.name, byId: excludedBy.get(h.id)! }));
+  const excludedFan = hits.filter((h) => excludedBy.has(h.id)).map((h) => ({ id: h.id, name: h.name, byId: excludedBy.get(h.id)!, reason: reasons.get(h.id) }));
 
   // Chicken Hand: no hand pattern at all. Worth 0 faan, so it only labels the hand.
   const chicken = (cfg.fanTable ?? FAN_TABLE).find((r) => r.id === "chicken-hand");

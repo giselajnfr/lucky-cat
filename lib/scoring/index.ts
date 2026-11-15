@@ -6,3 +6,6 @@ export { DEFAULT_GAME_CONFIG, FAN_TABLE, HK18_RULES, REVIEW_NOTES, PATTERN_RULES
 export { parseTiles, parseMelds, exampleToInput } from "./handParser";
 export * from "./tiles";
 export * from "./inferMelds";
+export * from "./rulesets";
+export { waitTypes, completingTileCount } from "./waits";
+export { concealedPungCount } from "./hk18Patterns";

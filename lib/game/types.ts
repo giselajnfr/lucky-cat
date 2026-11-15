@@ -8,6 +8,8 @@ export type GameRow = {
   /** Faan cap chosen by the table (null = no cap). */
   max_fan: number | null;
   rule_preset: RulePreset;
+  /** Hong Kong ruleset: classic | new6 | new18 (fan table, special rules). */
+  ruleset?: "classic" | "new6" | "new18";
   /** Play-time guide set by the admin when opening the room (minutes, null = no clock). Never closes the room. */
   session_minutes: number | null; session_started_at: string;
   /** false = the admin opened the room but the players have not entered names / rules yet. */

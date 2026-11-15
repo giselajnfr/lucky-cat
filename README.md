@@ -25,6 +25,15 @@ Push to GitHub, import in Vercel, add the three env vars (the service-role key m
 | Atomic DB functions + RLS | `supabase/migration_003_game_tracker.sql` |
 | Tile art, tile input, scorecard image | `components/mahjong`, `components/calculator`, `lib/scorecard` |
 
+## Rulesets (Hong Kong Classic / New 6 / New 18)
+Run `supabase/migration_007_rulesets.sql` (after 006) **before** deploying: it adds `games.ruleset` (existing games become `new18` and keep their own cap) and gives `setup_game` a `p_ruleset` argument.
+- **All rules live in `lib/scoring/rulesets.ts`**: one catalog of patterns, and per ruleset the patterns it recognises, fan values, minimum (`minimumFanToWin`), default cap (`maximumFan`), `specialRules`, `stackingRules` and `conflicts`. Detection code for each pattern id is in `hk18Patterns.ts`; wait types in `waits.ts`.
+- Classic = foundation hands · New 6 = Classic + 6 patterns (258 pair, Concealed Hand, Single Wait, Fully Concealed, All Simples, Lacking a Suit) · New 18 = New 6 + the "eighteen" (double chow, min-max, three/four sequence pungs, concealed triplets, orphans, all terminals...). The legacy `hk18Rules.ts` table is kept as the source of the foundation values.
+- The engine detects every pattern, drops conflicting ones (each rule's `excludes` + the ruleset's `conflicts`), sums the rest (Raw Fan) and applies the cap (Final Fan). Each pattern reports *why* it qualified.
+- The table picks the ruleset when it starts a game (default New 18). The cap defaults to the ruleset's maximum; the table may also choose no cap or another number.
+- Sources: TileBuddy Faan Wiki (rule-style labels Classic/New 6/New 18) and the Hong Kong mahjong pages on Wikipedia. Hong Kong tables differ, so every disputed value is a plain number/flag in `rulesets.ts`; the *Catatan interpretasi* section of the House Rules page lists the interpretations used.
+- Not implemented (need extra input, not derivable from tiles): Blessing of Heaven/Earth, Win by Kong Replacement, Fully Exposed, Seven-Flowers instant win.
+
 ## Rules decisions you can change (all in `hk18Rules.ts`)
 Anything the HK18 table does not define is a config flag, listed on the in-app *Aturan → Perlu konfirmasi* section: dragon/wind pong stacking with Little/Great hands, whether a Chicken Hand may win on bonus faan, payment multipliers (default: points = faan, discarder pays all, each opponent pays on self draw), all-chows pair rule, last-tile definition.
 
