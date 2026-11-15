@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Tile } from "@/components/mahjong/Tile";
 import { HandView } from "@/components/mahjong/HandView";
-import { ADDITIONAL_RULES, ALL_PLAY_TILES, BONUS_TILES, WINDS, calculateScore, countTiles, flattenHand, isNumbered, maxTilesFor, meldCandidates } from "@/lib/scoring";
+import { FAN_TABLE, ALL_PLAY_TILES, BONUS_TILES, WINDS, calculateScore, countTiles, flattenHand, isNumbered, maxTilesFor, meldCandidates } from "@/lib/scoring";
 import type { BonusTile, GameConfig, Meld, PlayTile, ScoringResult, Wind, WinMethod, WinningHandInput } from "@/lib/scoring";
 
 export type CalcPayload = { input: WinningHandInput; result: ScoringResult };
@@ -162,7 +162,7 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
       <section className="card space-y-2" aria-label="Poin tambahan">
         <div><h2 className="section-label">Poin tambahan</h2><p className="mt-1 text-xs text-muted">Yang bertanda <b className="text-cream">Otomatis</b> dihitung dari kartu. Centang sisanya jika terjadi di tangan ini.</p></div>
         <ul className="space-y-2">
-          {ADDITIONAL_RULES.map((rule) => {
+          {(config.fanTable ?? FAN_TABLE).filter((r) => r.category === "additional" && r.enabled).map((rule) => {
             const text = EXTRA_TEXT[rule.id] ?? { title: rule.name, hint: rule.summary };
             const hit = payload?.result.detectedFan.find((f) => f.id === rule.id);
             const manual = rule.id === "last-tile" || rule.id === "robbing-kong" || rule.id === "concealed-hand" || (rule.id === "self-draw" && !lockedMethod);

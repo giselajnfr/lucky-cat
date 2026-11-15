@@ -11,7 +11,7 @@ import { fmtScore, scoreTone } from "@/lib/ui/score";
 import { MEDALS, ROUND_NAME, STATUS_LABEL, WIND_NAME, seatWind } from "@/lib/tv/types";
 
 type P = { id: string; player_name: string; seat_position: number; current_score: number };
-type Row = { id: string; table_number: number; status: string; games: null | { id: string; room_code: string; status: string; current_round_wind: string; current_dealer_seat: number; setup_complete: boolean; starting_points: number; session_minutes: number | null; session_started_at: string; min_fan: number; max_fan: number | null; rule_preset: RulePreset; game_players: P[]; game_hands: { count: number }[] } };
+type Row = { id: string; table_number: number; status: string; games: null | { id: string; room_code: string; status: string; current_round_wind: string; current_dealer_seat: number; setup_complete: boolean; starting_points: number; session_minutes: number | null; session_started_at: string; min_fan: number; max_fan: number | null; rule_preset: RulePreset; ruleset?: string; game_players: P[]; game_hands: { count: number }[] } };
 
 export function AdminLiveTables() {
   const supabase = useMemo(() => createClient(), []);
@@ -20,7 +20,7 @@ export function AdminLiveTables() {
 
   const load = useCallback(async () => {
     const { data } = await supabase.from("cafe_tables")
-      .select("id, table_number, status, games(id, room_code, status, current_round_wind, current_dealer_seat, setup_complete, starting_points, session_minutes, session_started_at, min_fan, max_fan, rule_preset, game_players(id, player_name, seat_position, current_score), game_hands(count))")
+      .select("id, table_number, status, games(id, room_code, status, current_round_wind, current_dealer_seat, setup_complete, starting_points, session_minutes, session_started_at, min_fan, max_fan, rule_preset, ruleset, game_players(id, player_name, seat_position, current_score), game_hands(count))")
       .order("table_number");
     if (data) setRows(data as unknown as Row[]);
   }, [supabase]);

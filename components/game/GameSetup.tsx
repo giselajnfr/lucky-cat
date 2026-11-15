@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { CAP_CHOICES, MAX_START_POINTS, PRESETS, START_POINT_CHOICES, digits } from "@/lib/game/presets";
+import { DEFAULT_RULESET_ID, RULESETS, RULESET_IDS } from "@/lib/scoring";
+import type { RulesetId } from "@/lib/scoring";
 import type { RosterPlayer, RulePreset } from "@/lib/game/types";
 
 // Seats 0..3 are East, South, West, North. Placed around the table the way people sit: West on top, North left, South right, East at the bottom.
@@ -23,7 +25,10 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
   const [preset, setPreset] = useState<Exclude<RulePreset, "custom"> | null>(null);
   const [startChoice, setStartChoice] = useState<number | "other">(1000);   // default 1.000
   const [startOther, setStartOther] = useState("");
-  const [capOn, setCapOn] = useState(false);
+  const [ruleset, setRuleset] = useState<RulesetId>(DEFAULT_RULESET_ID);
+  const [capMode, setCapMode] = useState<"ruleset" | "none" | "custom">("ruleset");   // default: the ruleset's own cap
+  const capOn = capMode === "custom";
+  const setCapOn = (on: boolean) => setCapMode(on ? "custom" : "none");
   const [capChoice, setCapChoice] = useState<number | "other">(CAP_CHOICES[1]);
   const [capOther, setCapOther] = useState("");
   const [busy, setBusy] = useState(false);
@@ -48,7 +53,8 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
   const startPoints = startChoice === "other" ? Number(startOther || "0") : startChoice;
   const startOk = startPoints >= 0 && startPoints <= MAX_START_POINTS;
   const chicken = preset === "chicken";   // Chicken Hand has no faan, so no cap
-  const capValue = !capOn || chicken ? null : capChoice === "other" ? Number(capOther || "0") : capChoice;
+  const rs = RULESETS[ruleset];
+  const capValue = chicken || capMode === "none" ? null : capMode === "ruleset" ? rs.maximumFan : capChoice === "other" ? Number(capOther || "0") : capChoice;
   const capOk = capValue === null || (capValue >= Math.max(1, minFan) && capValue <= 99);
   const ready = namesOk && preset !== null && startOk && capOk;
 
@@ -60,7 +66,7 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
     e.preventDefault(); if (!ready || !preset) return;
     setBusy(true); setError(null);
     const { error } = await supabase.rpc("setup_game", {
-      p_game: gameId, p_preset: preset, p_max_fan: capValue, p_starting_points: startPoints,
+      p_game: gameId, p_preset: preset, p_ruleset: ruleset, p_max_fan: capValue, p_starting_points: startPoints,
       p_players: seats.map((s, seat) => (s.playerId ? { seat, player_id: s.playerId } : { seat, name: s.name.trim() })),
     });
     if (error) {
@@ -112,6 +118,19 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
       </section>
 
       <section className="card space-y-3">
+        <h2 className="section-label">Aturan Hong Kong</h2>
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Aturan Hong Kong">
+          {RULESET_IDS.map((id) => (
+            <button type="button" key={id} role="radio" aria-checked={ruleset === id} onClick={() => setRuleset(id)}
+              className={`flex min-h-[64px] flex-col items-center justify-center rounded-xl border px-1 py-2 text-center transition ${ruleset === id ? "border-cream bg-cream text-base" : "border-line bg-card text-cream"}`}>
+              <span className="text-sm font-bold leading-tight">{RULESETS[id].name.replace("Hong Kong ", "")}</span>
+              <span className={`mt-0.5 text-[11px] ${ruleset === id ? "text-base/70" : "text-muted"}`}>{RULESETS[id].nameZh} · maks {RULESETS[id].maximumFan}</span>
+            </button>))}
+        </div>
+        <p className="text-xs text-muted">{rs.description}</p>
+      </section>
+
+      <section className="card space-y-3">
         <h2 className="section-label">Buku aturan meja ini</h2>
         <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Buku aturan">
           {PRESETS.map((p) => (
@@ -143,8 +162,9 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
         {chicken ? <p className="rounded-xl border border-line bg-base/30 p-3 text-xs text-muted">Chicken Hand tidak memakai faan, jadi tidak ada batas faan. Setiap kemenangan bernilai 1 poin.</p> : <div>
           <h2 className="section-label mb-2">Batas faan (cap)</h2>
           <div className="seg" role="radiogroup" aria-label="Batas faan">
-            <button type="button" role="radio" aria-checked={!capOn} className={`seg-item ${!capOn ? "seg-on" : ""}`} onClick={() => setCapOn(false)}>Tanpa batas</button>
-            <button type="button" role="radio" aria-checked={capOn} className={`seg-item ${capOn ? "seg-on" : ""}`} onClick={() => setCapOn(true)}>Pakai batas</button>
+            <button type="button" role="radio" aria-checked={capMode === "ruleset"} className={`seg-item ${capMode === "ruleset" ? "seg-on" : ""}`} onClick={() => setCapMode("ruleset")}>Ikut aturan ({rs.maximumFan})</button>
+            <button type="button" role="radio" aria-checked={capMode === "none"} className={`seg-item ${capMode === "none" ? "seg-on" : ""}`} onClick={() => setCapMode("none")}>Tanpa batas</button>
+            <button type="button" role="radio" aria-checked={capMode === "custom"} className={`seg-item ${capMode === "custom" ? "seg-on" : ""}`} onClick={() => setCapMode("custom")}>Lainnya</button>
           </div>
           {capOn && (
             <div className="mt-2 space-y-2">

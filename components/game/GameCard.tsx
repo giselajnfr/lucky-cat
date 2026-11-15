@@ -29,7 +29,7 @@ export function GameCard({ g }: { g: GameCardData }) {
 
   if (finished) {
     return (
-      <Link href={`/history/${g.id}`} className={`flex min-h-[64px] items-center gap-3 rounded-2xl bg-base/40 px-4 py-3 transition hover:bg-card/50 ${ring}`}>
+      <Link href={`/history/${g.id}`} className={`flex min-h-[64px] items-center gap-3 rounded-2xl border border-line/60 bg-card px-4 py-3 transition hover:bg-card/80 ${ring}`}>
         <div className="min-w-0 flex-1">
           <p className="truncate font-bold text-cream/90">{title}</p>
           <p className="text-xs text-muted">Selesai {shortDate(g.finished_at || g.played_at)}</p>

@@ -4,6 +4,9 @@ import { HandView } from "@/components/mahjong/HandView";
 import { WIND_LABEL, type CalcPayload } from "./HandCalculator";
 import { buildScorecardSvg, downloadBlob, shareBlob, svgToPng } from "@/lib/scorecard/image";
 import { ruleById } from "@/lib/scoring";
+import type { WaitType } from "@/lib/scoring";
+
+const WAIT_LABEL: Record<WaitType, string> = { single: "Single / Pair Wait (menunggu pasangan)", closed: "Closed Wait (tengah chow)", edge: "Edge Wait (tepi chow)", twoSided: "Two-Sided Wait", dualPung: "Dual Pung Wait" };
 
 /** Result display, in the order: total · method & seat · tiles · itemised breakdown. */
 export function ScoreCard({ payload, winnerName, title }: { payload: CalcPayload; winnerName?: string; title?: string }) {
@@ -57,17 +60,31 @@ export function ScoreCard({ payload, winnerName, title }: { payload: CalcPayload
       <HandView concealed={input.concealedTiles} melds={input.melds} winningTile={input.winningTile} flowers={input.flowers} width={30} />
 
       <div>
-        <h3 className="section-label mb-2">Rincian</h3>
+        <h3 className="section-label mb-2">Rincian{result.rulesetName ? ` · ${result.rulesetName}` : ""}</h3>
         {result.detectedFan.length === 0 && <p className="text-sm text-muted">Tanpa faan: setiap kemenangan sah bernilai {result.basePoints} poin.</p>}
         <ul className="divide-y divide-line/60">
           {result.detectedFan.map((f) => (
-            <li key={f.id} className="flex items-baseline justify-between py-2 text-sm">
-              <span>{f.name}{f.count > 1 && <span className="text-muted"> ×{f.count}</span>}</span><span className="font-bold">+{f.fan}</span>
+            <li key={f.id} className="py-2 text-sm">
+              <div className="flex items-baseline justify-between"><span>✓ {f.name}{f.count > 1 && <span className="text-muted"> ×{f.count}</span>}</span><span className="font-bold">+{f.fan} faan</span></div>
+              {f.why && <p className="mt-0.5 text-xs text-muted">{f.why}</p>}
             </li>
           ))}
         </ul>
+        {result.detectedFan.length > 0 && (
+          <dl className="mt-3 space-y-1 rounded-xl border border-line bg-base/40 p-3 text-sm">
+            <div className="flex justify-between"><dt className="text-muted">Raw Fan</dt><dd className="font-bold">{result.rawFan}</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">Maximum Fan</dt><dd className="font-bold">{result.maximumFan ?? "tanpa batas"}</dd></div>
+            <div className="flex justify-between border-t border-line/60 pt-1"><dt className="font-semibold">Final Fan</dt><dd className="font-extrabold">{result.totalFan}</dd></div>
+          </dl>
+        )}
         {result.excludedFan.length > 0 && (
-          <p className="mt-2 text-xs text-muted">Tidak dihitung (sudah termasuk): {result.excludedFan.map((e) => `${e.name} → ${ruleById(e.byId)?.name ?? e.byId}`).join("; ")}.</p>
+          <div className="mt-2 text-xs text-muted">
+            <p className="font-semibold">Tidak dihitung (bentrok / sudah termasuk):</p>
+            <ul className="list-disc pl-4">{result.excludedFan.map((e) => <li key={e.id}>{e.name} → {ruleById(e.byId)?.name ?? e.byId}{e.reason ? `. ${e.reason}` : ""}</li>)}</ul>
+          </div>
+        )}
+        {result.waits && result.waits.length > 0 && result.waits[0] !== undefined && (
+          <p className="mt-2 text-xs text-muted">Jenis penantian: {result.waits.map((w) => WAIT_LABEL[w]).join(", ")}.</p>
         )}
       </div>
 
