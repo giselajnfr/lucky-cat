@@ -50,8 +50,23 @@ const GROUPS: { title: string; ids: string[]; note?: string }[] = [
   { title: "Angin & naga", ids: ["seat-wind", "round-wind", "dragon-pong"], note: "Angin ganda: bila angin kursi sama dengan angin ronde, pong-nya bernilai 2 faan." },
   { title: "Bunga & musim", ids: ["no-flower", "suitable-flower", "full-flowers", "eight-flowers"], note: "Nomor bunga dan musim mengikuti angin: 1 Timur, 2 Selatan, 3 Barat, 4 Utara." },
 ];
-const tilesFor = (id: string) => id === "seat-wind" ? <div className="mt-2">{row("E E E", 34)}</div> : id === "round-wind" ? <div className="mt-2">{row("S S S", 34)}</div>
-  : id === "dragon-pong" ? <div className="mt-2 flex gap-3">{["RD RD RD", "GD GD GD", "WD WD WD"].map((t) => <div key={t} className="min-w-0 flex-1">{row(t, 34)}</div>)}</div> : null;
+/** Show each valid wind/dragon set as its own group, separated by the same slash used in the reference guide. */
+const slashExamples = (items: string[]) => (
+  <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+    {items.map((tiles, i) => (
+      <div key={tiles} className="flex items-center gap-2">
+        {row(tiles, 34)}
+        {i < items.length - 1 && <span aria-hidden="true" className="text-base font-bold text-muted">/</span>}
+      </div>
+    ))}
+  </div>
+);
+const tilesFor = (id: string) =>
+  id === "seat-wind" || id === "round-wind"
+    ? slashExamples(["E E E", "S S S", "W W W", "N N N"])
+    : id === "dragon-pong"
+      ? slashExamples(["RD RD RD", "GD GD GD", "WD WD WD"])
+      : null;
 
 function AdditionalCard({ r }: { r: FanRuleConfig }) {
   const origin = HOUSE_RULE_IDS.includes(r.id) ? null : ruleOrigin(r.id);
