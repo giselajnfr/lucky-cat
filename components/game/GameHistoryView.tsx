@@ -30,8 +30,8 @@ export async function GameHistoryView({ id, backHref, backLabel, gameHref }: { i
 
   return (
     <main className="space-y-5">
-      <div><BackLink href={backHref} label={backLabel} /><h1 className="text-[1.6rem]">{(game as { name?: string | null }).name || `Game ${game.room_code}`}</h1>
-        <p className="text-xs text-muted">{new Date(game.played_at).toLocaleString("id-ID", { dateStyle: "long", timeStyle: "short" })}{sum.durationMinutes != null ? ` · ${sum.durationMinutes} menit` : ""} · {sum.totalHands} tangan · {game.status === "finished" ? "Selesai" : "Belum selesai"}</p></div>
+      <div><BackLink href={backHref} label={backLabel} /><h1 className="text-[1.6rem] leading-tight">{(game as { name?: string | null }).name || `Game ${game.room_code}`}</h1>
+        <p className="mt-2 text-xs leading-relaxed text-muted">{new Date(game.played_at).toLocaleString("id-ID", { dateStyle: "long", timeStyle: "short" })}{sum.durationMinutes != null ? ` · ${sum.durationMinutes} menit` : ""} · {sum.totalHands} tangan · {game.status === "finished" ? "Selesai" : "Belum selesai"}</p></div>
       <Link href={gameHref} className="btn-secondary">Lihat dan ubah tangan</Link>
       <section className="card"><h2 className="section-label mb-3">Peringkat akhir</h2>
         <ol className="space-y-2">{sum.rankings.map((r) => (<li key={r.id} className="flex items-center justify-between rounded-xl bg-base/40 px-3 py-2.5"><span><b className="mr-2">{r.rank}</b>{r.player_name}<span className="ml-2 text-xs text-muted">{r.wins} menang</span></span><b><span className={scoreTone(r.current_score, false, game.starting_points)}>{fmtScore(r.current_score)}</span></b></li>))}</ol></section>

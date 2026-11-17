@@ -8,6 +8,8 @@ export type HandSubmission = {
   winnerId: string; discarderId?: string; method: WinMethod;
   concealedTiles: PlayTile[]; melds: Meld[]; winningTile: PlayTile; flowers: BonusTile[];
   isLastTile?: boolean; isRobbingKong?: boolean;
+  /** faan the players ticked by hand (undefined = hand saved before this existed) */
+  manualFan?: string[];
   /** a chow/pong/kong was taken from a discard (the tiles are one flat list, so the player says so) */
   openMelds?: boolean;
 };
@@ -33,7 +35,7 @@ export function scoreHandForGame(state: GameState, players: SeatedPlayer[], h: H
   const result = calculateScore({
     concealedTiles: h.concealedTiles, melds: h.melds, winningTile: h.winningTile, flowers: h.flowers, winningMethod: h.method,
     winnerSeatWind: seatWind, roundWind: ROUND_TO_WIND[state.roundWind], isDealer: winner.id === dealer.id,
-    isLastTile: h.isLastTile, isRobbingKong: h.isRobbingKong, hasOpenMelds: h.openMelds, gameConfig: cfg,
+    isLastTile: h.isLastTile, isRobbingKong: h.isRobbingKong, hasOpenMelds: h.openMelds, manualFan: h.manualFan, gameConfig: cfg,
   }, { players: { winnerId: winner.id, discarderId: h.discarderId, dealerId: dealer.id, playerIds: players.map((p) => p.id) } });
   if (!result.canRecord || !result.scoreDistribution) return { error: result.errors[0] ?? result.reason ?? "Hand cannot be recorded" };
 

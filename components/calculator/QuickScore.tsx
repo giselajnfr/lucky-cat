@@ -23,7 +23,7 @@ export function QuickScore() {
               {RULESETS[id].name.replace("Hong Kong ", "")}
             </button>))}
         </div>
-        <p className="text-xs text-muted"><b className="text-cream">{rs.name}</b> · minimum {rs.minimumFanToWin} faan · maksimum {rs.maximumFan} faan. <Link href={`/guidebook?ruleset=${ruleset}`} className="underline">Lihat aturan</Link></p>
+        <p className="text-xs text-muted"><b className="text-cream">{rs.name}</b> · minimum {rs.minimumFanToWin} faan · maksimum {rs.maximumFan} faan. <Link href="/guidebook" className="underline">Lihat aturan</Link></p>
       </section>
       <HandCalculator key={ruleset} config={config} onChange={setPayload} />
       {payload ? <ScoreCard payload={payload} /> : <p className="card text-sm text-muted">Lengkapi tangan untuk melihat skor otomatis.</p>}

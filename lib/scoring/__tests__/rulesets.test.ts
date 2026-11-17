@@ -58,11 +58,9 @@ describe("the same hand scores differently per ruleset", () => {
     expect(ids(calculateScore(input("new6", h, "5s")))).not.toContain("pure-straight");
     expect(ids(calculateScore(input("new18", h, "5s")))).toContain("pure-straight");
   });
-  it("Seven Pairs only in New 18", () => {
+  it("Seven Pairs is a HK Classic pattern, valid in every ruleset", () => {
     const h = "11m 33m 55p 77p 99s 22s EE";
-    expect(calculateScore(input("classic", h, "E")).valid).toBe(false);
-    expect(calculateScore(input("new6", h, "E")).valid).toBe(false);
-    expect(calculateScore(input("new18", h, "E")).valid).toBe(true);
+    for (const r of ["classic", "new6", "new18"] as const) expect(calculateScore(input(r, h, "E")).valid).toBe(true);
   });
   it("Fully Concealed: 3 faan replaces Self Draw in New 6; New 18 keeps the house rule (Self Draw 1)", () => {
     const h = "123m 456p 789s 111p 55s";
@@ -83,10 +81,10 @@ describe("stacking, conflicts and cap", () => {
     expect(ids(r)).toContain("double-double-chows"); expect(ids(r)).not.toContain("double-chow");
     expect(r.excludedFan.find((e) => e.id === "double-chow")?.reason).toMatch(/Double Chow/);
   });
-  it("All Terminals (18) replaces Pure Orphans and All Pongs", () => {
+  it("Orphans (10) replaces Pure Orphans and All Pongs", () => {
     const r = calculateScore(input("new18", "111m 999m 111p 999p 11s", "1s"));
     expect(ids(r)).toContain("all-terminals"); expect(ids(r)).not.toContain("pure-orphans"); expect(ids(r)).not.toContain("all-pongs");
-    expect(r.totalFan).toBe(18);
+    expect(r.detectedFan.find((f) => f.id === "all-terminals")?.fan).toBe(10);
   });
   it("applies the ruleset cap and reports raw vs final", () => {
     const base = input("classic", "EEE SSS WWW NNN 55p", "5p", { winningMethod: "SELF_DRAW", flowers: ["F1", "S1"], winnerSeatWind: "E", roundWind: "E" });
@@ -131,3 +129,24 @@ describe("wait types", () => {
     expect(ids(calculateScore({ ...two, gameConfig: { ...two.gameConfig, singleWaitMode: "only-one-tile" } }))).toContain("single-wait");
   });
 });
+
+describe("faan ticked by hand (Poin tambahan)", () => {
+  const h3 = "111m 222p 333s 456p 55s";
+  it("Three Concealed Pungs needs the tick once the flag list is present", () => {
+    expect(ids(calculateScore(input("new18", h3, "5s", { manualFan: [] })))).not.toContain("three-concealed-pungs");
+    expect(ids(calculateScore(input("new18", h3, "5s", { manualFan: ["three-concealed-pungs"] })))).toContain("three-concealed-pungs");
+  });
+  it("Heavenly Hand: dealer only. Earthly Hand: non-dealer on a discard only", () => {
+    const hand = "123m 456p 789s 111p 55s";
+    expect(ids(calculateScore(input("classic", hand, "5s", { isDealer: true, winningMethod: "SELF_DRAW", manualFan: ["heavenly-hand"] })))).toContain("heavenly-hand");
+    expect(ids(calculateScore(input("classic", hand, "5s", { isDealer: false, winningMethod: "SELF_DRAW", manualFan: ["heavenly-hand"] })))).not.toContain("heavenly-hand");
+    expect(ids(calculateScore(input("classic", hand, "5s", { isDealer: false, manualFan: ["earthly-hand"] })))).toContain("earthly-hand");
+    expect(ids(calculateScore(input("classic", hand, "5s", { isDealer: true, manualFan: ["earthly-hand"] })))).not.toContain("earthly-hand");
+  });
+  it("Fully Exposed: discard win, and it cancels Concealed Hand", () => {
+    const got = ids(calculateScore(input("new18", "123m 456p 789s 111p 55s", "5s", { manualFan: ["fully-exposed"] })));
+    expect(got).toContain("fully-exposed"); expect(got).not.toContain("concealed-hand");
+    expect(ids(calculateScore(input("new18", "123m 456p 789s 111p 55s", "5s", { winningMethod: "SELF_DRAW", manualFan: ["fully-exposed"] })))).not.toContain("fully-exposed");
+  });
+});
+

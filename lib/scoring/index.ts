@@ -9,3 +9,4 @@ export * from "./inferMelds";
 export * from "./rulesets";
 export { waitTypes, completingTileCount } from "./waits";
 export { concealedPungCount } from "./hk18Patterns";
+export { MANUAL_FAN_IDS } from "./hk18Rules";

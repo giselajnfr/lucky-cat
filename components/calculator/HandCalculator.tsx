@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Tile } from "@/components/mahjong/Tile";
 import { HandView } from "@/components/mahjong/HandView";
-import { FAN_TABLE, ALL_PLAY_TILES, BONUS_TILES, WINDS, calculateScore, countTiles, flattenHand, isNumbered, maxTilesFor, meldCandidates } from "@/lib/scoring";
+import { FAN_TABLE, MANUAL_FAN_IDS, ALL_PLAY_TILES, BONUS_TILES, WINDS, calculateScore, countTiles, flattenHand, isNumbered, maxTilesFor, meldCandidates } from "@/lib/scoring";
 import type { BonusTile, GameConfig, Meld, PlayTile, ScoringResult, Wind, WinMethod, WinningHandInput } from "@/lib/scoring";
 
 export type CalcPayload = { input: WinningHandInput; result: ScoringResult };
@@ -12,7 +12,7 @@ const SUIT_ROWS = [{ s: "m", label: "Karakter" }, { s: "s", label: "Bambu" }, { 
 const BONUS_LABEL = "Bunga & Musim (nomor sama dengan kursi = +1 faan)";
 
 /** Starting values, used when an existing hand is opened for editing. */
-export type CalcInitial = { concealed: PlayTile[]; melds: Meld[]; flowers: BonusTile[]; winningTile: PlayTile | null; lastTile: boolean; robbing: boolean; openMelds?: boolean };
+export type CalcInitial = { concealed: PlayTile[]; melds: Meld[]; flowers: BonusTile[]; winningTile: PlayTile | null; lastTile: boolean; robbing: boolean; openMelds?: boolean; manualFan?: string[] };
 
 // Extra points ("poin tambahan"). Some are worked out from the tiles; two can only be known by the players and are ticked by hand.
 const EXTRA_TEXT: Record<string, { title: string; hint: string }> = {
@@ -22,10 +22,17 @@ const EXTRA_TEXT: Record<string, { title: string; hint: string }> = {
   "concealed-hand": { title: "Tangan tertutup (Concealed Hand)", hint: "Menang dari buangan tanpa ada set yang diambil dari buangan. Hilangkan centang jika ada chow, pong, atau kong yang kamu ambil dari buangan." },
   "seat-wind": { title: "Pong angin kursi (Seat Wind)", hint: "Pong/kong angin yang sama dengan kursi pemenang" },
   "round-wind": { title: "Pong angin ronde (Round Wind)", hint: "Pong/kong angin yang sama dengan ronde" },
+  "heavenly-hand": { title: "Heavenly Hand (天胡)", hint: "Dong menang dengan tangan awalnya" },
+  "earthly-hand": { title: "Earthly Hand (地胡)", hint: "Pemain non-dong menang dari buangan pertama dong" },
+  "fully-exposed": { title: "Fully Exposed (全求人)", hint: "Semua set dibuka, menang dari buangan untuk melengkapi pasangan" },
+  "three-concealed-pungs": { title: "Three Concealed Pungs (三暗刻)", hint: "Tiga pong/kong tertutup. Pong yang diselesaikan kartu buangan dihitung terbuka" },
   "dragon-pong": { title: "Pong naga (Dragon Pong/Kong)", hint: "Pong/kong naga merah, hijau, atau putih" },
   "suitable-flower": { title: "Bunga/musim sesuai kursi", hint: "Nomor sama dengan kursi, dihitung per kartu" },
   "no-flower": { title: "Tanpa bunga (No Flower)", hint: "Tidak punya kartu bunga atau musim" },
 };
+
+/** Rows of the checklist: everything the players have to tick themselves. Wind, dragon and flower faan are worked out from the tiles and are not listed. */
+const CHECKABLE = ["last-tile", "robbing-kong", "concealed-hand", ...MANUAL_FAN_IDS];
 
 type Props = {
   config: GameConfig;
@@ -48,6 +55,7 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
   const [round, setRound] = useState<Wind>("E");
   const [lastTile, setLastTile] = useState(initial?.lastTile ?? false);
   const [robbing, setRobbing] = useState(initial?.robbing ?? false);
+  const [manual, setManual] = useState<string[]>(initial?.manualFan ?? []);   // heavenly / earthly / fully exposed / three concealed pungs
   const [note, setNote] = useState<string | null>(null);
 
   const effMethod = lockedMethod ?? method;
@@ -66,14 +74,14 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
       if (!win) continue;
       const input: WinningHandInput = {
         concealedTiles: c.concealed, melds: c.melds, winningTile: win, flowers, winningMethod: effMethod, winnerSeatWind: effSeat, roundWind: effRound,
-        isDealer: effSeat === "E", isLastTile: lastTile, isRobbingKong: robbing && effMethod === "DISCARD", hasOpenMelds: opened, gameConfig: config,
+        isDealer: effSeat === "E", isLastTile: lastTile, isRobbingKong: robbing && effMethod === "DISCARD", hasOpenMelds: opened, manualFan: manual, gameConfig: config,
       };
       const result = calculateScore(input);
       const better = !top || (result.valid && !top.result.valid) || (result.valid === top.result.valid && result.totalFan > top.result.totalFan);
       if (better) top = { c, input, result, win };
     }
     return top;
-  }, [candidates, winning, flowers, effMethod, effSeat, effRound, lastTile, robbing, opened, config]);
+  }, [candidates, winning, flowers, effMethod, effSeat, effRound, lastTile, robbing, opened, manual, config]);
 
   const payload = useMemo<CalcPayload | null>(() => (best ? { input: best.input, result: best.result } : null), [best]);
   const effWin = best?.win ?? null;
@@ -89,7 +97,7 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
   }
   const removeTile = (t: string) => { const i = tiles.indexOf(t as PlayTile); if (i >= 0) setTiles(tiles.filter((_, k) => k !== i)); setNote(null); };
   const removeKong = (t: PlayTile) => { setTiles(tiles.filter((x) => x !== t)); setNote(null); };
-  const reset = () => { setTiles([]); setFlowers([]); setWinning(null); setOpened(false); setLastTile(false); setRobbing(false); setNote(null); };
+  const reset = () => { setTiles([]); setFlowers([]); setWinning(null); setOpened(false); setLastTile(false); setRobbing(false); setManual([]); setNote(null); };
   const toggleFlower = (f: BonusTile) => setFlowers(flowers.includes(f) ? flowers.filter((x) => x !== f) : [...flowers, f]);
 
   const chip = (on: boolean) => `min-h-[40px] rounded-xl border px-3 text-sm font-semibold transition ${on ? "border-cream bg-cream text-base" : "border-line bg-card text-cream"}`;
@@ -160,25 +168,23 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
       </section>
 
       <section className="card space-y-2" aria-label="Poin tambahan">
-        <div><h2 className="section-label">Poin tambahan</h2><p className="mt-1 text-xs text-muted">Yang bertanda <b className="text-cream">Otomatis</b> dihitung dari kartu. Centang sisanya jika terjadi di tangan ini.</p></div>
+        <div><h2 className="section-label">Poin tambahan</h2><p className="mt-1 text-xs text-muted">Centang yang terjadi di tangan ini. Faan angin, naga, dan bunga dihitung otomatis dari kartu.</p></div>
         <ul className="space-y-2">
-          {(config.fanTable ?? FAN_TABLE).filter((r) => r.category === "additional" && r.enabled).map((rule) => {
+          {(config.fanTable ?? FAN_TABLE).filter((r) => r.category === "additional" && r.enabled && (CHECKABLE.includes(r.id) || (r.id === "self-draw" && !lockedMethod))).map((rule) => {
             const text = EXTRA_TEXT[rule.id] ?? { title: rule.name, hint: rule.summary };
-            const hit = payload?.result.detectedFan.find((f) => f.id === rule.id);
-            const manual = rule.id === "last-tile" || rule.id === "robbing-kong" || rule.id === "concealed-hand" || (rule.id === "self-draw" && !lockedMethod);
-            const blocked = (rule.id === "robbing-kong" || rule.id === "concealed-hand") && effMethod !== "DISCARD";
-            const on = rule.id === "last-tile" ? lastTile : rule.id === "robbing-kong" ? robbing && !blocked : rule.id === "concealed-hand" ? !opened && !blocked : rule.id === "self-draw" && manual ? effMethod === "SELF_DRAW" : !!hit;
-            const toggle = () => { if (rule.id === "last-tile") setLastTile(!lastTile); else if (rule.id === "robbing-kong") setRobbing(!robbing); else if (rule.id === "concealed-hand") setOpened(!opened); else setMethod(effMethod === "SELF_DRAW" ? "DISCARD" : "SELF_DRAW"); };
-            const fan = hit ? hit.fan : rule.fan;
-            const body = (<>
-              <span aria-hidden className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${on ? "border-cream bg-cream text-base" : "border-line bg-well"}`}>{on && <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>}</span>
-              <span className="min-w-0 flex-1 text-left"><span className="block text-sm font-semibold">{text.title}</span><span className="block text-xs text-muted">{blocked ? (rule.id === "concealed-hand" ? "Hanya untuk menang dari buangan (menang sendiri dihitung Self Draw)" : "Hanya untuk menang dari buangan") : text.hint}</span></span>
-              <span className="shrink-0 text-right"><b className={`block text-sm ${on ? "text-pos" : "text-muted"}`}>+{fan}</b>{!manual && <span className="block text-[10px] uppercase tracking-wide text-muted">Otomatis</span>}</span>
-            </>);
-            const cls = `flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 ${on ? "border-cream/60 bg-cream/10" : "border-line bg-card"}`;
-            return (<li key={rule.id}>{manual
-              ? <button type="button" role="checkbox" aria-checked={on} disabled={blocked} onClick={toggle} className={`${cls} transition active:scale-[0.99] ${blocked ? "opacity-40" : ""}`}>{body}</button>
-              : <div role="checkbox" aria-checked={on} aria-readonly className={`${cls} ${on ? "" : "opacity-70"}`}>{body}</div>}</li>);
+            const flag = (MANUAL_FAN_IDS as readonly string[]).includes(rule.id);
+            const blocked = ((rule.id === "robbing-kong" || rule.id === "concealed-hand" || rule.id === "fully-exposed") && effMethod !== "DISCARD")
+              || (rule.id === "heavenly-hand" && effSeat !== "E") || (rule.id === "earthly-hand" && (effSeat === "E" || effMethod !== "DISCARD"));
+            const blockedHint = rule.id === "concealed-hand" ? "Hanya untuk menang dari buangan (menang sendiri dihitung Self Draw)" : rule.id === "heavenly-hand" ? "Hanya untuk dong (kursi Timur)"
+              : rule.id === "earthly-hand" ? "Hanya untuk pemain non-dong yang menang dari buangan" : "Hanya untuk menang dari buangan";
+            const on = flag ? manual.includes(rule.id) && !blocked : rule.id === "last-tile" ? lastTile : rule.id === "robbing-kong" ? robbing && !blocked : rule.id === "concealed-hand" ? !opened && !blocked : effMethod === "SELF_DRAW";
+            const toggle = () => { if (flag) setManual(manual.includes(rule.id) ? manual.filter((x) => x !== rule.id) : [...manual, rule.id]); else if (rule.id === "last-tile") setLastTile(!lastTile); else if (rule.id === "robbing-kong") setRobbing(!robbing); else if (rule.id === "concealed-hand") setOpened(!opened); else setMethod(effMethod === "SELF_DRAW" ? "DISCARD" : "SELF_DRAW"); };
+            return (<li key={rule.id}>
+              <button type="button" role="checkbox" aria-checked={on} disabled={blocked} onClick={toggle} className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 transition active:scale-[0.99] ${on ? "border-cream/60 bg-cream/10" : "border-line bg-card"} ${blocked ? "opacity-40" : ""}`}>
+                <span aria-hidden className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${on ? "border-cream bg-cream text-base" : "border-line bg-well"}`}>{on && <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>}</span>
+                <span className="min-w-0 flex-1 text-left"><span className="block text-sm font-semibold">{text.title}</span><span className="block text-xs text-muted">{blocked ? blockedHint : text.hint}</span></span>
+                <b className={`shrink-0 text-sm ${on ? "text-pos" : "text-muted"}`}>+{rule.fan}</b>
+              </button></li>);
           })}
         </ul>
       </section>

@@ -78,13 +78,15 @@ export type WinningHandInput = {
   gameConfig: GameConfig;
   /** The tiles are entered as one flat list, so the app cannot see which sets were taken from a discard. The player says so here. */
   hasOpenMelds?: boolean;
+  /** Extra faan the players tick by hand (ids in MANUAL_FAN_IDS). undefined = old hand saved before this existed. */
+  manualFan?: string[];
 };
 
 export type ScoringContext = {
   kind: HandKind; sets: Meld[]; pair: PlayTile[]; allTiles: PlayTile[]; flowers: BonusTile[];
   method: WinMethod; seatWind: Wind; roundWind: Wind; isDealer: boolean; winningTile: PlayTile;
   waits: WaitType[]; /** every way the winning tile could have completed this reading (see waits.ts) */ completingTiles: number | null;
-  declaredMelds: Meld[]; /** any set taken from a discard (declared exposed meld, or flagged by the player) */ openHand: boolean; isLastTile: boolean; isRobbingKong: boolean; config: GameConfig;
+  declaredMelds: Meld[]; /** any set taken from a discard (declared exposed meld, or flagged by the player) */ openHand: boolean; isLastTile: boolean; isRobbingKong: boolean; /** ticked-by-hand faan ids; undefined = legacy hand */ manual?: string[]; config: GameConfig;
 };
 
 export type DetectedFan = { id: string; name: string; fan: number; category: RuleCategory; count: number; /** why it qualified, in plain language */ why?: string };

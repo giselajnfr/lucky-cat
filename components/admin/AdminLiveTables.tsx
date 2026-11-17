@@ -43,6 +43,44 @@ export function AdminLiveTables() {
     if (error) alert(error.message); else load();
   }
 
+  /**
+   * Release without leaving an orphan: a game that is still running is finished first (final ranks are saved), a room
+   * nobody played in is deleted. Releasing alone would leave the game "in progress" with no table, inflating live counts.
+   */
+  async function release(r: Row) {
+    const g = r.games;
+    if (!g || g.status === "finished") { if (confirm("Lepas meja ini?")) await call("admin_release_table", { p_table: r.id }); return; }
+    const hands = g.game_hands?.[0]?.count ?? 0;
+    if (hands > 0) {
+      if (!confirm(`Game di meja ini belum diakhiri (${hands} tangan tercatat).\n\nAkhiri game, simpan hasilnya, lalu lepas meja?`)) return;
+      const { error } = await supabase.rpc("admin_set_game_status", { p_game: g.id, p_status: "finished" });
+      if (error) { alert(error.message); return; }
+    } else {
+      if (!confirm("Belum ada tangan yang dicatat di meja ini.\n\nHapus ruang ini lalu lepas meja?")) return;
+      await supabase.from("games").delete().eq("id", g.id);   // best effort: only the game's owner may delete; the release below still runs
+    }
+    await call("admin_release_table", { p_table: r.id });
+  }
+
+  /** Delete the table itself. A running game is finished first (results saved) or, if nobody played, deleted; finished games stay in history. */
+  async function removeTable(r: Row) {
+    const g = r.games, label = `Meja ${String(r.table_number).padStart(2, "0")}`;
+    if (!g || g.status === "finished") { if (!confirm(`Hapus ${label}? Meja hilang dari daftar. Riwayat game yang sudah selesai tetap tersimpan.`)) return; }
+    else {
+      const hands = g.game_hands?.[0]?.count ?? 0;
+      if (hands > 0) {
+        if (!confirm(`${label} masih punya game berjalan (${hands} tangan tercatat).\n\nAkhiri game, simpan hasilnya, lalu hapus meja?`)) return;
+        const { error } = await supabase.rpc("admin_set_game_status", { p_game: g.id, p_status: "finished" });
+        if (error) { alert(error.message); return; }
+      } else {
+        if (!confirm(`${label} punya ruang yang belum dimainkan.\n\nHapus ruang itu dan hapus meja?`)) return;
+        const { error } = await supabase.from("games").delete().eq("id", g.id);
+        if (error) { alert(error.message); return; }
+      }
+    }
+    await call("admin_delete_table", { p_table: r.id });
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
@@ -93,13 +131,14 @@ export function AdminLiveTables() {
                     : g.status === "in_progress" && <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => call("admin_set_game_status", { p_game: g.id, p_status: "paused" })}>Pause</button>}
                   {g.status !== "finished" && <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => confirm("Mark this game as finished?") && call("admin_set_game_status", { p_game: g.id, p_status: "finished" })}>Finish</button>}
                   <Link href={`/admin/games/${g.id}`} className="btn-secondary !min-h-[44px] flex-1">Buka game</Link>
-                  <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => confirm("Remove this game from the table?") && call("admin_release_table", { p_table: r.id })}>Release</button>
+                  <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => release(r)}>Release</button>
                 </div>
               </>) : (
                 <div className="space-y-2">
                   <p className="text-sm text-muted">Meja kosong. Buka ruang, lalu berikan kode ruang ke pemain.</p>
                   <Link href={`/admin/tables/open?table=${r.id}`} className="btn-primary">Buka ruang</Link>
                 </div>)}
+              <div className="border-t border-line/60 pt-3"><button className="text-xs font-semibold text-neg underline underline-offset-2" onClick={() => removeTable(r)}>Hapus meja</button></div>
             </article>);
         })}
       </div>

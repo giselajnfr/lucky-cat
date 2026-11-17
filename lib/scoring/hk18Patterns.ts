@@ -96,7 +96,11 @@ export const PATTERN_CHECKS: Record<string, Check> = {
   "three-suits-pung": (c) => [1, 2, 3, 4, 5, 6, 7, 8, 9].some((r) => SU.every((su) => pungHas(c, `${r}${su}`))),
   "three-sequence-pung": (c) => consecutivePungs(c, 3),
   "four-sequence-pung": (c) => consecutivePungs(c, 4),
-  "three-concealed-pungs": (c) => concealedPungCount(c) >= 3,
+  // Ticked by the players (the tiles cannot show which pung came from a discard). Old hands saved without the flag keep the automatic check.
+  "three-concealed-pungs": (c) => c.manual ? c.manual.includes("three-concealed-pungs") && pungsOf(c).length >= 3 : concealedPungCount(c) >= 3,
+  "heavenly-hand": (c) => !!c.manual?.includes("heavenly-hand") && c.isDealer,
+  "earthly-hand": (c) => !!c.manual?.includes("earthly-hand") && !c.isDealer && c.method === "DISCARD",
+  "fully-exposed": (c) => !!c.manual?.includes("fully-exposed") && c.method === "DISCARD",
   "all-concealed-triplets": (c) => std(c) && c.sets.every((s) => s.type !== "CHOW") && concealedPungCount(c) === 4,
   // Four identical tiles split between one pung and one chow (not a kong).
   "four-into-one": (c) => std(c) && [...new Set(c.allTiles)].some((t) => c.allTiles.filter((x) => x === t).length === 4 &&
@@ -125,7 +129,10 @@ export const PATTERN_WHY: Record<string, (c: ScoringContext) => string> = {
   "three-suits-pung": () => "Pong angka yang sama di ketiga jenis",
   "three-sequence-pung": () => "Tiga pong berurutan satu jenis",
   "four-sequence-pung": () => "Empat pong berurutan satu jenis",
-  "three-concealed-pungs": (c) => `${concealedPungCount(c)} pong tertutup`,
+  "three-concealed-pungs": (c) => c.manual ? "Tiga pong/kong tertutup (dicentang pemain)" : `${concealedPungCount(c)} pong tertutup`,
+  "heavenly-hand": () => "Dong menang dengan tangan awal",
+  "earthly-hand": () => "Pemain non-dong menang dari buangan pertama dong",
+  "fully-exposed": () => "Semua set terbuka, menang dari buangan untuk melengkapi pasangan",
   "all-concealed-triplets": () => "Keempat set pong tertutup",
   "four-into-one": () => "Empat kartu sama terbagi pada satu pong dan satu chow",
   "lacking-a-suit": () => "Hanya dua jenis angka, tanpa kartu kehormatan",
@@ -133,7 +140,7 @@ export const PATTERN_WHY: Record<string, (c: ScoringContext) => string> = {
   "fully-concealed": () => "Self Draw tanpa set terbuka",
   "full-flowers": (c) => `Lengkap 4 bunga atau 4 musim (${c.flowers.join(" ")})`,
   "eight-flowers": () => "Delapan kartu bunga dan musim",
-  "all-terminals": () => "Semua kartu adalah 1 atau 9",
+  "all-terminals": () => "Semua set pong/kong dari kartu 1 atau 9, pasangan 1 atau 9",
   "mixed-orphans": () => "Setiap set dan pasangan memuat kartu 1/9 atau kehormatan, ada kehormatan",
   "pure-orphans": () => "Setiap set dan pasangan memuat kartu 1 atau 9, tanpa kehormatan",
 };

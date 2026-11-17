@@ -25,6 +25,9 @@ const p = (id: string, name: string, fan: number, summary: string, conditions: s
 const a = (id: string, name: string, fan: number, summary: string, conditions: string[], example: FanRuleConfig["example"], extra: Partial<FanRuleConfig> = {}): FanRuleConfig =>
   ({ id, name, fan, enabled: true, category: "additional", summary, conditions, example, ...extra });
 
+/** Faan that only the players can know: they are ticked by hand in the "Poin tambahan" checklist. */
+export const MANUAL_FAN_IDS = ["heavenly-hand", "earthly-hand", "fully-exposed", "three-concealed-pungs"] as const;
+
 export const FAN_TABLE: FanRuleConfig[] = [
   // ---------- Winning hand patterns ----------
   p("chicken-hand", "Chicken Hand", 0, "Tangan menang biasa tanpa pola apa pun. Bernilai 0 faan, jadi tidak bisa memenuhi syarat minimum 3 faan sendirian.",

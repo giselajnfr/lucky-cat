@@ -29,7 +29,7 @@ export function RecordHand({ game, players, handsPlayed, edit, onDone, onCancel 
   const cfg = useMemo(() => configForGame(game), [game]);
   const state = useMemo(() => stateOfGame(viewGame, edit ? edit.hand_number - 1 : handsPlayed), [viewGame, edit, handsPlayed]);
   const d = edit?.hand_detail;
-  const calcInitial: CalcInitial | undefined = d?.concealed ? { concealed: d.concealed as PlayTile[], melds: d.melds as Meld[], flowers: d.flowers as BonusTile[], winningTile: d.winningTile as PlayTile, lastTile: !!d.isLastTile, robbing: !!d.isRobbingKong, openMelds: d.openMelds ?? d.melds.some((m) => m.exposed) } : undefined;
+  const calcInitial: CalcInitial | undefined = d?.concealed ? { concealed: d.concealed as PlayTile[], melds: d.melds as Meld[], flowers: d.flowers as BonusTile[], winningTile: d.winningTile as PlayTile, lastTile: !!d.isLastTile, robbing: !!d.isRobbingKong, manualFan: d.manualFan, openMelds: d.openMelds ?? d.melds.some((m) => m.exposed) } : undefined;
   const seated: SeatedPlayer[] = useMemo(() => players.map((p) => ({ id: p.id, seat: p.seat_position, name: p.player_name, score: p.current_score })), [players]);
   const bySeat = [...players].sort((a, b) => a.seat_position - b.seat_position);
   const winner = players.find((p) => p.id === winnerId);
@@ -39,7 +39,7 @@ export function RecordHand({ game, players, handsPlayed, edit, onDone, onCancel 
     if (!payload || !winner || !method) return null;
     const r = scoreHandForGame(state, seated, { winnerId: winner.id, discarderId: method === "DISCARD" ? discarderId ?? undefined : undefined, method,
       concealedTiles: payload.input.concealedTiles, melds: payload.input.melds, winningTile: payload.input.winningTile, flowers: payload.input.flowers,
-      isLastTile: payload.input.isLastTile, isRobbingKong: payload.input.isRobbingKong, openMelds: payload.input.hasOpenMelds }, cfg);
+      isLastTile: payload.input.isLastTile, isRobbingKong: payload.input.isRobbingKong, openMelds: payload.input.hasOpenMelds, manualFan: payload.input.manualFan }, cfg);
     return r;
   }, [payload, winner, method, discarderId, state, seated, cfg]);
 
@@ -48,7 +48,7 @@ export function RecordHand({ game, players, handsPlayed, edit, onDone, onCancel 
     const base = { requestId, expectedHand: edit ? handsPlayed : handsPlayed + 1 };   // editing: the number of hands this screen shows
     const body = kind === "draw" ? { ...base, type: "draw" } : { ...base, type: "win", winnerId, discarderId: method === "DISCARD" ? discarderId : undefined, method,
       concealedTiles: payload!.input.concealedTiles, melds: payload!.input.melds, winningTile: payload!.input.winningTile, flowers: payload!.input.flowers,
-      isLastTile: payload!.input.isLastTile, isRobbingKong: payload!.input.isRobbingKong, openMelds: payload!.input.hasOpenMelds === true };
+      isLastTile: payload!.input.isLastTile, isRobbingKong: payload!.input.isRobbingKong, openMelds: payload!.input.hasOpenMelds === true, manualFan: payload!.input.manualFan };
     try {
       const res = await fetch(edit ? `/api/games/${game.id}/hands/${edit.id}` : `/api/games/${game.id}/hands`, { method: edit ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const json = await res.json().catch(() => ({}));

@@ -71,7 +71,7 @@ export function GameDashboard({ initial, canPlay, canManage, backHref = "/game",
       <header>
         <div className="flex items-start justify-between gap-3">
           <div><h1 className="text-[1.6rem] leading-tight">{game.name || `Game ${game.room_code}`}</h1>
-            <p className="text-xs text-muted">{game.setup_complete ? `${ruleSummary(game)} · ${new Date(game.played_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}` : "Ruang dibuka · menunggu pengaturan meja"}</p></div>
+            <p className="mt-2 text-xs leading-relaxed text-muted">{game.setup_complete ? `${ruleSummary(game)} · ${new Date(game.played_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}` : "Ruang dibuka · menunggu pengaturan meja"}</p></div>
           <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold ${finished ? "border-line text-muted" : game.status === "paused" ? "border-warn text-warn" : "border-pos text-pos"}`}>{STATUS[game.status]}</span>
         </div>
       </header>

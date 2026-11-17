@@ -36,13 +36,16 @@ const NEW_RULES: FanRuleConfig[] = [
   np("min-max-pung", "Min-Max Pung (么九刻)", 1, "Pong/kong 1 dan pong/kong 9 dalam satu jenis yang sama.", ["Pong 1 dan pong 9 satu jenis"], { hand: "111m 999m 456p 234s 55p", win: "5p" }),
   np("three-sequence-pung", "Three Sequence Pung (三連刻)", 2, "Tiga pong/kong berurutan dalam satu jenis (mis. 333, 444, 555).", ["Tiga pong angka berurutan satu jenis"], { hand: "222m 333m 444m 456p 55s", win: "5s" }),
   np("four-sequence-pung", "Four Sequence Pung (四連刻)", 8, "Empat pong/kong berurutan dalam satu jenis.", ["Empat pong angka berurutan satu jenis", "Three Sequence Pung tidak dihitung lagi"], { hand: "222m 333m 444m 555m 66p", win: "6p" }),
-  np("three-concealed-pungs", "Three Concealed Pungs (三暗刻)", 2, "Tiga dari empat set adalah pong/kong tertutup.", ["Tiga pong tertutup", "Pong yang diselesaikan kartu buangan lawan dianggap terbuka", "Jika pemain hanya menandai ada set terbuka, satu set dianggap terbuka (chow bila ada)"], { hand: "111m 222p 333s 456p 55s", win: "5s", method: "DISCARD" }),
+  na("three-concealed-pungs", "Three Concealed Pungs (三暗刻)", 2, "Tiga pong/kong tertutup. Dicentang pemain: pong yang diselesaikan kartu buangan lawan dianggap terbuka.", ["Minimal tiga set pong/kong di tangan", "Ketiganya tertutup (tidak diambil dari buangan)", "Dicentang manual di Poin tambahan"], undefined),
+  na("heavenly-hand", "Heavenly Hand (天胡)", 13, "Dong menang dengan tangan awalnya.", ["Pemenang adalah dong", "Menang dengan 14 kartu awal"], undefined),
+  na("earthly-hand", "Earthly Hand (地胡)", 13, "Pemain non-dong menang dari buangan pertama dong.", ["Pemenang bukan dong", "Menang dari buangan pertama dong"], undefined),
+  na("fully-exposed", "Fully Exposed (全求人)", 1, "Semua set dibuka, menang dari buangan untuk melengkapi pasangan.", ["Semua set diambil dari buangan", "Menang dari buangan, kartu menang melengkapi pasangan"], undefined),
   np("three-suits-pung", "Three Suits Pung (三同刻)", 3, "Tiga pong/kong angka yang sama di tiga jenis berbeda.", ["Pong angka sama di karakter, bambu dan lingkaran"], { hand: "555m 555p 555s 123p 99m", win: "9m" }),
   np("three-suits-chow", "Three Suits Chow (三同順)", 3, "Tiga chow yang sama di tiga jenis berbeda.", ["Chow identik di karakter, bambu dan lingkaran"], { hand: "234m 234p 234s 678p 55s", win: "5s" }),
   np("all-concealed-triplets", "All Concealed Triplets (坎坎胡)", 10, "Keempat set adalah pong/kong tertutup. Harus Self Draw atau menang pada pasangan.", ["4 pong tertutup", "Pong yang diselesaikan buangan lawan tidak tertutup", "Three Concealed Pungs dan All Pongs tidak dihitung lagi"], { hand: "111m 222p 333s 444m 55p", win: "5p", method: "SELF_DRAW" }),
   np("lacking-a-suit", "Lacking a Suit (缺一門)", 1, "Hanya dua dari tiga jenis angka, tanpa angin atau naga.", ["Tepat dua jenis angka", "Tidak ada kartu kehormatan"], { hand: "123m 456m 789p 234p 55m", win: "5m" }),
-  np("all-types", "All Types (五門齊)", 1, "Ketiga jenis angka ditambah angin dan naga.", ["Karakter, bambu dan lingkaran", "Minimal satu angin dan satu naga"], { hand: "123m 456p 789s EEE RD RD", win: "RD" }),
-  np("all-terminals", "All Terminals (清么九)", 18, "Seluruh tangan hanya kartu 1 dan 9 (tanpa kehormatan).", ["Semua kartu adalah 1 atau 9", "Pure Orphans, Mixed Orphans dan All Pongs tidak dihitung lagi"], { hand: "111m 999m 111p 999p 11s", win: "1s" }),
+  np("all-types", "All Types (五門齊)", 1, "Ada ketiga jenis angka (karakter, bambu, lingkaran), angin dan naga sekaligus dalam satu tangan.", ["Karakter, bambu dan lingkaran: ketiganya ada", "Minimal satu kartu angin dan satu kartu naga"], { hand: "123m 456p 789s EEE RD RD", win: "RD" }),
+  np("all-terminals", "Orphans (清么九)", 10, "Seluruh tangan hanya pong atau kong dari kartu 1 dan 9 (tanpa angin dan naga).", ["Semua set adalah pong atau kong dari kartu 1 atau 9", "Pasangan juga kartu 1 atau 9", "Pure Orphans, Mixed Orphans dan All Pongs tidak dihitung lagi"], { hand: "111m 999m 111p 999p 11s", win: "1s" }),
   na("fully-concealed", "Fully Concealed (門前清自摸)", 3, "Self Draw tanpa set terbuka. Menggantikan Self Draw dan Concealed Hand.", ["Menang dengan kartu ambil sendiri", "Tidak ada set yang diambil dari buangan"], { hand: BASE, win: "5s", method: "SELF_DRAW" }),
   na("full-flowers", "Full Flowers / Full Seasons (一檯花)", 2, "Memiliki keempat bunga atau keempat musim.", ["Bunga 1-4 lengkap, atau musim 1-4 lengkap", "2 faan untuk masing-masing set lengkap"], { hand: BASE, win: "5s", flowers: "F1 F2 F3 F4" }, { perUnit: true }),
   na("eight-flowers", "All 8 Flowers & Seasons (八仙過海)", 8, "Memiliki kedelapan bunga dan musim. Menggantikan Full Flowers / Full Seasons.", ["Semua 8 kartu bunga dan musim"], { hand: BASE, win: "5s", flowers: "F1 F2 F3 F4 S1 S2 S3 S4" }),
@@ -51,13 +54,13 @@ const CATALOG = new Map<string, FanRuleConfig>([...FAN_TABLE, ...NEW_RULES].map(
 const get = (id: string, over: Partial<FanRuleConfig> = {}): FanRuleConfig => { const r = CATALOG.get(id); if (!r) throw new Error(`Unknown rule ${id}`); return { ...r, ...over }; };
 
 /** Foundation hands: the same in all three rulesets. */
-const FOUNDATION = ["chicken-hand", "all-chows", "all-pongs", "half-flush", "full-flush", "little-dragon", "great-dragon", "little-wind", "great-wind", "all-honors",
-  "nine-gates", "thirteen-orphans", "four-kongs", "seat-wind", "round-wind", "dragon-pong", "suitable-flower", "no-flower", "full-flowers", "eight-flowers", "self-draw", "last-tile", "robbing-kong"];
+const FOUNDATION = ["chicken-hand", "all-chows", "all-pongs", "half-flush", "full-flush", "little-dragon", "great-dragon", "little-wind", "great-wind", "all-honors", "seven-pairs",
+  "nine-gates", "thirteen-orphans", "four-kongs", "seat-wind", "round-wind", "dragon-pong", "suitable-flower", "no-flower", "full-flowers", "eight-flowers", "self-draw", "last-tile", "robbing-kong", "heavenly-hand", "earthly-hand"];
 /** The six extra patterns of New 6. */
 const NEW6_EXTRA = ["pair-258", "concealed-hand", "single-wait", "fully-concealed", "all-simples", "lacking-a-suit"];
-/** What New 18 adds on top of New 6 (Snake Hand 一條龍 is the app's Pure Straight). Fully Exposed (全求人) needs per-set exposure input and is not implemented. */
-const NEW18_EXTRA = ["pure-straight", "double-chow", "four-into-one", "min-max-chow", "min-max-pung", "three-sequence-pung", "three-concealed-pungs", "three-suits-pung", "three-suits-chow",
-  "four-sequence-pung", "all-concealed-triplets", "double-double-chows", "all-types", "mixed-orphans", "pure-orphans", "all-terminals", "seven-pairs", "closed-wait", "edge-wait", "two-sided-wait"];
+/** What New 18 adds on top of New 6 (Snake Hand 一條龍 is the app's Pure Straight). Fully Exposed (全求人) and Three Concealed Pungs are ticked by hand (MANUAL_FAN_IDS). */
+const NEW18_EXTRA = ["pure-straight", "double-chow", "four-into-one", "min-max-chow", "min-max-pung", "three-sequence-pung", "three-concealed-pungs", "fully-exposed", "three-suits-pung", "three-suits-chow",
+  "four-sequence-pung", "all-concealed-triplets", "double-double-chows", "all-types", "mixed-orphans", "pure-orphans", "all-terminals", "closed-wait", "edge-wait", "two-sided-wait"];
 
 export type RulesetConfig = {
   id: RulesetId; name: string; nameZh: string; emoji: string; description: string;
@@ -79,6 +82,7 @@ export type RulesetConfig = {
 
 const CONFLICTS_COMMON: RuleConflict[] = [
   { rule: "eight-flowers", supersedes: ["full-flowers"], reason: "Delapan bunga menggantikan bonus empat bunga / empat musim" },
+  { rule: "seven-pairs", supersedes: ["single-wait", "all-types", "lacking-a-suit"], reason: "Seven Pairs selalu menunggu satu pasangan; dibayar sebagai satu tangan khusus" },
 ];
 const CONFLICTS_NEW6: RuleConflict[] = [
   { rule: "fully-concealed", supersedes: ["self-draw", "concealed-hand"], reason: "Fully Concealed sudah mencakup Self Draw dan Concealed Hand" },
@@ -88,9 +92,8 @@ const CONFLICTS_NEW18: RuleConflict[] = [
   { rule: "double-double-chows", supersedes: ["double-chow"], reason: "Dua pasang chow kembar sudah mencakup Double Chow" },
   { rule: "four-sequence-pung", supersedes: ["three-sequence-pung"], reason: "Empat pong berurutan sudah mencakup tiga pong berurutan" },
   { rule: "all-concealed-triplets", supersedes: ["three-concealed-pungs", "all-pongs"], reason: "Semua pong tertutup sudah mencakup Three Concealed Pungs dan All Pongs" },
-  { rule: "all-terminals", supersedes: ["pure-orphans", "mixed-orphans", "all-pongs", "lacking-a-suit"], reason: "All Terminals sudah mencakup pola orphans dan All Pongs" },
+  { rule: "all-terminals", supersedes: ["pure-orphans", "mixed-orphans", "all-pongs", "lacking-a-suit"], reason: "Orphans (pong/kong 1 dan 9) sudah mencakup Pure/Mixed Orphans dan All Pongs" },
   { rule: "pure-straight", supersedes: ["min-max-chow"], reason: "Pure Straight (123-456-789) sudah memuat chow 123 dan 789" },
-  { rule: "seven-pairs", supersedes: ["single-wait", "all-types", "lacking-a-suit"], reason: "Seven Pairs selalu menunggu satu pasangan; dibayar sebagai satu tangan khusus" },
 ];
 
 const SPECIAL = { chickenHandCanWinOnBonusFaan: true, allChowsRequiresPlainPair: true, singleWaitMode: "pair" as const, waitFan: { single: 0, closed: 0, edge: 0, twoSided: 0 } };
@@ -101,14 +104,14 @@ export const RULESETS: Record<RulesetId, RulesetConfig> = {
     id: "classic", name: "Hong Kong Classic", nameZh: "舊章", emoji: "🀄",
     description: "Aturan tradisional yang dikenal semua meja Hong Kong: pola dasar (All Chows, All Pongs, Flush, Naga, Angin, bunga). Tidak ada pola tambahan New Style.",
     minimumFanToWin: 3, maximumFan: 13,
-    specialRules: { ...SPECIAL, sevenPairs: false, thirteenOrphans: true, pair258: false, doubleChow: false, waitBonuses: false, flowerBonuses: true, waitFan: { ...SPECIAL.waitFan } },
+    specialRules: { ...SPECIAL, sevenPairs: true, thirteenOrphans: true, pair258: false, doubleChow: false, waitBonuses: false, flowerBonuses: true, waitFan: { ...SPECIAL.waitFan } },
     scoringRules: FOUNDATION.map((id) => get(id)),
     stackingRules: { ...STACK },
     conflicts: [...CONFLICTS_COMMON, { rule: "thirteen-orphans", supersedes: ["all-types"], reason: "Thirteen Orphans adalah tangan khusus" }],
     notes: [
       "Minimum 3 faan adalah standar meja Hong Kong; batas (cap) yang umum 8, 10 atau 13 faan. Default Classic: 13. Ubah di rulesets.ts atau pilih batas lain saat membuat game.",
       "Double Chow, 2-5-8 Pair, Single Wait dan Concealed Hand tidak dihitung di Classic (standar 舊章/清章 memberi 0 faan).",
-      "Seven Pairs bukan tangan standar Hong Kong, jadi tidak dikenali di Classic.",
+      "Seven Pairs (4 faan) termasuk pola dasar HK Classic dan berlaku di ketiga ruleset.",
       "Great Four Winds bernilai 13 (nilai rumah aplikasi ini). Beberapa sumber memberi 15 faan 'atau limit'.",
     ],
   },
@@ -116,13 +119,13 @@ export const RULESETS: Record<RulesetId, RulesetConfig> = {
     id: "new6", name: "Hong Kong New 6", nameZh: "新章六", emoji: "🀄",
     description: "Classic ditambah enam pola New Style: 2-5-8 Pair, Concealed Hand, Single Wait, Fully Concealed, All Simples dan Lacking a Suit.",
     minimumFanToWin: 3, maximumFan: 13,
-    specialRules: { ...SPECIAL, sevenPairs: false, thirteenOrphans: true, pair258: true, doubleChow: false, waitBonuses: true, flowerBonuses: true, waitFan: { ...SPECIAL.waitFan, single: 1 } },
+    specialRules: { ...SPECIAL, sevenPairs: true, thirteenOrphans: true, pair258: true, doubleChow: false, waitBonuses: true, flowerBonuses: true, waitFan: { ...SPECIAL.waitFan, single: 1 } },
     scoringRules: [...FOUNDATION, ...NEW6_EXTRA].map((id) => get(id)),
     stackingRules: { ...STACK },
     conflicts: [...CONFLICTS_COMMON, ...CONFLICTS_NEW6],
     notes: [
       "New 6 = Classic + tepat enam pola: 258 Pair (1), Concealed Hand (1), Single Wait (1), Fully Concealed (3), All Simples (1), Lacking a Suit (1).",
-      "New 6 BUKAN New 18 dengan cap lain: Double Chow, Min-Max, Three Suits, Sequence Pung, Concealed Triplets, All Terminals dan pola New 18 lain tidak dihitung.",
+      "New 6 BUKAN New 18 dengan cap lain: Double Chow, Min-Max, Three Suits, Sequence Pung, Concealed Triplets, Orphans dan pola New 18 lain tidak dihitung.",
       "Single Wait dihitung bila kartu menang melengkapi pasangan. Closed, Edge dan Two-Sided Wait dideteksi dan ditampilkan, tanpa faan (nilai 0, bisa diatur).",
       "Fully Concealed (3) menggantikan Self Draw (1) pada tangan tertutup.",
       "Cap default 13 faan (sumber berbeda: 8, 10 atau 13). Bisa diubah.",
@@ -138,12 +141,11 @@ export const RULESETS: Record<RulesetId, RulesetConfig> = {
     stackingRules: { ...STACK },
     conflicts: [...CONFLICTS_COMMON, ...CONFLICTS_NEW6, ...CONFLICTS_NEW18],
     notes: [
-      "Cap 18 faan (All Terminals bernilai 18). Minimum 3 faan.",
-      "Pola New 18 yang dihitung: Double Chow, Four into One, Min-Max Chow/Pung, Three Sequence Pung, Three Concealed Pungs, Three Suits Pung/Chow, Four Sequence Pung, All Concealed Triplets, Double Double Chows, All Types, Mixed Orphans, Pure Orphans, All Terminals, dan Snake Hand (= Pure Straight).",
-      "Fully Exposed (全求人) belum didukung: butuh input set mana yang terbuka.",
+      "Cap 18 faan. Minimum 3 faan.",
+      "Pola New 18 yang dihitung: Double Chow, Four into One, Min-Max Chow/Pung, Three Sequence Pung, Three Concealed Pungs, Three Suits Pung/Chow, Four Sequence Pung, All Concealed Triplets, Double Double Chows, All Types, Mixed Orphans, Pure Orphans, Orphans (pong/kong 1 dan 9, 10 faan), dan Snake Hand (= Pure Straight).",
+      "Fully Exposed, Three Concealed Pungs, Heavenly Hand dan Earthly Hand dicentang manual di Poin tambahan (kartu saja tidak cukup untuk mengetahuinya).",
       "Mixed / Pure Orphans: setiap set dan pasangan memuat kartu 1/9 (atau kehormatan). Chow 123 dan 789 dihitung.",
       "Fully Concealed (3 faan) tersedia tetapi NONAKTIF: aturan rumah yang sudah dikonfirmasi memberi Self Draw +1 pada tangan tertutup. Ubah enabled di rulesets.ts untuk mengaktifkan.",
-      "Seven Pairs (4 faan) adalah aturan rumah aplikasi ini, bukan pola standar New 18.",
       "Pure Straight menggantikan Min-Max Chow, All Concealed Triplets menggantikan All Pongs: dibuat agar faan tidak terhitung ganda. Tambahkan/ubah di daftar conflicts bila meja Anda berbeda.",
     ],
   },
@@ -182,4 +184,4 @@ export function ruleOrigin(ruleId: string): RulesetId {
   return has("classic") ? "classic" : has("new6") ? "new6" : "new18";
 }
 /** Rules this app adds on its own (not part of the published rule style). */
-export const HOUSE_RULE_IDS = ["seven-pairs"];
+export const HOUSE_RULE_IDS: string[] = [];

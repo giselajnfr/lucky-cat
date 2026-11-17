@@ -10,7 +10,7 @@ export function buildContext(input: WinningHandInput, d: HandDecomposition): Sco
     flowers: input.flowers, method: input.winningMethod, seatWind: input.winnerSeatWind,
     roundWind: input.roundWind, isDealer: input.isDealer, winningTile: input.winningTile,
     waits: waitTypes(input, d), completingTiles: input.gameConfig.singleWaitMode === "only-one-tile" ? completingTileCount(input) : null,
-    declaredMelds: input.melds, openHand: !!input.hasOpenMelds || input.melds.some((m) => m.exposed), isLastTile: !!input.isLastTile, isRobbingKong: !!input.isRobbingKong, config: input.gameConfig,
+    declaredMelds: input.melds, openHand: !!input.hasOpenMelds || input.melds.some((m) => m.exposed) || !!input.manualFan?.includes("fully-exposed"), manual: input.manualFan, isLastTile: !!input.isLastTile, isRobbingKong: !!input.isRobbingKong, config: input.gameConfig,
   };
 }
 

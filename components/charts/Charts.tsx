@@ -1,3 +1,6 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
+
 const PALETTE = ["#F7ECD0", "#E8A87C", "#85C1A3", "#9DB4E8", "#D98BA8", "#C4AD8E"];
 
 export function BarList({ data, unit = "", empty = "Belum ada data." }: { data: { name: string; value: number; note?: string }[]; unit?: string; empty?: string }) {
@@ -29,21 +32,31 @@ export function Split({ a, b, aLabel, bLabel }: { a: number; b: number; aLabel: 
   );
 }
 
-export function LineChart({ series, xLabels }: { series: { name: string; values: number[] }[]; xLabels?: string[] }) {
+/** Line chart with a FIXED pixel height (default 150): only the width follows the container, so it never balloons on wide screens. */
+export function LineChart({ series, xLabels, height = 150 }: { series: { name: string; values: number[] }[]; xLabels?: string[]; height?: number }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [W, setW] = useState(320);
+  useEffect(() => {
+    const el = box.current; if (!el) return;
+    const set = () => setW(Math.max(260, Math.round(el.clientWidth)));
+    set();
+    const ro = new ResizeObserver(set); ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const n = Math.max(...series.map((s) => s.values.length), 0);
   if (n < 2) return <p className="text-sm text-muted">Butuh minimal dua titik data untuk grafik.</p>;
   const all = series.flatMap((s) => s.values); const lo = Math.min(...all, 0), hi = Math.max(...all, 0), span = hi - lo || 1;
-  const W = 320, H = 150, px = 28, py = 12;
+  const H = height, px = 28, py = 12;
   const X = (i: number) => px + (i / (n - 1)) * (W - px - 6), Y = (v: number) => H - py - ((v - lo) / span) * (H - py * 2);
   return (
-    <div>
-      <svg viewBox={`0 0 ${W} ${H + 14}`} className="w-full" role="img" aria-label="Grafik">
+    <div ref={box}>
+      <svg width={W} height={H + 14} viewBox={`0 0 ${W} ${H + 14}`} className="block" role="img" aria-label="Grafik">
         <line x1={px} x2={W - 6} y1={Y(0)} y2={Y(0)} stroke="#7A564C" strokeDasharray="3 3" />
         <text x={2} y={Y(hi) + 3} fontSize="9" fill="#C4AD8E">{hi}</text><text x={2} y={Y(lo) + 3} fontSize="9" fill="#C4AD8E">{lo}</text>
         {series.map((s, k) => <polyline key={s.name} fill="none" stroke={PALETTE[k % PALETTE.length]} strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" points={s.values.map((v, i) => `${X(i)},${Y(v)}`).join(" ")} />)}
         {xLabels && <><text x={px} y={H + 10} fontSize="9" fill="#C4AD8E">{xLabels[0]}</text><text x={W - 6} y={H + 10} fontSize="9" fill="#C4AD8E" textAnchor="end">{xLabels[xLabels.length - 1]}</text></>}
       </svg>
-      <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">{series.map((s, k) => <li key={s.name}><i className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: PALETTE[k % PALETTE.length] }} />{s.name}</li>)}</ul>
+      <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">{series.map((s, k) => <li key={s.name}><i className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: PALETTE[k % PALETTE.length] }} />{s.name}</li>)}</ul>
     </div>
   );
 }

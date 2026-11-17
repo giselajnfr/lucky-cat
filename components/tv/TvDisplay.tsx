@@ -9,7 +9,7 @@ import { MEDALS, ROUND_NAME, STATUS_LABEL, TV_MODE_LABEL, WIND_NAME, seatWind, t
 
 const PER_PAGE = 8;       // tables per page (per-table mode)
 const MAIN_COLS = 2;
-const MAIN_ROWS = 8;      // rows per column on the main leaderboard -> 16 players per page
+const MAIN_ROWS = 6;      // rows per column on the main leaderboard -> 12 players per page (fewer, roomier cards)
 const ranked = (t: TvTable) => [...t.players].sort((a, b) => b.score - a.score);
 const fmt = (n: number) => n.toLocaleString("en-US");
 const net = (n: number) => (n > 0 ? `+${fmtScore(n)}` : fmtScore(n));
@@ -80,8 +80,8 @@ function MainBoard({ rows, page, pages }: { rows: MainRow[]; page: number; pages
   const per = MAIN_COLS * MAIN_ROWS;
   const slice = rows.slice(page * per, (page + 1) * per);
   return (
-    <div className="flex h-full flex-col px-[6vw] pb-[5vh] pt-[4vh]">
-      <div className="mb-[3.5vh] flex items-baseline justify-between gap-[2vw]">
+    <div className="flex h-full flex-col px-[5vw] pb-[5vh] pt-[3vh]">
+      <div className="mb-[4vh] flex items-baseline justify-between gap-[2vw]">
         <div className="flex items-baseline gap-[2vw]">
           <h2 className="text-[3vw] font-extrabold">🏆 MAIN LEADERBOARD</h2>
           <p className="text-[1.5vw] font-semibold text-muted">All players · all tables · live</p>
@@ -89,17 +89,17 @@ function MainBoard({ rows, page, pages }: { rows: MainRow[]; page: number; pages
         <p className="shrink-0 text-[1.5vw] font-semibold text-muted">{rows.length} players{pages > 1 ? ` · page ${page + 1}/${pages}` : ""}</p>
       </div>
       {rows.length === 0 ? <p className="flex flex-1 items-center justify-center text-[3vw] font-bold text-muted">No players yet</p> : (
-        <ol className="grid min-h-0 flex-1 grid-flow-col gap-x-[4vw] gap-y-[2vh]" style={{ gridTemplateRows: `repeat(${MAIN_ROWS}, minmax(0, 1fr))`, gridTemplateColumns: `repeat(${MAIN_COLS}, minmax(0, 1fr))` }}>
+        <ol className="grid min-h-0 flex-1 grid-flow-col gap-x-[3.5vw] gap-y-[2.6vh]" style={{ gridTemplateRows: `repeat(${MAIN_ROWS}, minmax(0, 1fr))`, gridTemplateColumns: `repeat(${MAIN_COLS}, minmax(0, 1fr))` }}>
           {slice.map((r, i) => {
             const rank = page * per + i, top = rank < 3;
             return (
-              <li key={`${r.table}-${r.name}-${rank}`} className={`flex min-h-0 items-center gap-[1.6vw] rounded-[1.2vw] px-[2vw] ${top ? "border-[0.15vw] border-cream/40 bg-card" : "bg-card/70"}`}>
-                <span className="w-[4vw] shrink-0 text-center text-[2.2vw] font-extrabold leading-none text-muted">{MEDALS[rank] && rank < 3 ? MEDALS[rank] : rank + 1}</span>
-                <span className="min-w-0 flex-1 truncate text-[2.2vw] font-bold leading-none">{r.name}</span>
-                <span className="shrink-0 rounded-full bg-base/60 px-[1.4vw] py-[0.5vh] text-[1.3vw] font-semibold leading-tight text-muted">Table {pad(r.table)}</span>
-                <span className="w-[10vw] shrink-0 pl-[0.5vw] text-right">
-                  <span className={`block text-[2.2vw] font-extrabold leading-none tabular-nums ${scoreTone(r.net, false, 0)}`}>{net(r.net)}</span>
-                  {r.start > 0 && <span className="mt-[0.6vh] block text-[1vw] leading-none text-muted">total {fmtScore(r.score)}</span>}
+              <li key={`${r.table}-${r.name}-${rank}`} className={`flex min-h-0 items-center gap-[1.4vw] rounded-[1.2vw] px-[1.8vw] py-[1.2vh] ${top ? "border-[0.15vw] border-cream/40 bg-card" : "bg-card/70"}`}>
+                <span className="w-[3.6vw] shrink-0 text-center text-[1.9vw] font-extrabold leading-none text-muted">{MEDALS[rank] && rank < 3 ? MEDALS[rank] : rank + 1}</span>
+                <span className="min-w-0 flex-1 truncate text-[1.9vw] font-bold leading-none">{r.name}</span>
+                <span className="shrink-0 rounded-full bg-base/60 px-[1.1vw] py-[0.6vh] text-[1.1vw] font-semibold leading-tight text-muted">Table {pad(r.table)}</span>
+                <span className="w-[9vw] shrink-0 pl-[0.5vw] text-right">
+                  <span className={`block text-[1.9vw] font-extrabold leading-none tabular-nums ${scoreTone(r.net, false, 0)}`}>{net(r.net)}</span>
+                  {r.start > 0 && <span className="mt-[0.9vh] block text-[0.9vw] leading-none text-muted">total {fmtScore(r.score)}</span>}
                 </span>
               </li>
             );
