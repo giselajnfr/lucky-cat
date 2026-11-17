@@ -79,21 +79,21 @@ function MainBoard({ rows, page, pages }: { rows: MainRow[]; page: number; pages
   const per = MAIN_COLS * MAIN_ROWS;
   const slice = rows.slice(page * per, (page + 1) * per);
   return (
-    <div className="flex h-full flex-col px-[3vw] pb-[2vw]">
-      <div className="mb-[1.2vw] flex items-end justify-between">
-        <div><h2 className="text-[3.6vw] font-extrabold">🏆 MAIN LEADERBOARD</h2><p className="text-[1.6vw] font-semibold text-muted">All players · all tables · live</p></div>
+    <div className="flex h-full flex-col px-[3vw] pb-[2vw] pt-[1.8vw]">
+      <div className="mb-[2vw] flex items-end justify-between">
+        <div className="space-y-[0.6vw]"><h2 className="text-[3.2vw] font-extrabold">🏆 MAIN LEADERBOARD</h2><p className="text-[1.6vw] font-semibold text-muted">All players · all tables · live</p></div>
         <p className="text-[1.5vw] font-semibold text-muted">{rows.length} players{pages > 1 ? ` · page ${page + 1}/${pages}` : ""}</p>
       </div>
       {rows.length === 0 ? <p className="flex flex-1 items-center justify-center text-[3vw] font-bold text-muted">No players yet</p> : (
-        <ol className="grid min-h-0 flex-1 grid-flow-col gap-x-[2vw] gap-y-[0.8vw]" style={{ gridTemplateRows: `repeat(${MAIN_ROWS}, minmax(0, 1fr))`, gridTemplateColumns: `repeat(${MAIN_COLS}, minmax(0, 1fr))` }}>
+        <ol className="grid min-h-0 flex-1 grid-flow-col gap-x-[2.4vw] gap-y-[1vw]" style={{ gridTemplateRows: `repeat(${MAIN_ROWS}, minmax(0, 1fr))`, gridTemplateColumns: `repeat(${MAIN_COLS}, minmax(0, 1fr))` }}>
           {slice.map((r, i) => {
             const rank = page * per + i, top = rank < 3;
             return (
               <li key={`${r.table}-${r.name}-${rank}`} className={`flex min-h-0 items-center gap-[1.2vw] rounded-[1vw] px-[1.4vw] ${top ? "border-[0.15vw] border-cream/40 bg-card" : "bg-card/70"}`}>
-                <span className="w-[3.6vw] shrink-0 text-center text-[2.4vw] font-extrabold text-muted">{MEDALS[rank] && rank < 3 ? MEDALS[rank] : rank + 1}</span>
+                <span className="w-[4vw] shrink-0 text-center text-[2.4vw] font-extrabold text-muted">{MEDALS[rank] && rank < 3 ? MEDALS[rank] : rank + 1}</span>
                 <span className="min-w-0 flex-1 truncate text-[2.3vw] font-bold">{r.name}</span>
-                <span className="shrink-0 rounded-full bg-base/60 px-[1vw] py-[0.2vw] text-[1.2vw] font-semibold text-muted">T{pad(r.table)}</span>
-                <span className="w-[10vw] shrink-0 text-right">
+                <span className="shrink-0 rounded-full bg-base/60 px-[1.2vw] py-[0.3vw] text-[1.3vw] font-semibold text-muted">Table {pad(r.table)}</span>
+                <span className="w-[10vw] shrink-0 pl-[0.5vw] text-right">
                   <span className={`block text-[2.4vw] font-extrabold tabular-nums ${scoreTone(r.net, false, 0)}`}>{net(r.net)}</span>
                   {r.start > 0 && <span className="block text-[1vw] text-muted">total {fmtScore(r.score)}</span>}
                 </span>

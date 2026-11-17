@@ -25,7 +25,7 @@ const BASE = "123m 456p 789s 111p 55s";
 /** Rules that do not exist in the legacy HK18 table. */
 const NEW_RULES: FanRuleConfig[] = [
   np("pair-258", "2-5-8 Pair (二五八將)", 1, "Pasangan (mata) berupa angka 2, 5 atau 8.", ["Pasangan adalah kartu angka 2, 5 atau 8", "Angin dan naga tidak dihitung"], { hand: BASE, win: "5s" }),
-  na("single-wait", "Single Wait (單釣)", 1, "Menang dengan menyelesaikan pasangan: kartu menang adalah kartu mata yang ditunggu.", ["Kartu menang melengkapi pasangan", "Dihitung dari susunan tangan, bukan dari pilihan pemain", "Mode lain (opsi konfigurasi): tangan hanya bisa selesai dengan satu jenis kartu"], { hand: BASE, win: "5s" }),
+  na("single-wait", "Single Wait (單釣)", 1, "Menang dengan menyelesaikan pasangan: kartu menang adalah kartu mata yang ditunggu.", ["Kartu menang melengkapi pasangan"], { hand: BASE, win: "5s" }),
   na("closed-wait", "Closed Wait (坎張)", 0, "Kartu menang mengisi tengah sebuah chow (mis. 2 pada 1-_-3).", ["Kartu menang di tengah chow"], { hand: BASE, win: "2m" }, { enabled: false }),
   na("edge-wait", "Edge Wait (邊張)", 0, "Kartu menang melengkapi chow 1-2-3 dengan angka 3, atau 7-8-9 dengan angka 7.", ["3 pada 1-2-3 atau 7 pada 7-8-9"], { hand: BASE, win: "3m" }, { enabled: false }),
   na("two-sided-wait", "Two-Sided Wait (兩面)", 0, "Kartu menang melengkapi chow yang bisa dilengkapi dari dua sisi.", ["Kartu menang di ujung chow, bukan tepi (edge)"], { hand: BASE, win: "4p" }, { enabled: false }),
