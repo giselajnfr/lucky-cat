@@ -28,9 +28,8 @@ function RuleCard({ r }: { r: FanRuleConfig }) {
   const ctx = r.example && [r.example.method === "SELF_DRAW" ? "Self Draw" : r.example.method === "DISCARD" ? "dari buangan" : null, r.example.seat ? `kursi ${WIND[r.example.seat]}` : null, r.example.round ? `ronde ${WIND[r.example.round]}` : null, r.example.lastTile ? "kartu terakhir" : null, r.example.robbingKong ? "rampas kong" : null].filter(Boolean).join(" · ");
   return (
     <article id={r.id} className="card scroll-mt-4 space-y-3">
-      <div className="flex items-baseline justify-between gap-3"><h3 className="text-lg font-bold leading-tight text-cream">{r.name}</h3>
+      <div className="flex items-baseline justify-between gap-3"><h3 className="text-xl font-extrabold leading-tight text-cream">{r.name}{!HOUSE_RULE_IDS.includes(r.id) && ruleOrigin(r.id) !== "classic" ? <span className="ml-2 inline-block align-middle rounded-full border border-line px-2.5 py-1 text-[11px] font-bold text-muted">{RULESETS[ruleOrigin(r.id)].name.replace("Hong Kong ", "HK ")}</span> : null}</h3>
         <span className="shrink-0 rounded-full bg-cream px-3 py-1 text-sm font-extrabold text-base">{r.perUnit ? `${r.fan} per kartu` : `${r.fan} faan`}</span></div>
-      <p className="-mt-1"><span className="inline-block rounded-full border border-line px-2.5 py-0.5 text-[11px] font-semibold text-muted">{HOUSE_RULE_IDS.includes(r.id) ? "Aturan rumah" : RULESETS[ruleOrigin(r.id)].name.replace("Hong Kong", "HK")}</span></p>
       <p className="text-sm">{r.summary}</p>
       <ul className="list-disc space-y-0.5 pl-5 text-sm text-muted">{r.conditions.map((c) => <li key={c}>{c}</li>)}</ul>
       {r.needsInput && <p className="text-xs text-muted">Perlu diisi pemain: <b className="text-cream">{r.needsInput}</b></p>}
@@ -43,8 +42,8 @@ function RuleCard({ r }: { r: FanRuleConfig }) {
 const SHORT: Record<string, string> = {
   "seat-wind": "Pong/kong angin sesuai kursi pemenang.", "round-wind": "Pong/kong angin ronde yang sedang berjalan.", "dragon-pong": "Pong/kong naga (merah, hijau atau putih).",
   "no-flower": "Tidak punya bunga atau musim sama sekali.", "suitable-flower": "Bunga/musim bernomor sama dengan kursi pemenang.", "full-flowers": "Empat bunga atau empat musim lengkap.", "eight-flowers": "Kedelapan bunga dan musim. Menggantikan Full Flowers.",
-  "self-draw": "Kartu menang diambil sendiri dari tumpukan.", "concealed-hand": "Menang dari buangan tanpa set terbuka.", "last-tile": "Menang dengan kartu terakhir.", "robbing-kong": "Menang dengan kartu yang dipakai lawan untuk menambah kong.",
-  "single-wait": "Menunggu satu kartu: melengkapi pasangan.", "heavenly-hand": "Dong menang dengan tangan awalnya.", "earthly-hand": "Pemain non-dong menang dari buangan pertama dong.", "fully-exposed": "Semua set dibuka, menang dari buangan untuk pasangan.", "three-concealed-pungs": "Tiga pong/kong tertutup.", "fully-concealed": "Self Draw tanpa set terbuka (menggantikan Self Draw + Concealed Hand).",
+  "self-draw": "Kartu menang diambil sendiri dari tumpukan.", "self-draw-after-kong": "Menang dari kartu pengganti setelah menyatakan kong.", "concealed-hand": "Menang dari buangan tanpa set terbuka.", "last-tile": "Menang dengan kartu terakhir.", "robbing-kong": "Menang dengan kartu yang dipakai lawan untuk menambah kong.",
+  "single-wait": "Menunggu satu kartu: melengkapi pasangan.", "heavenly-hand": "Dong menang dengan tangan awalnya.", "earthly-hand": "Pemain non-dong menang dari buangan pertama dong.", "fully-exposed": "Semua set dibuka, menang dari buangan untuk melengkapi pasangan.", "three-concealed-pungs": "Tiga pong/kong tertutup.", "fully-concealed": "Self Draw tanpa set terbuka (menggantikan Self Draw + Concealed Hand).",
 };
 const UNIT: Record<string, string> = { "dragon-pong": "1 per set", "suitable-flower": "1 per kartu", "full-flowers": "2 per set" };
 const GROUPS: { title: string; ids: string[]; note?: string }[] = [
@@ -58,9 +57,9 @@ function AdditionalCard({ r }: { r: FanRuleConfig }) {
   const origin = HOUSE_RULE_IDS.includes(r.id) ? null : ruleOrigin(r.id);
   return (
     <article id={r.id} className="card scroll-mt-4 !px-4 !py-3">
-      <div className="flex items-baseline justify-between gap-3"><h3 className="text-base font-bold leading-tight text-cream">{r.name}</h3>
+      <div className="flex items-baseline justify-between gap-3"><h3 className="text-lg font-extrabold leading-tight text-cream">{r.name}{origin && origin !== "classic" ? <span className="ml-2 inline-block align-middle rounded-full border border-line px-2 py-0.5 text-[10px] font-bold text-muted">{RULESETS[origin].name.replace("Hong Kong ", "HK ")}</span> : null}</h3>
         <span className="shrink-0 rounded-full bg-cream px-3 py-0.5 text-sm font-extrabold text-base">{UNIT[r.id] ?? `${r.fan} faan`}</span></div>
-      <p className="mt-1 text-sm text-muted">{SHORT[r.id] ?? r.summary}{origin && origin !== "classic" ? <span className="ml-2 rounded-full border border-line px-2 py-0.5 text-[10px] font-semibold">{RULESETS[origin].name.replace("Hong Kong ", "HK ")}</span> : null}</p>
+      <p className="mt-1 text-sm text-muted">{SHORT[r.id] ?? r.summary}</p>
       {tilesFor(r.id)}
     </article>
   );
@@ -83,7 +82,7 @@ export default function Page() {
   const rs = getRuleset();   // the full rule set (New 18 = superset); each rule is labelled with where it comes from
   const pattern = rs.scoringRules.filter((r) => r.category === "pattern" && r.enabled);
   const additional = rs.scoringRules.filter((r) => r.category === "additional" && r.enabled);
-  const header = <h1 className="text-[1.5rem] leading-tight">Aturan Hong Kong</h1>;
+  const header = <h1 className="text-[1.9rem] font-extrabold leading-tight">Aturan Hong Kong</h1>;
   return (
     <main>
       <StickyTabs header={header} tabs={[
@@ -107,12 +106,12 @@ export default function Page() {
             <div><p className="text-sm"><b>Pasangan</b>: dua kartu yang sama.</p>{row("EE")}</div></div>
           <div className="card space-y-2 text-sm"><h3>Jalannya permainan</h3>
             <ol className="list-decimal space-y-1 pl-5"><li>Setiap pemain mengambil lalu membuang satu kartu secara bergiliran.</li><li>Kartu buangan boleh diambil untuk Chow (hanya dari pemain sebelumnya), Pong, atau Kong.</li><li>Menang dari kartu buangan lawan disebut <b>menang dari buangan</b>. Menang dari kartu yang diambil sendiri disebut <b>Self Draw</b>.</li><li>Jika kartu habis tanpa pemenang, tangan itu <b>seri</b> dan tidak ada poin berpindah.</li></ol></div>
-          <div className="card space-y-2 text-sm"><h3>Minimum {rs.minimumFanToWin} faan · maksimum {rs.maximumFan} faan</h3>
-            <p>Pada {rs.name}, tangan menang harus bernilai minimal <b>{rs.minimumFanToWin} faan</b> untuk sah, dan faan dibayar paling banyak <b>{rs.maximumFan} faan</b> (meja boleh memilih batas lain saat membuat game). Faan dari pola tangan dan faan tambahan dijumlahkan. Chicken Hand bernilai 0 faan, jadi tidak cukup sendirian. Pemain memilih buku aturan sendiri saat memulai meja: <b>Chicken Hand</b> (tanpa minimum), <b>Beginner</b> (minimum 3 faan) atau <b>Advanced</b> (minimum 5 faan), dan boleh memakai batas faan (cap).</p></div>
+          <div className="card space-y-2 text-sm"><h3>Minimum {rs.minimumFanToWin} faan · maksimum {rs.maximumFan ?? 13} faan</h3>
+            <p>Untuk menang, kumpulkan minimal <b>{rs.minimumFanToWin} faan</b>. Semua faan pola dan bonus dijumlahkan, hingga batas maksimum <b>{rs.maximumFan ?? 13} faan</b>. Pilih mode <b>Chicken Hand</b> (tanpa minimum), <b>Beginner</b> (3 faan), atau <b>Advanced</b> (5 faan) saat membuat meja.</p></div>
         </div></section>
         ) },
         { id: "pola", label: "Pola tangan", content: (
-      <section><p className="mb-3 text-sm text-muted">Label di tiap aturan menunjukkan aturan itu berasal dari HK Classic, HK New 6, atau HK New 18.</p><div className="space-y-3">{pattern.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
+      <section><div className="space-y-3">{pattern.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
         ) },
         { id: "tambahan", label: "Faan tambahan", content: (
       <section><p className="mb-3 text-sm text-muted">Ditambahkan di atas faan pola tangan.</p><AdditionalList rules={additional} /></section>
@@ -123,11 +122,12 @@ export default function Page() {
           <ul className="list-disc space-y-1 pl-5">
             <li>Semua pola yang cocok dijumlahkan.</li>
             <li>Pola yang sudah tercakup tidak dihitung dua kali. Contoh: Full Flush menggantikan Half Flush.</li>
-            <li>Total dibatasi maksimum <b>{rs.maximumFan} faan</b>. Poin = faan.</li>
+            <li>Total dibatasi maksimum <b>{rs.maximumFan ?? 13} faan</b>. Poin = faan.</li>
           </ul></div>
         <div className="card space-y-2 text-sm"><h3>Cara menang</h3>
           <ul className="list-disc space-y-1 pl-5">
             <li><b>Self Draw</b>: +1 faan, dibayar ketiga lawan.</li>
+            <li><b>Self Draw After Kong</b>: +1 faan jika menang dari kartu pengganti setelah menyatakan kong.</li>
             <li><b>Dari buangan</b>: dibayar oleh pembuang kartu.</li>
             {rs.id !== "classic" && <li><b>Concealed Hand</b>: +1 faan jika tangan tertutup dan menang dari buangan.</li>}
             {rs.id === "new6" && <li><b>Fully Concealed</b>: +3 faan menggantikan Self Draw pada tangan tertutup.</li>}
