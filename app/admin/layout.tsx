@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 
-const NAV = [["/admin", "Dashboard"], ["/admin/tables", "Live Tables"], ["/admin/games", "Games"], ["/admin/tv", "TV Display"], ["/admin/calculator", "Kode Kalkulator"], ["/admin/statistics", "Statistics"]];
+const NAV = [["/admin", "Dashboard"], ["/admin/tables", "Live Tables"], ["/admin/games", "Games"], ["/admin/tv", "TV Display"], ["/admin/calculator", "Kode Kalkulator"], ["/admin/statistics", "Statistics"], ["/admin/admins", "Admins"]];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { profile } = await requireAdmin();
