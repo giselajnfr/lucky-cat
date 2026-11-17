@@ -30,7 +30,7 @@ export const MANUAL_FAN_IDS = ["heavenly-hand", "earthly-hand", "fully-exposed",
 
 export const FAN_TABLE: FanRuleConfig[] = [
   // ---------- Winning hand patterns ----------
-  p("chicken-hand", "Chicken Hand", 0, "Tangan menang biasa tanpa pola apa pun. Bernilai 0 faan, jadi tidak bisa memenuhi syarat minimum 3 faan sendirian.",
+  p("chicken-hand", "Chicken Hand", 0, "Tangan menang biasa tanpa pola apa pun.",
     ["Tidak ada pola tangan lain dari tabel ini", "Faan tambahan tetap boleh dihitung"],
     { hand: "123m 456p 789s 111p 55s", win: "5s" }),
   p("all-chows", "All Chows / Sequence Hand", 1, "Keempat set adalah urutan (chow), tidak ada pong atau kong.",
