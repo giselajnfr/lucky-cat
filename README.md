@@ -34,6 +34,9 @@ Run `supabase/migration_007_rulesets.sql` (after 006) **before** deploying: it a
 - Sources: TileBuddy Faan Wiki (rule-style labels Classic/New 6/New 18) and the Hong Kong mahjong pages on Wikipedia. Hong Kong tables differ, so every disputed value is a plain number/flag in `rulesets.ts`; the *Catatan interpretasi* section of the House Rules page lists the interpretations used.
 - Not implemented (need extra input, not derivable from tiles): Blessing of Heaven/Earth, Win by Kong Replacement, Fully Exposed, Seven-Flowers instant win.
 
+## TV display (`/tv`)
+Run `supabase/migration_008_tv_main_leaderboard.sql` once (adds the `main` mode). Admin → TV Display picks the mode: **Live · Per Table**, **Live · Main Leaderboard** (all players from all tables, ranked by points won/lost against each table's starting points), Table Spotlight, Today's Stats, Auto Rotate. For two screens use `/tv?view=tables` and `/tv?view=main`: the link overrides the admin mode for that screen only.
+
 ## Rules decisions you can change (all in `hk18Rules.ts`)
 Anything the HK18 table does not define is a config flag, listed on the in-app *Aturan → Perlu konfirmasi* section: dragon/wind pong stacking with Little/Great hands, whether a Chicken Hand may win on bonus faan, payment multipliers (default: points = faan, discarder pays all, each opponent pays on self draw), all-chows pair rule, last-tile definition.
 
