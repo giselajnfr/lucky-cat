@@ -29,7 +29,7 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
   const [capMode, setCapMode] = useState<"default" | "custom">("default");
   const capOn = capMode === "custom";
   const [capChoice, setCapChoice] = useState<number | "other">(13);
-  const [discardPaymentMode, setDiscardPaymentMode] = useState<DiscardPaymentMode>("DISCARDER_PAYS_ALL");
+  const [discardPaymentMode, setDiscardPaymentMode] = useState<DiscardPaymentMode>("DISCARDER_FULL_OTHERS_HALF");
   const [capOther, setCapOther] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -161,9 +161,9 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
 
         {chicken ? <p className="rounded-xl border border-line bg-base/30 p-3 text-xs text-muted">Chicken Hand tidak memakai faan, jadi tidak ada batas faan. Setiap kemenangan bernilai 1 poin.</p> : <div>
           <h2 className="section-label mb-2">Batas faan (cap)</h2>
-          <div className="seg" role="radiogroup" aria-label="Batas faan">
-            <button type="button" role="radio" aria-checked={capMode === "default"} className={`seg-item ${capMode === "default" ? "seg-on" : ""}`} onClick={() => setCapMode("default")}>Default (13)</button>
-            <button type="button" role="radio" aria-checked={capMode === "custom"} className={`seg-item ${capMode === "custom" ? "seg-on" : ""}`} onClick={() => setCapMode("custom")}>Lainnya</button>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Batas faan">
+            <button type="button" aria-pressed={capMode === "default"} className={chip(capMode === "default")} onClick={() => setCapMode("default")}>Default (13)</button>
+            <button type="button" aria-pressed={capMode === "custom"} className={chip(capMode === "custom")} onClick={() => setCapMode("custom")}>Lainnya</button>
           </div>
           {capOn && (
             <div className="mt-2 space-y-2">

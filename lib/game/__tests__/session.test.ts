@@ -37,7 +37,7 @@ describe("rules chosen by the players", () => {
   it("uses the table-selected discard settlement mode", () => {
     expect(configForGame({ min_fan: 3, last_round_wind: "north", discard_payment_mode: "DISCARDER_PAYS_ALL" }).discardRules.paymentMode).toBe("DISCARDER_PAYS_ALL");
     expect(configForGame({ min_fan: 3, last_round_wind: "north", discard_payment_mode: "DISCARDER_FULL_OTHERS_HALF" }).discardRules.paymentMode).toBe("DISCARDER_FULL_OTHERS_HALF");
-    expect(configForGame({ min_fan: 3, last_round_wind: "north" }).discardRules.paymentMode).toBe("DISCARDER_PAYS_ALL");
+    expect(configForGame({ min_fan: 3, last_round_wind: "north" }).discardRules.paymentMode).toBe("DISCARDER_FULL_OTHERS_HALF");
   });
   it("Chicken Hand means no minimum and a flat 1 point per win", () => {
     const c = configForGame({ min_fan: 0, last_round_wind: "north", rule_preset: "chicken" });

@@ -8,7 +8,7 @@ export const configForGame = (g: Pick<GameRow, "min_fan" | "last_round_wind"> & 
   // The ruleset (Classic / New 6 / New 18) decides the fan table; a row without one keeps the legacy single HK18 table.
   ...(isRulesetId(g.ruleset) ? configFromRuleset(g.ruleset) : DEFAULT_GAME_CONFIG), minimumFan: g.min_fan, maximumFan: g.max_fan ?? null,
   flatPointsPerWin: g.rule_preset === "chicken" ? 1 : null,   // Chicken Hand: no faan, every win is 1 point
-  discardRules: { ...((isRulesetId(g.ruleset) ? configFromRuleset(g.ruleset) : DEFAULT_GAME_CONFIG).discardRules), paymentMode: g.discard_payment_mode ?? "DISCARDER_PAYS_ALL" },
+  discardRules: { ...((isRulesetId(g.ruleset) ? configFromRuleset(g.ruleset) : DEFAULT_GAME_CONFIG).discardRules), paymentMode: g.discard_payment_mode ?? "DISCARDER_FULL_OTHERS_HALF" },
   progression: { ...DEFAULT_GAME_CONFIG.progression, lastRoundWind: g.last_round_wind },
 });
 
