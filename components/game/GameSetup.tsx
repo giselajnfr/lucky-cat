@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { CAP_CHOICES, MAX_START_POINTS, PRESETS, START_POINT_CHOICES, digits } from "@/lib/game/presets";
 import { DEFAULT_RULESET_ID, RULESETS, RULESET_IDS } from "@/lib/scoring";
-import type { RulesetId } from "@/lib/scoring";
+import type { RulesetId, DiscardPaymentMode } from "@/lib/scoring";
 import type { RosterPlayer, RulePreset } from "@/lib/game/types";
 
 // Seats 0..3 are East, South, West, North. Placed around the table the way people sit: West on top, North left, South right, East at the bottom.
@@ -26,10 +26,10 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
   const [startChoice, setStartChoice] = useState<number | "other">(1000);   // default 1.000
   const [startOther, setStartOther] = useState("");
   const [ruleset, setRuleset] = useState<RulesetId>(DEFAULT_RULESET_ID);
-  const [capMode, setCapMode] = useState<"ruleset" | "none" | "custom">("ruleset");   // default: the ruleset's own cap
+  const [capMode, setCapMode] = useState<"default" | "custom">("default");
   const capOn = capMode === "custom";
-  const setCapOn = (on: boolean) => setCapMode(on ? "custom" : "none");
-  const [capChoice, setCapChoice] = useState<number | "other">(CAP_CHOICES[1]);
+  const [capChoice, setCapChoice] = useState<number | "other">(13);
+  const [discardPaymentMode, setDiscardPaymentMode] = useState<DiscardPaymentMode>("DISCARDER_PAYS_ALL");
   const [capOther, setCapOther] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +54,7 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
   const startOk = startPoints >= 0 && startPoints <= MAX_START_POINTS;
   const chicken = preset === "chicken";   // Chicken Hand has no faan, so no cap
   const rs = RULESETS[ruleset];
-  const capValue = chicken || capMode === "none" ? null : capMode === "ruleset" ? rs.maximumFan : capChoice === "other" ? Number(capOther || "0") : capChoice;
+  const capValue = chicken ? null : capMode === "default" ? 13 : capChoice === "other" ? Number(capOther || "0") : capChoice;
   const capOk = capValue === null || (capValue >= Math.max(1, minFan) && capValue <= 99);
   const ready = namesOk && preset !== null && startOk && capOk;
 
@@ -66,7 +66,7 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
     e.preventDefault(); if (!ready || !preset) return;
     setBusy(true); setError(null);
     const { error } = await supabase.rpc("setup_game", {
-      p_game: gameId, p_preset: preset, p_ruleset: ruleset, p_max_fan: capValue, p_starting_points: startPoints,
+      p_game: gameId, p_preset: preset, p_ruleset: ruleset, p_max_fan: capValue, p_starting_points: startPoints, p_discard_payment_mode: discardPaymentMode,
       p_players: seats.map((s, seat) => (s.playerId ? { seat, player_id: s.playerId } : { seat, name: s.name.trim() })),
     });
     if (error) {
@@ -162,8 +162,7 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
         {chicken ? <p className="rounded-xl border border-line bg-base/30 p-3 text-xs text-muted">Chicken Hand tidak memakai faan, jadi tidak ada batas faan. Setiap kemenangan bernilai 1 poin.</p> : <div>
           <h2 className="section-label mb-2">Batas faan (cap)</h2>
           <div className="seg" role="radiogroup" aria-label="Batas faan">
-            <button type="button" role="radio" aria-checked={capMode === "ruleset"} className={`seg-item ${capMode === "ruleset" ? "seg-on" : ""}`} onClick={() => setCapMode("ruleset")}>Ikut aturan ({rs.maximumFan})</button>
-            <button type="button" role="radio" aria-checked={capMode === "none"} className={`seg-item ${capMode === "none" ? "seg-on" : ""}`} onClick={() => setCapMode("none")}>Tanpa batas</button>
+            <button type="button" role="radio" aria-checked={capMode === "default"} className={`seg-item ${capMode === "default" ? "seg-on" : ""}`} onClick={() => setCapMode("default")}>Default (13)</button>
             <button type="button" role="radio" aria-checked={capMode === "custom"} className={`seg-item ${capMode === "custom" ? "seg-on" : ""}`} onClick={() => setCapMode("custom")}>Lainnya</button>
           </div>
           {capOn && (
@@ -178,8 +177,21 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
               </>)}
               {!capOk && <p role="alert" className="text-xs text-neg">Batas harus antara {Math.max(1, minFan)} dan 99 faan.</p>}
             </div>)}
-          <p className="mt-2 text-xs text-muted">{capValue ? `Tangan bernilai lebih dari ${capValue} faan tetap dibayar sebagai ${capValue} faan.` : "Faan dibayar penuh, berapa pun nilainya."}</p>
+          <p className="mt-2 text-xs text-muted">Tangan bernilai lebih dari {capValue ?? 13} faan tetap dibayar sebagai {capValue ?? 13} faan.</p>
         </div>}
+
+        <div>
+          <h2 className="section-label mb-2">Pembayaran saat menang dari buangan</h2>
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Aturan pembayaran discard">
+            <button type="button" role="radio" aria-checked={discardPaymentMode === "DISCARDER_PAYS_ALL"} onClick={() => setDiscardPaymentMode("DISCARDER_PAYS_ALL")} className={`min-h-[64px] rounded-xl border px-3 py-2 text-left transition ${discardPaymentMode === "DISCARDER_PAYS_ALL" ? "border-cream bg-cream text-base" : "border-line bg-card text-cream"}`}>
+              <span className="block text-sm font-bold">Discarder Pays All</span><span className={`mt-1 block text-xs ${discardPaymentMode === "DISCARDER_PAYS_ALL" ? "text-base/70" : "text-muted"}`}>Pemain yang membuang membayar 3×</span>
+            </button>
+            <button type="button" role="radio" aria-checked={discardPaymentMode === "DISCARDER_FULL_OTHERS_HALF"} onClick={() => setDiscardPaymentMode("DISCARDER_FULL_OTHERS_HALF")} className={`min-h-[64px] rounded-xl border px-3 py-2 text-left transition ${discardPaymentMode === "DISCARDER_FULL_OTHERS_HALF" ? "border-cream bg-cream text-base" : "border-line bg-card text-cream"}`}>
+              <span className="block text-sm font-bold">Split</span><span className={`mt-1 block text-xs ${discardPaymentMode === "DISCARDER_FULL_OTHERS_HALF" ? "text-base/70" : "text-muted"}`}>Discarder 2×, dua pemain lain 1×</span>
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-muted">Pengaturan ini berlaku saat kemenangan dari buangan. Menang sendiri tetap dibayar oleh tiga pemain lainnya.</p>
+        </div>
 
       </section>
 
