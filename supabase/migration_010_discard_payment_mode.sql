@@ -1,6 +1,6 @@
--- Per-table discard settlement mode. Existing tables keep the historical default: discarder pays all.
+-- Per-table discard settlement mode. New tables default to Split.
 alter table public.games
-  add column if not exists discard_payment_mode text not null default 'DISCARDER_PAYS_ALL';
+  add column if not exists discard_payment_mode text not null default 'DISCARDER_FULL_OTHERS_HALF';
 
 do $$ begin
   alter table public.games add constraint games_discard_payment_mode_check
@@ -12,7 +12,7 @@ drop function if exists public.setup_game(uuid, jsonb, text, int, int, text, tex
 create or replace function public.setup_game(
   p_game uuid, p_players jsonb, p_preset text, p_max_fan int default null, p_starting_points int default 1000,
   p_round_wind text default 'east', p_last_round_wind text default 'north', p_ruleset text default 'new18',
-  p_discard_payment_mode text default 'DISCARDER_PAYS_ALL'
+  p_discard_payment_mode text default 'DISCARDER_FULL_OTHERS_HALF'
 ) returns void language plpgsql security definer set search_path = public as $$
 declare g public.games; x jsonb; pid uuid; pname text; puser uuid; seats int[] := '{}'; pids uuid[] := '{}'; minf int;
 begin
