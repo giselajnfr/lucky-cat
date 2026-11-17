@@ -248,20 +248,28 @@ describe("determinism and points", () => {
     const i = hand("111m 222m 333m 555s 7p 7p", { winningTile: "7p" });
     expect(JSON.stringify(calculateScore(i))).toBe(JSON.stringify(calculateScore(i)));
   });
-  it("points equal faan (no multiplier, no money)", () => {
-    expect(calculatePoints(9, CFG)).toBe(9); expect(calculatePoints(0, CFG)).toBe(0);
+  it("converts faan to Hong Kong base points", () => {
+    expect([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((f) => calculatePoints(f, CFG)))
+      .toEqual([1, 2, 4, 8, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384]);
+    expect(calculatePoints(15, CFG)).toBe(384);
   });
 });
 
 describe("score settlement", () => {
   const p = { playerIds: ["a", "b", "c", "d"], dealerId: "a", basePoints: 5, config: CFG };
-  it("self draw: each other player pays the total; zero-sum", () => {
-    const d = calculateScoreDistribution({ ...p, winnerId: "b", method: "SELF_DRAW" });
-    expect(d.winner.points).toBe(15); expect(d.payments.every((x) => x.points === 5)).toBe(true);
+  it("self draw: each other player pays 2× base points", () => {
+    const d = calculateScoreDistribution({ ...p, basePoints: 16, winnerId: "b", method: "SELF_DRAW" });
+    expect(d.winner.points).toBe(96); expect(d.payments.every((x) => x.points === 32)).toBe(true);
   });
-  it("discard win: only the discarder pays", () => {
-    const d = calculateScoreDistribution({ ...p, winnerId: "b", discarderId: "c", method: "DISCARD" });
-    expect(d.winner.points).toBe(5); expect(d.payments.find((x) => x.playerId === "c")?.points).toBe(5); expect(d.payments.find((x) => x.playerId === "d")?.points).toBe(0);
+  it("discard win: discarder pays 3× base points", () => {
+    const d = calculateScoreDistribution({ ...p, basePoints: 16, winnerId: "b", discarderId: "c", method: "DISCARD" });
+    expect(d.winner.points).toBe(48); expect(d.payments.find((x) => x.playerId === "c")?.points).toBe(48); expect(d.payments.find((x) => x.playerId === "d")?.points).toBe(0);
+  });
+  it("split discard win: discarder pays 2× and each other player pays 1×", () => {
+    const cfg = { ...CFG, discardRules: { dealerMultiplier: 1, paymentMode: "DISCARDER_FULL_OTHERS_HALF" as const } };
+    const d = calculateScoreDistribution({ ...p, config: cfg, basePoints: 16, winnerId: "b", discarderId: "c", method: "DISCARD" });
+    expect(d.winner.points).toBe(64);
+    expect(d.payments.map((x) => x.points)).toEqual([16, 32, 16]);
   });
   it("discard win needs a valid discarder", () => {
     expect(() => calculateScoreDistribution({ ...p, winnerId: "b", method: "DISCARD" })).toThrow();
@@ -274,7 +282,7 @@ describe("score settlement", () => {
   });
   it("calculateScore attaches settlement only when the minimum is met", () => {
     const ok = calculateScore(hand("111m 999p 222s 555p 33s", { winningTile: "3s" }), { players: { winnerId: "b", discarderId: "c", dealerId: "a", playerIds: ["a", "b", "c", "d"] } });
-    expect(ok.scoreDistribution?.winner.points).toBe(5);
+    expect(ok.scoreDistribution?.winner.points).toBe(72);
     const low = calculateScore(hand("123m 456p 789s 111p 55s", { winningTile: "5s" }), { players: { winnerId: "b", discarderId: "c", dealerId: "a", playerIds: ["a", "b", "c", "d"] } });
     expect(low.scoreDistribution).toBeUndefined();
   });

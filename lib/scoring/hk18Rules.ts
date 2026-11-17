@@ -16,7 +16,7 @@ export const HK18_RULES = {
   dragonPongStacksWithDragonHands: false,   // Little / Great Dragon already include each dragon pong
   windPongStacksWithWindHands: false,       // Little / Great Wind already include each wind pong (seat and round wind too)
   chickenHandCanWinOnBonusFaan: true,
-  pointsPerFan: 1,
+  pointsPerFan: 1, // Legacy compatibility; pointCalculator uses the Hong Kong faan-to-points table.
   progression: { drawKeepsDealer: true, dealerWinKeepsDealer: true, lastRoundWind: "north" as const },
 };
 
