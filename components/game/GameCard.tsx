@@ -45,7 +45,7 @@ export function GameCard({ g }: { g: GameCardData }) {
   const sub = waiting ? "Belum dimulai" : `Ronde ${ROUND[g.current_round_wind as keyof typeof ROUND]} · Tangan ${hands + 1}`;
   const names = ps.map((p) => p.player_name).join(", ");
   return (
-    <Link href={`/game/${g.id}`} className={`flex items-center gap-3 rounded-2xl border border-l-4 border-cream/25 bg-[#7A4034] px-4 py-4 shadow-md shadow-black/25 transition hover:bg-[#86483B] ${amber ? "border-l-warn" : "border-l-pos"} ${ring}`}>
+    <Link href={`/game/${g.id}`} className={`flex items-center gap-3 rounded-2xl border border-l-4 border-cream/25 bg-[#7A4034] px-4 py-4 transition hover:bg-[#86483B] ${amber ? "border-l-warn" : "border-l-pos"} ${ring}`}>
       <div className="min-w-0 flex-1">
         <p className={`flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider ${amber ? "text-warn" : "text-pos"}`}>
           {amber ? <span className="h-2 w-2 rounded-full bg-warn" aria-hidden /> : (
