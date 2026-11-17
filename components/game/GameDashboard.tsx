@@ -20,7 +20,7 @@ const STATUS = { in_progress: "Sedang berlangsung", paused: "Dijeda", finished: 
 const METHOD = { self_draw: "Self Draw", discard: "Dari buangan", draw: "Seri" };
 
 /** canPlay: record, edit and undo hands (admin who opened the table, other admins, anyone who joined with the room code). canManage: also pause and finish (owner or admin). */
-export function GameDashboard({ initial, canPlay, canManage }: { initial: Full; canPlay: boolean; canManage: boolean }) {
+export function GameDashboard({ initial, canPlay, canManage, backHref = "/game", backLabel = "Game" }: { initial: Full; canPlay: boolean; canManage: boolean; backHref?: string; backLabel?: string }) {
   const supabase = useMemo(() => createClient(), []);
   const [d, setD] = useState<Full>(initial);
   const [recording, setRecording] = useState(false);
@@ -67,7 +67,7 @@ export function GameDashboard({ initial, canPlay, canManage }: { initial: Full; 
 
   return (
     <main className="space-y-4">
-      <BackLink href="/game" label="Game" />
+      <BackLink href={backHref} label={backLabel} />
       <header>
         <div className="flex items-start justify-between gap-3">
           <div><h1 className="text-[1.6rem] leading-tight">{game.name || `Game ${game.room_code}`}</h1>

@@ -175,3 +175,11 @@ export function configFromRuleset(id: RulesetId): GameConfig {
 }
 export const patternRulesOf = (id: RulesetId) => RULESETS[id].scoringRules.filter((x) => x.category === "pattern" && x.enabled);
 export const additionalRulesOf = (id: RulesetId) => RULESETS[id].scoringRules.filter((x) => x.category === "additional" && x.enabled);
+
+/** Where a rule first appears: "classic" (all three rulesets have it), "new6" (New 6 and New 18) or "new18" (New 18 only). */
+export function ruleOrigin(ruleId: string): RulesetId {
+  const has = (id: RulesetId) => RULESETS[id].scoringRules.some((r) => r.id === ruleId);
+  return has("classic") ? "classic" : has("new6") ? "new6" : "new18";
+}
+/** Rules this app adds on its own (not part of the published rule style). */
+export const HOUSE_RULE_IDS = ["seven-pairs"];

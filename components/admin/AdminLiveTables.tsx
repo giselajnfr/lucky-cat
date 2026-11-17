@@ -92,7 +92,7 @@ export function AdminLiveTables() {
                   {g.status === "paused" ? <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => call("admin_set_game_status", { p_game: g.id, p_status: "in_progress" })}>Resume</button>
                     : g.status === "in_progress" && <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => call("admin_set_game_status", { p_game: g.id, p_status: "paused" })}>Pause</button>}
                   {g.status !== "finished" && <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => confirm("Mark this game as finished?") && call("admin_set_game_status", { p_game: g.id, p_status: "finished" })}>Finish</button>}
-                  <Link href={`/game/${g.id}`} className="btn-secondary !min-h-[44px] flex-1">Buka game</Link>
+                  <Link href={`/admin/games/${g.id}`} className="btn-secondary !min-h-[44px] flex-1">Buka game</Link>
                   <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => confirm("Remove this game from the table?") && call("admin_release_table", { p_table: r.id })}>Release</button>
                 </div>
               </>) : (

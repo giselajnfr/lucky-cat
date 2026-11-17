@@ -27,7 +27,7 @@ export function StickyTabs({ header, tabs }: { header: React.ReactNode; tabs: Ta
   return (
     <div>
       {/* -mt-8 cancels the page's top padding so the pinned block sits flush at the top of the screen */}
-      <div className="sticky top-0 z-30 -mx-5 -mt-8 border-b border-line/60 bg-base px-5 pb-3 pt-4 shadow-lg shadow-black/20">
+      <div className="sticky top-0 z-30 -mx-5 -mt-8 bg-base px-5 pb-3 pt-4">
         {header}
         <div ref={bar} role="tablist" aria-label="Bagian aturan" className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-0.5 text-sm font-semibold [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {tabs.map((t) => (

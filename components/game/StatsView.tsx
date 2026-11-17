@@ -6,7 +6,7 @@ import { monthlyActivity, overall, patternCounts, playerDirectory, playerStats, 
 const RANGES = [{ id: "all", label: "Semua" }, { id: "30", label: "30 hari" }, { id: "90", label: "90 hari" }, { id: "year", label: "Tahun ini" }] as const;
 const stat = (label: string, v: string | number) => (<div className="card !p-3"><p className="text-[11px] text-muted">{label}</p><p className="text-xl font-extrabold">{v}</p></div>);
 
-export function StatsView({ games, players, hands }: { games: SGame[]; players: SPlayer[]; hands: SHand[] }) {
+export function StatsView({ games, players, hands, historyHref = (id) => `/history/${id}` }: { games: SGame[]; players: SPlayer[]; hands: SHand[]; historyHref?: (gameId: string) => string }) {
   const [range, setRange] = useState<(typeof RANGES)[number]["id"]>("all");
   const [who, setWho] = useState<string>("");   // "" = everyone
   const filtered = useMemo(() => {
@@ -34,7 +34,7 @@ export function StatsView({ games, players, hands }: { games: SGame[]; players: 
           <section className="card"><h2 className="section-label mb-3">Pola paling sering</h2><BarList data={ps.topPatterns.map((p) => ({ name: p.name, value: p.count }))} empty="Belum ada kemenangan." /></section>
           <section className="card"><h2 className="section-label mb-3">Performa dari waktu ke waktu (skor bersih kumulatif)</h2>
             <LineChart series={[{ name: ps.name, values: ps.performance.map((p) => p.cumulative) }]} xLabels={ps.performance.length ? [ps.performance[0].date.slice(0, 10), ps.performance[ps.performance.length - 1].date.slice(0, 10)] : undefined} /></section>
-          <section><h2 className="section-label mb-2">Riwayat game</h2><ul className="space-y-2">{[...ps.history].reverse().map((h) => (<li key={h.gameId}><a className="card flex justify-between !p-3 text-sm" href={`/history/${h.gameId}`}><span>{new Date(h.date).toLocaleDateString("id-ID", { dateStyle: "medium" })}</span><b>{h.score} poin{h.rank ? ` · #${h.rank}` : ""}</b></a></li>))}</ul></section>
+          <section><h2 className="section-label mb-2">Riwayat game</h2><ul className="space-y-2">{[...ps.history].reverse().map((h) => (<li key={h.gameId}><a className="card flex justify-between !p-3 text-sm" href={historyHref(h.gameId)}><span>{new Date(h.date).toLocaleDateString("id-ID", { dateStyle: "medium" })}</span><b>{h.score} poin{h.rank ? ` · #${h.rank}` : ""}</b></a></li>))}</ul></section>
         </>
       ) : (
         <>
