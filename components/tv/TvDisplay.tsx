@@ -127,17 +127,34 @@ function StatsBoard({ rows, type }: { rows: LeaderRow[]; type: string }) {
 
 function Highlight({ e, animate, more }: { e: WinningHandEvent; animate: boolean; more: number }) {
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-[1.2vw] bg-base p-[3vw] text-center">
-      <p className={`text-[4vw] font-extrabold ${animate ? "animate-pulse" : ""}`}>🎉 HU! 🎉</p>
-      <h1 className="text-[8vw] font-extrabold leading-none">🀄 {e.winner.name.toUpperCase()} HU!</h1>
-      <p className="text-[2.4vw] font-semibold text-muted">TABLE {pad(e.tableNumber)} · {ROUND_NAME[e.roundWind] ?? e.roundWind} · {e.winningMethod === "self_draw" ? "Self Draw" : "Discard Win"}</p>
-      <div className="flex flex-wrap justify-center gap-[1.5vw] text-[3vw] font-bold">{e.detectedFan.map((f) => <span key={f.name}>🀄 {f.name} <span className="text-muted">{f.fan}</span></span>)}</div>
-      <p className="text-[7vw] font-extrabold">{e.totalFan > 0 ? `${e.totalFan} FAN` : `${e.points} POIN`}</p>
-      <p className="text-[4vw] font-bold">+{fmt(e.points)} POINTS</p>
-      <div className="flex flex-wrap justify-center gap-[0.4vw]">{e.handTiles.map((t, i) => <span key={i} className="rounded-[0.5vw] bg-cream px-[0.8vw] py-[0.3vw] text-[2vw] font-extrabold text-base">{t}</span>)}</div>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {e.photoUrl && <img src={e.photoUrl} alt="Winning hand" className="max-h-[22vh] rounded-[1vw] border-[0.2vw] border-line" />}
-      {more > 0 && <p className="absolute bottom-[1.5vw] right-[2vw] text-[1.5vw] text-muted">+{more} more winning hand{more > 1 ? "s" : ""} next</p>}
+    <div className="absolute inset-0 z-10 flex items-center justify-center overflow-y-auto bg-base/95 px-[4vw] py-[3vh]">
+      <section className="relative flex max-h-[88vh] w-full max-w-[88vw] flex-col items-center overflow-hidden rounded-[2vw] border-[0.18vw] border-line bg-card px-[4vw] py-[3vh] text-center shadow-2xl">
+        <div className="absolute inset-x-0 top-0 h-[0.65vh] bg-cream/80" />
+        <div className="flex w-full flex-wrap items-center justify-between gap-[1vw] pt-[0.8vh]">
+          <span className="rounded-full border border-line bg-base/70 px-[1.4vw] py-[0.7vh] text-[1.25vw] font-extrabold uppercase tracking-[0.18em] text-muted">Winning hand</span>
+          <div className="flex flex-wrap justify-center gap-[0.7vw] text-[1.25vw] font-bold text-muted">
+            <span className="rounded-full bg-base/70 px-[1.2vw] py-[0.7vh]">TABLE {pad(e.tableNumber)}</span>
+            <span className="rounded-full bg-base/70 px-[1.2vw] py-[0.7vh]">{ROUND_NAME[e.roundWind] ?? e.roundWind}</span>
+            <span className="rounded-full bg-base/70 px-[1.2vw] py-[0.7vh]">{e.winningMethod === "self_draw" ? "SELF DRAW" : "DISCARD WIN"}</span>
+          </div>
+        </div>
+        <div className="my-[2.4vh] flex flex-col items-center">
+          <p className={`mb-[1vh] text-[2vw] font-bold tracking-[0.28em] text-cream/70 ${animate ? "animate-pulse" : ""}`}>🀄 HU! 🀄</p>
+          <h1 className="text-[5.2vw] font-black leading-[1.05] tracking-tight text-cream">{e.winner.name}</h1>
+          <p className="mt-[1vh] text-[1.55vw] font-semibold text-muted">Winning player</p>
+        </div>
+        <div className="mb-[2.2vh] grid w-full max-w-[62vw] grid-cols-2 gap-[1vw]">
+          <div className="rounded-[1.2vw] border border-line bg-base/55 px-[2vw] py-[1.5vh]"><p className="text-[1.1vw] font-bold uppercase tracking-[0.16em] text-muted">Total faan</p><p className="mt-[0.5vh] text-[3.2vw] font-black leading-none text-cream">{e.totalFan > 0 ? e.totalFan : "—"}</p></div>
+          <div className="rounded-[1.2vw] border border-line bg-base/55 px-[2vw] py-[1.5vh]"><p className="text-[1.1vw] font-bold uppercase tracking-[0.16em] text-muted">Points won</p><p className="mt-[0.5vh] text-[3.2vw] font-black leading-none text-cream">+{fmt(e.points)}</p></div>
+        </div>
+        {e.detectedFan.length > 0 && <div className="mb-[2vh] w-full max-w-[76vw]"><p className="mb-[1vh] text-[1.05vw] font-extrabold uppercase tracking-[0.2em] text-muted">Winning patterns</p><div className="flex flex-wrap justify-center gap-[0.7vw]">{e.detectedFan.map((f) => <span key={f.name} className="inline-flex items-center gap-[0.65vw] rounded-full border border-line bg-base/60 px-[1.2vw] py-[0.8vh] text-[1.25vw] font-semibold text-cream">{f.name}<span className="rounded-full bg-cream px-[0.65vw] py-[0.25vh] text-[1vw] font-extrabold text-base">{f.fan}F</span></span>)}</div></div>}
+        {e.handTiles.length > 0 && <div className="mb-[1.8vh] w-full"><p className="mb-[0.8vh] text-[1.05vw] font-extrabold uppercase tracking-[0.2em] text-muted">Winning hand</p><div className="flex flex-wrap justify-center gap-[0.65vw]">{e.handTiles.map((t, i) => <span key={i} className="flex min-h-[8vh] min-w-[4.6vw] items-center justify-center rounded-[0.7vw] border-[0.12vw] border-[#D9C9A9] bg-cream px-[1vw] py-[0.8vh] text-[2.15vw] font-extrabold text-base shadow-md">{t}</span>)}</div></div>}
+        {e.photoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={e.photoUrl} alt="Winning hand" className="max-h-[19vh] max-w-[48vw] rounded-[1vw] border-[0.15vw] border-line object-contain" />
+        )}
+        {more > 0 && <p className="mt-[1.4vh] text-[1.05vw] font-semibold text-muted">+{more} more winning hand{more > 1 ? "s" : ""} in queue</p>}
+      </section>
     </div>
   );
 }
