@@ -99,7 +99,7 @@ export default function Page() {
   const rs = getRuleset();   // the full rule set (New 18 = superset); each rule is labelled with where it comes from
   const pattern = rs.scoringRules.filter((r) => r.category === "pattern" && r.enabled);
   const additional = rs.scoringRules.filter((r) => r.category === "additional" && r.enabled);
-  const header = <h1 className="text-[2.75rem] font-extrabold leading-[1.05] tracking-tight text-cream">Aturan Hong Kong</h1>;
+  const header = <h1 className="text-[1.9rem] font-extrabold leading-tight">Aturan Mahjong</h1>;
   return (
     <main>
       <StickyTabs header={header} tabs={[
