@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { StickyTabs } from "@/components/ui/StickyTabs";
 import { HandView } from "@/components/mahjong/HandView";
 import { Tile } from "@/components/mahjong/Tile";
-import { HK18_RULES, HOUSE_RULE_IDS, RULESETS, RULESET_IDS, ruleOrigin, exampleToInput, getRuleset, parseTiles } from "@/lib/scoring";
-import type { FanRuleConfig, RulesetId } from "@/lib/scoring";
+import { HK18_RULES, HOUSE_RULE_IDS, RULESETS, ruleOrigin, exampleToInput, getRuleset, parseTiles } from "@/lib/scoring";
+import type { FanRuleConfig } from "@/lib/scoring";
 
 const ROUND_NAME: Record<string, string> = { east: "Timur", south: "Selatan", west: "Barat", north: "Utara" };
 const WIND = { E: "Timur", S: "Selatan", W: "Barat", N: "Utara" } as const;
@@ -12,6 +11,16 @@ const row = (s: string, w = 46) => {
   const tiles = parseTiles(s);
   return <div className="flex gap-1" style={{ maxWidth: tiles.length * (w + 4) }}>{tiles.map((t, i) => <div key={i} className="min-w-0 flex-1 [&>span]:block"><Tile t={t} fluid /></div>)}</div>;
 };
+/** Rule example in the order it is written: one block per set, the pair last (so chows read 123 123 456, never 112233). */
+function exampleGroups(hand: string): string[][] {
+  const out: string[][] = [];
+  for (const tok of hand.trim().split(/\s+/)) {
+    const tiles = parseTiles(tok), prev = out[out.length - 1];
+    if (tiles.length === 1 && prev && prev.length < 4 && prev.every((t) => t === tiles[0]) && !/^\d/.test(tok)) prev.push(tiles[0]);
+    else out.push([...tiles]);
+  }
+  return out.length > 8 ? [out.flat()] : out;   // e.g. Thirteen Orphans: one plain row
+}
 const H2 = ({ id, children }: { id: string; children: React.ReactNode }) => <h2 id={id} className="mb-3 scroll-mt-4 text-xl">{children}</h2>;
 
 function RuleCard({ r }: { r: FanRuleConfig }) {
@@ -25,25 +34,56 @@ function RuleCard({ r }: { r: FanRuleConfig }) {
       <p className="text-sm">{r.summary}</p>
       <ul className="list-disc space-y-0.5 pl-5 text-sm text-muted">{r.conditions.map((c) => <li key={c}>{c}</li>)}</ul>
       {r.needsInput && <p className="text-xs text-muted">Perlu diisi pemain: <b className="text-cream">{r.needsInput}</b></p>}
-      {ex && (<div><p className="mb-1.5 text-xs font-semibold text-muted">Contoh{ctx ? ` (${ctx})` : ""}</p><HandView concealed={ex.concealedTiles} melds={ex.melds} winningTile={ex.winningTile} flowers={ex.flowers} width={32} fit /></div>)}
+      {ex && (<div><p className="mb-1.5 text-xs font-semibold text-muted">Contoh{ctx ? ` (${ctx})` : ""}</p><HandView concealed={ex.concealedTiles} groups={exampleGroups(r.example!.hand)} melds={ex.melds} winningTile={ex.winningTile} flowers={ex.flowers} width={32} fit /></div>)}
     </article>
   );
 }
 
+/** Compact "Faan tambahan" lists, grouped like a cheat sheet: one short line per rule, tiles only for winds and dragons. */
+const SHORT: Record<string, string> = {
+  "seat-wind": "Pong/kong angin sesuai kursi pemenang.", "round-wind": "Pong/kong angin ronde yang sedang berjalan.", "dragon-pong": "Pong/kong naga (merah, hijau atau putih).",
+  "no-flower": "Tidak punya bunga atau musim sama sekali.", "suitable-flower": "Bunga/musim bernomor sama dengan kursi pemenang.", "full-flowers": "Empat bunga atau empat musim lengkap.", "eight-flowers": "Kedelapan bunga dan musim. Menggantikan Full Flowers.",
+  "self-draw": "Kartu menang diambil sendiri dari tumpukan.", "concealed-hand": "Menang dari buangan tanpa set terbuka.", "last-tile": "Menang dengan kartu terakhir.", "robbing-kong": "Menang dengan kartu yang dipakai lawan untuk menambah kong.",
+  "single-wait": "Menunggu satu kartu: melengkapi pasangan.", "heavenly-hand": "Dong menang dengan tangan awalnya.", "earthly-hand": "Pemain non-dong menang dari buangan pertama dong.", "fully-exposed": "Semua set dibuka, menang dari buangan untuk pasangan.", "three-concealed-pungs": "Tiga pong/kong tertutup.", "fully-concealed": "Self Draw tanpa set terbuka (menggantikan Self Draw + Concealed Hand).",
+};
+const UNIT: Record<string, string> = { "dragon-pong": "1 per set", "suitable-flower": "1 per kartu", "full-flowers": "2 per set" };
+const GROUPS: { title: string; ids: string[]; note?: string }[] = [
+  { title: "Angin & naga", ids: ["seat-wind", "round-wind", "dragon-pong"], note: "Angin ganda: bila angin kursi sama dengan angin ronde, pong-nya bernilai 2 faan." },
+  { title: "Bunga & musim", ids: ["no-flower", "suitable-flower", "full-flowers", "eight-flowers"], note: "Nomor bunga dan musim mengikuti angin: 1 Timur, 2 Selatan, 3 Barat, 4 Utara." },
+];
+const tilesFor = (id: string) => id === "seat-wind" ? <div className="mt-2">{row("E E E", 34)}</div> : id === "round-wind" ? <div className="mt-2">{row("S S S", 34)}</div>
+  : id === "dragon-pong" ? <div className="mt-2 flex gap-3">{["RD RD RD", "GD GD GD", "WD WD WD"].map((t) => <div key={t} className="min-w-0 flex-1">{row(t, 34)}</div>)}</div> : null;
 
-export default function Page({ searchParams }: { searchParams?: { ruleset?: string } }) {
+function AdditionalCard({ r }: { r: FanRuleConfig }) {
+  const origin = HOUSE_RULE_IDS.includes(r.id) ? null : ruleOrigin(r.id);
+  return (
+    <article id={r.id} className="card scroll-mt-4 !px-4 !py-3">
+      <div className="flex items-baseline justify-between gap-3"><h3 className="text-base font-bold leading-tight text-cream">{r.name}</h3>
+        <span className="shrink-0 rounded-full bg-cream px-3 py-0.5 text-sm font-extrabold text-base">{UNIT[r.id] ?? `${r.fan} faan`}</span></div>
+      <p className="mt-1 text-sm text-muted">{SHORT[r.id] ?? r.summary}{origin && origin !== "classic" ? <span className="ml-2 rounded-full border border-line px-2 py-0.5 text-[10px] font-semibold">{RULESETS[origin].name.replace("Hong Kong ", "HK ")}</span> : null}</p>
+      {tilesFor(r.id)}
+    </article>
+  );
+}
+function AdditionalList({ rules }: { rules: FanRuleConfig[] }) {
+  const used = new Set(GROUPS.flatMap((g) => g.ids));
+  const groups = [...GROUPS.map((g) => ({ ...g, rules: g.ids.map((id) => rules.find((r) => r.id === id)).filter(Boolean) as FanRuleConfig[] })),
+    { title: "Cara menang", note: undefined as string | undefined, ids: [], rules: rules.filter((r) => !used.has(r.id)) }].filter((g) => g.rules.length);
+  return (
+    <div className="space-y-6">{groups.map((g) => (
+      <div key={g.title} className="space-y-2.5"><h2 className="section-label">{g.title}</h2>
+        {g.rules.map((r) => <AdditionalCard key={r.id} r={r} />)}
+        {g.note && <p className="px-1 text-xs text-muted">{g.note}</p>}</div>))}
+    </div>
+  );
+}
+
+export default function Page() {
   const p = HK18_RULES.progression;
-  const rs = getRuleset(searchParams?.ruleset);
+  const rs = getRuleset();   // the full rule set (New 18 = superset); each rule is labelled with where it comes from
   const pattern = rs.scoringRules.filter((r) => r.category === "pattern" && r.enabled);
   const additional = rs.scoringRules.filter((r) => r.category === "additional" && r.enabled);
-  const header = (
-    <>
-      <h1 className="text-[1.5rem] leading-tight">Aturan Hong Kong</h1>
-      <div className="mt-2 grid grid-cols-3 gap-2" role="group" aria-label="Pilih ruleset">
-        {RULESET_IDS.map((id) => <Link key={id} href={`/guidebook?ruleset=${id}`} scroll={false} aria-current={rs.id === id ? "true" : undefined} className={`flex min-h-[40px] items-center justify-center rounded-xl border px-2 text-center text-sm font-bold ${rs.id === id ? "border-cream bg-cream text-base" : "border-line bg-card text-cream"}`}>{RULESETS[id as RulesetId].name.replace("Hong Kong ", "")}</Link>)}
-      </div>
-    </>
-  );
+  const header = <h1 className="text-[1.5rem] leading-tight">Aturan Hong Kong</h1>;
   return (
     <main>
       <StickyTabs header={header} tabs={[
@@ -75,7 +115,7 @@ export default function Page({ searchParams }: { searchParams?: { ruleset?: stri
       <section><p className="mb-3 text-sm text-muted">Label di tiap aturan menunjukkan aturan itu berasal dari HK Classic, HK New 6, atau HK New 18.</p><div className="space-y-3">{pattern.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
         ) },
         { id: "tambahan", label: "Faan tambahan", content: (
-      <section><p className="mb-3 text-sm text-muted">Ditambahkan di atas pola tangan. Label di tiap aturan menunjukkan aturan itu berasal dari HK Classic, HK New 6, atau HK New 18.</p><div className="space-y-3">{additional.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
+      <section><p className="mb-3 text-sm text-muted">Ditambahkan di atas faan pola tangan.</p><AdditionalList rules={additional} /></section>
         ) },
         { id: "aturan", label: "Aturan lain", content: (
       <section id="aturan" className="scroll-mt-4 space-y-3">

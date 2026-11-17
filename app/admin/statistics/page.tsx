@@ -23,7 +23,7 @@ export default async function Page() {
     <main>
       <h1 className="text-3xl font-extrabold">Statistics</h1>
       <p className="mt-1 text-sm text-muted">Semua meja, dari game yang sudah selesai. Pilih pemain untuk melihat angka per orang.</p>
-      <StatsView games={games} players={players} hands={hands} historyHref={(id) => `/admin/games/${id}/history`} />
+      <StatsView games={games} players={players} hands={hands} historyHref="/admin/games/{id}/history" />
     </main>
   );
 }
