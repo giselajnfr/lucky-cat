@@ -10,6 +10,8 @@ export type GameRow = {
   rule_preset: RulePreset;
   /** Hong Kong ruleset: classic | new6 | new18 (fan table, special rules). */
   ruleset?: "classic" | "new6" | "new18";
+  /** Settlement rule when a win is claimed from a discard. */
+  discard_payment_mode?: "DISCARDER_PAYS_ALL" | "DISCARDER_FULL_OTHERS_HALF";
   /** Play-time guide set by the admin when opening the room (minutes, null = no clock). Never closes the room. */
   session_minutes: number | null; session_started_at: string;
   /** false = the admin opened the room but the players have not entered names / rules yet. */

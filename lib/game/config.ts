@@ -4,10 +4,11 @@ import type { GameState } from "../game-engine";
 import type { GameRow } from "./types";
 
 /** The rules for ONE game: the chosen ruleset's configuration plus the per-game options the players chose when they started the session (minimum faan, faan cap, last round). */
-export const configForGame = (g: Pick<GameRow, "min_fan" | "last_round_wind"> & { max_fan?: number | null; rule_preset?: GameRow["rule_preset"]; ruleset?: string | null }): GameConfig => ({
+export const configForGame = (g: Pick<GameRow, "min_fan" | "last_round_wind"> & { max_fan?: number | null; rule_preset?: GameRow["rule_preset"]; ruleset?: string | null; discard_payment_mode?: GameRow["discard_payment_mode"] }): GameConfig => ({
   // The ruleset (Classic / New 6 / New 18) decides the fan table; a row without one keeps the legacy single HK18 table.
   ...(isRulesetId(g.ruleset) ? configFromRuleset(g.ruleset) : DEFAULT_GAME_CONFIG), minimumFan: g.min_fan, maximumFan: g.max_fan ?? null,
   flatPointsPerWin: g.rule_preset === "chicken" ? 1 : null,   // Chicken Hand: no faan, every win is 1 point
+  discardRules: { ...((isRulesetId(g.ruleset) ? configFromRuleset(g.ruleset) : DEFAULT_GAME_CONFIG).discardRules), paymentMode: g.discard_payment_mode ?? "DISCARDER_PAYS_ALL" },
   progression: { ...DEFAULT_GAME_CONFIG.progression, lastRoundWind: g.last_round_wind },
 });
 

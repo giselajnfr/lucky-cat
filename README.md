@@ -76,3 +76,6 @@ In the Supabase SQL Editor, with your account already set to ADMIN:
 - Run `supabase/migration_005_room_setup_and_clock.sql` after migration 004. It also needs `SUPABASE_SERVICE_ROLE_KEY` on the server (already required for recording hands).
 - Demo-seeded games store tile lists but no hand details, so their hands can be viewed but not edited.
 - Chicken Hand: faan are not counted and there is no cap. Every valid win is worth 1 point (`flatPointsPerWin` in the scoring config), settled like any other hand: the discarder pays 1, or on a self draw each opponent pays 1.
+
+
+Run `supabase/migration_010_discard_payment_mode.sql` after migration 009 to add the per-table discard settlement choice (Discarder Pays All or Split) and update `setup_game`.
