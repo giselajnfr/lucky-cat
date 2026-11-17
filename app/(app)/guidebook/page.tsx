@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StickyTabs } from "@/components/ui/StickyTabs";
 import { HandView } from "@/components/mahjong/HandView";
 import { Tile } from "@/components/mahjong/Tile";
 import { HK18_RULES, RULESETS, RULESET_IDS, exampleToInput, getRuleset, parseTiles } from "@/lib/scoring";
@@ -34,20 +35,22 @@ export default function Page({ searchParams }: { searchParams?: { ruleset?: stri
   const rs = getRuleset(searchParams?.ruleset);
   const pattern = rs.scoringRules.filter((r) => r.category === "pattern" && r.enabled);
   const additional = rs.scoringRules.filter((r) => r.category === "additional" && r.enabled);
-  const waits = RULESETS.new18.scoringRules.filter((r) => r.id === "single-wait");
-  const waitFan = (id: string) => (id === "single-wait" ? rs.specialRules.waitFan.single : id === "closed-wait" ? rs.specialRules.waitFan.closed : id === "edge-wait" ? rs.specialRules.waitFan.edge : rs.specialRules.waitFan.twoSided);
+  const header = (
+    <>
+      <h1 className="text-[1.5rem] leading-tight">Aturan Hong Kong</h1>
+      <div className="mt-2 grid grid-cols-3 gap-2" role="group" aria-label="Pilih ruleset">
+        {RULESET_IDS.map((id) => <Link key={id} href={`/guidebook?ruleset=${id}`} scroll={false} aria-current={rs.id === id ? "true" : undefined} className={`flex min-h-[40px] items-center justify-center rounded-xl border px-2 text-center text-sm font-bold ${rs.id === id ? "border-cream bg-cream text-base" : "border-line bg-card text-cream"}`}>{RULESETS[id as RulesetId].name.replace("Hong Kong ", "")}</Link>)}
+      </div>
+    </>
+  );
   return (
-    <main className="space-y-8">
-      <header><h1 className="text-[1.75rem]">Aturan Hong Kong</h1><p className="mt-1 text-sm text-muted">Panduan Mahjong untuk pemula dan pemain lama. Nilai faan di halaman ini diambil dari konfigurasi yang sama dengan kalkulator.</p>
-        <nav className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1 text-sm font-semibold" aria-label="Lompat ke">
-          {[["dasar", "Dasar"], ["pola", "Pola tangan"], ["tambahan", "Faan tambahan"], ["wait", "Jenis wait"], ["aturan", "Aturan lain"]].map(([id, l]) => <a key={id} href={`#${id}`} className="shrink-0 rounded-full border border-line bg-card px-3.5 py-2">{l}</a>)}</nav>
-        <div className="mt-3 grid grid-cols-3 gap-2" role="tablist" aria-label="Pilih ruleset">{RULESET_IDS.map((id) => <Link key={id} href={`/guidebook?ruleset=${id}`} scroll={false} role="tab" aria-selected={rs.id === id} className={`flex min-h-[44px] items-center justify-center rounded-xl border px-2 text-center text-sm font-bold ${rs.id === id ? "border-cream bg-cream text-base" : "border-line bg-card text-cream"}`}>{RULESETS[id as RulesetId].name.replace("Hong Kong ", "")}</Link>)}</div>
-        <div className="card mt-3 space-y-1" aria-live="polite"><p className="section-label">Ruleset aktif</p><p className="text-xl font-extrabold">{rs.emoji} {rs.name} <span className="text-base font-semibold text-muted">{rs.nameZh}</span></p>
-          <p className="text-sm">Minimum untuk menang: <b>{rs.minimumFanToWin} faan</b> · Maksimum: <b>{rs.maximumFan} faan</b></p><p className="text-xs text-muted">{rs.description} Aturan di bawah hanya berlaku untuk {rs.name}.</p></div>
-        <div className="mt-3 grid grid-cols-2 gap-2"><Link href="/quick-score" className="btn-secondary">Hitung skor</Link><Link href="/game" className="btn-secondary">Game Tracker</Link></div></header>
-
-      <section><H2 id="dasar">Dasar Mahjong</H2>
+    <main>
+      <StickyTabs header={header} tabs={[
+        { id: "dasar", label: "Dasar", content: (
+      <section>
         <div className="space-y-4">
+          <p className="text-sm text-muted">Panduan Mahjong untuk pemula dan pemain lama. Nilai faan di halaman ini diambil dari konfigurasi yang sama dengan kalkulator.</p>
+          <div className="grid grid-cols-2 gap-2"><Link href="/quick-score" className="btn-secondary">Hitung skor</Link><Link href="/game" className="btn-secondary">Game Tracker</Link></div>
           <p className="text-sm">Mahjong dimainkan empat orang dengan 136 kartu (ditambah kartu bunga dan musim). Tujuannya menyusun <b>4 set dan 1 pasangan</b> dari 14 kartu, lebih dulu dari lawan.</p>
           <div className="card space-y-3"><h3>Jenis kartu</h3>
             <div><p className="mb-1 text-xs font-semibold text-muted">Karakter (萬) 1–9</p>{row("123456789m")}</div>
@@ -67,16 +70,15 @@ export default function Page({ searchParams }: { searchParams?: { ruleset?: stri
           <div className="card space-y-2 text-sm"><h3>Minimum {rs.minimumFanToWin} faan · maksimum {rs.maximumFan} faan</h3>
             <p>Pada {rs.name}, tangan menang harus bernilai minimal <b>{rs.minimumFanToWin} faan</b> untuk sah, dan faan dibayar paling banyak <b>{rs.maximumFan} faan</b> (meja boleh memilih batas lain saat membuat game). Faan dari pola tangan dan faan tambahan dijumlahkan. Chicken Hand bernilai 0 faan, jadi tidak cukup sendirian. Pemain memilih buku aturan sendiri saat memulai meja: <b>Chicken Hand</b> (tanpa minimum), <b>Beginner</b> (minimum 3 faan) atau <b>Advanced</b> (minimum 5 faan), dan boleh memakai batas faan (cap).</p></div>
         </div></section>
-
-      <section><H2 id="pola">Pola tangan</H2><div className="space-y-3">{pattern.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
-      <section><H2 id="tambahan">Faan tambahan</H2><p className="mb-3 text-sm text-muted">Ditambahkan di atas pola tangan.</p><div className="space-y-3">{additional.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
-
-      <section id="wait" className="scroll-mt-4 space-y-3"><H2 id="wait-h">Jenis wait dan pasangan</H2>
-        <div className="card space-y-2 text-sm"><p>Wait adalah cara kartu menang melengkapi tangan. Aplikasi membacanya dari susunan tangan: bila satu kartu bisa dibaca lebih dari satu cara, nilai terbaik bagi pemenang yang dipakai.</p>
-          <p><b>Pasangan 2-5-8 (二五八將)</b>: {rs.specialRules.pair258 ? "pasangan berupa angka 2, 5 atau 8 memberi 1 faan." : "tidak dihitung di ruleset ini."}</p></div>
-        {waits.map((r) => { const f = waitFan(r.id); return <RuleCard key={r.id} r={{ ...r, fan: f, enabled: true, summary: (r.id === "single-wait" && !rs.specialRules.waitBonuses) || (r.id !== "single-wait" && f === 0) ? `${r.summary} Di ${rs.name}: dideteksi dan ditampilkan, tanpa faan.` : r.summary }} />; })}</section>
-
-      <section id="aturan" className="scroll-mt-4 space-y-3"><H2 id="aturan-lain">Aturan lain</H2>
+        ) },
+        { id: "pola", label: "Pola tangan", content: (
+      <section><div className="space-y-3">{pattern.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
+        ) },
+        { id: "tambahan", label: "Faan tambahan", content: (
+      <section><p className="mb-3 text-sm text-muted">Ditambahkan di atas pola tangan.</p><div className="space-y-3">{additional.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
+        ) },
+        { id: "aturan", label: "Aturan lain", content: (
+      <section id="aturan" className="scroll-mt-4 space-y-3">
         <div className="card space-y-2 text-sm"><h3>Cara faan dijumlahkan</h3>
           <ul className="list-disc space-y-1 pl-5">
             <li>Semua pola yang cocok dijumlahkan.</li>
@@ -111,7 +113,8 @@ export default function Page({ searchParams }: { searchParams?: { ruleset?: stri
             <li>Game selesai setelah ronde {ROUND_NAME[p.lastRoundWind]}.</li>
           </ul></div>
       </section>
-
+        ) },
+      ]} />
     </main>
   );
 }
