@@ -47,7 +47,6 @@ function RuleCard({ r }: { r: FanRuleConfig }) {
       <div className="flex items-baseline justify-between gap-3"><h3 className="text-xl font-extrabold leading-tight text-cream">{r.name}{!HOUSE_RULE_IDS.includes(r.id) && ruleOrigin(r.id) !== "classic" ? <span className="ml-2 inline-block align-middle rounded-full border border-line px-2.5 py-1 text-[11px] font-bold text-muted">{RULESETS[ruleOrigin(r.id)].name.replace("Hong Kong ", "HK ")}</span> : null}</h3>
         <span className="shrink-0 rounded-full bg-cream px-3 py-1 text-sm font-extrabold text-base">{r.perUnit ? `${r.fan} per kartu` : `${r.fan} faan`}</span></div>
       <p className="text-sm">{r.summary}</p>
-      <ul className="list-disc space-y-0.5 pl-5 text-sm text-muted">{r.conditions.map((c) => <li key={c}>{c}</li>)}</ul>
       {r.needsInput && <p className="text-xs text-muted">Perlu diisi pemain: <b className="text-cream">{r.needsInput}</b></p>}
       {ex && (<div><p className="mb-1.5 text-xs font-semibold text-muted">Contoh pola{ctx ? ` (${ctx})` : ""}</p><FocusedPatternExample rule={r} hand={r.example!.hand} /></div>)}
     </article>
