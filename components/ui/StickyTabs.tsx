@@ -32,7 +32,7 @@ export function StickyTabs({ header, tabs }: { header: React.ReactNode; tabs: Ta
         <div ref={bar} role="tablist" aria-label="Bagian aturan" className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-0.5 text-sm font-semibold [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {tabs.map((t) => (
             <button key={t.id} type="button" role="tab" id={`tab-${t.id}`} aria-selected={active === t.id} aria-controls={`panel-${t.id}`} onClick={() => pick(t.id)}
-              className={`min-h-[40px] shrink-0 rounded-full border px-4 transition ${active === t.id ? "border-cream bg-cream text-base" : "border-line bg-card text-cream"}`}>{t.label}</button>
+              className={`min-h-[40px] shrink-0 rounded-full border px-4 text-sm font-semibold leading-none transition ${active === t.id ? "border-cream bg-cream text-[#461F1A]" : "border-line bg-card text-cream"}`}>{t.label}</button>
           ))}
         </div>
       </div>

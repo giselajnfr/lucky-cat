@@ -39,7 +39,7 @@ const NEW_RULES: FanRuleConfig[] = [
   na("three-concealed-pungs", "Three Concealed Pungs (三暗刻)", 2, "Tiga pong/kong tertutup. Dicentang pemain: pong yang diselesaikan kartu buangan lawan dianggap terbuka.", ["Minimal tiga set pong/kong di tangan", "Ketiganya tertutup (tidak diambil dari buangan)", "Dicentang manual di Poin tambahan"], undefined),
   na("heavenly-hand", "Heavenly Hand (天胡)", 13, "Dong menang dengan tangan awalnya.", ["Pemenang adalah dong", "Menang dengan 14 kartu awal"], undefined),
   na("earthly-hand", "Earthly Hand (地胡)", 13, "Pemain non-dong menang dari buangan pertama dong.", ["Pemenang bukan dong", "Menang dari buangan pertama dong"], undefined),
-  na("fully-exposed", "Fully Exposed (全求人)", 1, "Semua set dibuka, menang dari buangan untuk melengkapi pasangan.", ["Semua set diambil dari buangan", "Menang dari buangan, kartu menang melengkapi pasangan"], undefined),
+  na("fully-exposed", "All from Others", 1, "Semua set dibuka, menang dari buangan untuk melengkapi pasangan.", ["Semua set diambil dari buangan", "Menang dari buangan, kartu menang melengkapi pasangan"], undefined),
   np("three-suits-pung", "Three Suits Pung (三同刻)", 3, "Tiga pong/kong angka yang sama di tiga jenis berbeda.", ["Pong angka sama di karakter, bambu dan lingkaran"], { hand: "555m 555p 555s 123p 99m", win: "9m" }),
   np("three-suits-chow", "Three Suits Chow (三同順)", 3, "Tiga chow yang sama di tiga jenis berbeda.", ["Chow identik di karakter, bambu dan lingkaran"], { hand: "234m 234p 234s 678p 55s", win: "5s" }),
   np("all-concealed-triplets", "All Concealed Triplets (坎坎胡)", 10, "Keempat set adalah pong/kong tertutup. Harus Self Draw atau menang pada pasangan.", ["4 pong tertutup", "Pong yang diselesaikan buangan lawan tidak tertutup", "Three Concealed Pungs dan All Pongs tidak dihitung lagi"], { hand: "111m 222p 333s 444m 55p", win: "5p", method: "SELF_DRAW" }),
@@ -55,10 +55,10 @@ const get = (id: string, over: Partial<FanRuleConfig> = {}): FanRuleConfig => { 
 
 /** Foundation hands: the same in all three rulesets. */
 const FOUNDATION = ["chicken-hand", "all-chows", "all-pongs", "half-flush", "full-flush", "little-dragon", "great-dragon", "little-wind", "great-wind", "all-honors", "seven-pairs",
-  "nine-gates", "thirteen-orphans", "four-kongs", "seat-wind", "round-wind", "dragon-pong", "suitable-flower", "no-flower", "full-flowers", "eight-flowers", "self-draw", "last-tile", "robbing-kong", "heavenly-hand", "earthly-hand"];
+  "nine-gates", "thirteen-orphans", "four-kongs", "seat-wind", "round-wind", "dragon-pong", "suitable-flower", "no-flower", "full-flowers", "eight-flowers", "self-draw", "self-draw-after-kong", "last-tile", "robbing-kong", "heavenly-hand", "earthly-hand"];
 /** The six extra patterns of New 6. */
 const NEW6_EXTRA = ["pair-258", "concealed-hand", "single-wait", "fully-concealed", "all-simples", "lacking-a-suit"];
-/** What New 18 adds on top of New 6 (Snake Hand 一條龍 is the app's Pure Straight). Fully Exposed (全求人) and Three Concealed Pungs are ticked by hand (MANUAL_FAN_IDS). */
+/** What New 18 adds on top of New 6 (Snake Hand 一條龍 is the app's Pure Straight). All from Others and Three Concealed Pungs are ticked by hand (MANUAL_FAN_IDS). */
 const NEW18_EXTRA = ["pure-straight", "double-chow", "four-into-one", "min-max-chow", "min-max-pung", "three-sequence-pung", "three-concealed-pungs", "fully-exposed", "three-suits-pung", "three-suits-chow",
   "four-sequence-pung", "all-concealed-triplets", "double-double-chows", "all-types", "mixed-orphans", "pure-orphans", "all-terminals", "closed-wait", "edge-wait", "two-sided-wait"];
 
@@ -134,16 +134,16 @@ export const RULESETS: Record<RulesetId, RulesetConfig> = {
   new18: {
     id: "new18", name: "Hong Kong New 18", nameZh: "新章十八", emoji: "🀄",
     description: "Ruleset paling lengkap: New 6 ditambah pola sekuens, pong dan orphans New 18. Ini adalah aturan rumah HK18 yang sudah ada di aplikasi, dilengkapi.",
-    minimumFanToWin: 3, maximumFan: 18,
+    minimumFanToWin: 3, maximumFan: 13,
     specialRules: { ...SPECIAL, sevenPairs: true, thirteenOrphans: true, pair258: true, doubleChow: true, waitBonuses: true, flowerBonuses: true, waitFan: { ...SPECIAL.waitFan, single: 1 } },
     // Fully Concealed is listed but OFF: the confirmed house rule is that a concealed Self Draw scores Self Draw 1 (not Concealed Hand, not 3).
     scoringRules: [...FOUNDATION, ...NEW6_EXTRA, ...NEW18_EXTRA].map((id) => id === "fully-concealed" ? get(id, { enabled: false }) : get(id)),
     stackingRules: { ...STACK },
     conflicts: [...CONFLICTS_COMMON, ...CONFLICTS_NEW6, ...CONFLICTS_NEW18],
     notes: [
-      "Cap 18 faan. Minimum 3 faan.",
+      "Cap default 13 faan. Minimum 3 faan.",
       "Pola New 18 yang dihitung: Double Chow, Four into One, Min-Max Chow/Pung, Three Sequence Pung, Three Concealed Pungs, Three Suits Pung/Chow, Four Sequence Pung, All Concealed Triplets, Double Double Chows, All Types, Mixed Orphans, Pure Orphans, Orphans (pong/kong 1 dan 9, 10 faan), dan Snake Hand (= Pure Straight).",
-      "Fully Exposed, Three Concealed Pungs, Heavenly Hand dan Earthly Hand dicentang manual di Poin tambahan (kartu saja tidak cukup untuk mengetahuinya).",
+      "All from Others, Three Concealed Pungs, Heavenly Hand dan Earthly Hand dicentang manual di Poin tambahan (kartu saja tidak cukup untuk mengetahuinya).",
       "Mixed / Pure Orphans: setiap set dan pasangan memuat kartu 1/9 (atau kehormatan). Chow 123 dan 789 dihitung.",
       "Fully Concealed (3 faan) tersedia tetapi NONAKTIF: aturan rumah yang sudah dikonfirmasi memberi Self Draw +1 pada tangan tertutup. Ubah enabled di rulesets.ts untuk mengaktifkan.",
       "Pure Straight menggantikan Min-Max Chow, All Concealed Triplets menggantikan All Pongs: dibuat agar faan tidak terhitung ganda. Tambahkan/ubah di daftar conflicts bila meja Anda berbeda.",

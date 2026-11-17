@@ -75,6 +75,7 @@ export const PATTERN_CHECKS: Record<string, Check> = {
   "suitable-flower": (c) => c.flowers.filter((f) => f === `F${seatNo(c)}` || f === `S${seatNo(c)}`).length,
   "no-flower": (c) => c.flowers.length === 0,
   "self-draw": (c) => c.method === "SELF_DRAW",
+  "self-draw-after-kong": (c) => !!c.manual?.includes("self-draw-after-kong") && c.method === "SELF_DRAW",
   "last-tile": (c) => c.isLastTile,
   "robbing-kong": (c) => c.isRobbingKong && c.method === "DISCARD",
   // Discard win only: on a self draw, Self Draw is awarded instead (never both).

@@ -24,7 +24,8 @@ const EXTRA_TEXT: Record<string, { title: string; hint: string }> = {
   "round-wind": { title: "Pong angin ronde (Round Wind)", hint: "Pong/kong angin yang sama dengan ronde" },
   "heavenly-hand": { title: "Heavenly Hand (天胡)", hint: "Dong menang dengan tangan awalnya" },
   "earthly-hand": { title: "Earthly Hand (地胡)", hint: "Pemain non-dong menang dari buangan pertama dong" },
-  "fully-exposed": { title: "Fully Exposed (全求人)", hint: "Semua set dibuka, menang dari buangan untuk melengkapi pasangan" },
+  "fully-exposed": { title: "All from Others", hint: "Semua set dibuka dan menang dari buangan untuk melengkapi pasangan" },
+  "self-draw-after-kong": { title: "Self Draw After Kong", hint: "Menang dari kartu pengganti (replacement tile) setelah menyatakan kong" },
   "three-concealed-pungs": { title: "Three Concealed Pungs (三暗刻)", hint: "Tiga pong/kong tertutup. Pong yang diselesaikan kartu buangan dihitung terbuka" },
   "dragon-pong": { title: "Pong naga (Dragon Pong/Kong)", hint: "Pong/kong naga merah, hijau, atau putih" },
   "suitable-flower": { title: "Bunga/musim sesuai kursi", hint: "Nomor sama dengan kursi, dihitung per kartu" },
@@ -32,7 +33,7 @@ const EXTRA_TEXT: Record<string, { title: string; hint: string }> = {
 };
 
 /** Rows of the checklist: everything the players have to tick themselves. Wind, dragon and flower faan are worked out from the tiles and are not listed. */
-const CHECKABLE = ["last-tile", "robbing-kong", "concealed-hand", ...MANUAL_FAN_IDS];
+const CHECKABLE = ["last-tile", "robbing-kong", "concealed-hand", "self-draw-after-kong", ...MANUAL_FAN_IDS];
 
 type Props = {
   config: GameConfig;
@@ -173,12 +174,13 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
           {(config.fanTable ?? FAN_TABLE).filter((r) => r.category === "additional" && r.enabled && (CHECKABLE.includes(r.id) || (r.id === "self-draw" && !lockedMethod))).map((rule) => {
             const text = EXTRA_TEXT[rule.id] ?? { title: rule.name, hint: rule.summary };
             const flag = (MANUAL_FAN_IDS as readonly string[]).includes(rule.id);
-            const blocked = ((rule.id === "robbing-kong" || rule.id === "concealed-hand" || rule.id === "fully-exposed") && effMethod !== "DISCARD")
+            const blocked = (rule.id === "self-draw-after-kong" && effMethod !== "SELF_DRAW")
+              || ((rule.id === "robbing-kong" || rule.id === "concealed-hand" || rule.id === "fully-exposed") && effMethod !== "DISCARD")
               || (rule.id === "heavenly-hand" && effSeat !== "E") || (rule.id === "earthly-hand" && (effSeat === "E" || effMethod !== "DISCARD"));
-            const blockedHint = rule.id === "concealed-hand" ? "Hanya untuk menang dari buangan (menang sendiri dihitung Self Draw)" : rule.id === "heavenly-hand" ? "Hanya untuk dong (kursi Timur)"
+            const blockedHint = rule.id === "self-draw-after-kong" ? "Hanya untuk Self Draw setelah menyatakan kong" : rule.id === "concealed-hand" ? "Hanya untuk menang dari buangan (menang sendiri dihitung Self Draw)" : rule.id === "heavenly-hand" ? "Hanya untuk dong (kursi Timur)"
               : rule.id === "earthly-hand" ? "Hanya untuk pemain non-dong yang menang dari buangan" : "Hanya untuk menang dari buangan";
-            const on = flag ? manual.includes(rule.id) && !blocked : rule.id === "last-tile" ? lastTile : rule.id === "robbing-kong" ? robbing && !blocked : rule.id === "concealed-hand" ? !opened && !blocked : effMethod === "SELF_DRAW";
-            const toggle = () => { if (flag) setManual(manual.includes(rule.id) ? manual.filter((x) => x !== rule.id) : [...manual, rule.id]); else if (rule.id === "last-tile") setLastTile(!lastTile); else if (rule.id === "robbing-kong") setRobbing(!robbing); else if (rule.id === "concealed-hand") setOpened(!opened); else setMethod(effMethod === "SELF_DRAW" ? "DISCARD" : "SELF_DRAW"); };
+            const on = flag ? manual.includes(rule.id) && !blocked : rule.id === "last-tile" ? lastTile : rule.id === "robbing-kong" ? robbing && !blocked : rule.id === "concealed-hand" ? !opened && !blocked : rule.id === "self-draw-after-kong" ? manual.includes(rule.id) && !blocked : effMethod === "SELF_DRAW";
+            const toggle = () => { if (flag) setManual(manual.includes(rule.id) ? manual.filter((x) => x !== rule.id) : [...manual, rule.id]); else if (rule.id === "last-tile") setLastTile(!lastTile); else if (rule.id === "robbing-kong") setRobbing(!robbing); else if (rule.id === "concealed-hand") setOpened(!opened); else if (rule.id === "self-draw-after-kong") setManual(manual.includes(rule.id) ? manual.filter((x) => x !== rule.id) : [...manual, rule.id]); else setMethod(effMethod === "SELF_DRAW" ? "DISCARD" : "SELF_DRAW"); };
             return (<li key={rule.id}>
               <button type="button" role="checkbox" aria-checked={on} disabled={blocked} onClick={toggle} className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 transition active:scale-[0.99] ${on ? "border-cream/60 bg-cream/10" : "border-line bg-card"} ${blocked ? "opacity-40" : ""}`}>
                 <span aria-hidden className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${on ? "border-cream bg-cream text-base" : "border-line bg-well"}`}>{on && <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>}</span>

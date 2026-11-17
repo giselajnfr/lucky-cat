@@ -11,8 +11,9 @@ const ids = (r: ReturnType<typeof calculateScore>) => r.detectedFan.map((f) => f
 describe("ruleset configuration", () => {
   it("has three distinct rulesets with their own minimum / cap", () => {
     expect(RULESET_IDS).toEqual(["classic", "new6", "new18"]);
-    expect(RULESETS.new18.maximumFan).toBe(18);
+    expect(RULESETS.new18.maximumFan).toBe(13);
     expect(RULESETS.classic.minimumFanToWin).toBe(3);
+    for (const id of RULESET_IDS) expect(RULESETS[id].scoringRules.some((r) => r.id === "self-draw-after-kong" && r.fan === 1)).toBe(true);
     expect(new Set(RULESET_IDS.map((i) => RULESETS[i].scoringRules.length)).size).toBe(3);
   });
   it("New 6 is Classic plus exactly six patterns; New 18 contains New 6", () => {
@@ -72,6 +73,11 @@ describe("the same hand scores differently per ruleset", () => {
 });
 
 describe("stacking, conflicts and cap", () => {
+  it("Self Draw After Kong adds one faan only when manually checked on a Self Draw", () => {
+    const h = "123m 456p 789s 111p 55s";
+    expect(ids(calculateScore(input("new18", h, "5s", { winningMethod: "SELF_DRAW", manualFan: ["self-draw-after-kong"] })))).toContain("self-draw-after-kong");
+    expect(ids(calculateScore(input("new18", h, "5s", { winningMethod: "DISCARD", manualFan: ["self-draw-after-kong"] })))).not.toContain("self-draw-after-kong");
+  });
   it("Full Flush does not also count Half Flush; reasons are reported", () => {
     const r = calculateScore(input("new18", "123m 456m 789m 234m 55m", "5m"));
     expect(ids(r)).toContain("full-flush"); expect(ids(r)).not.toContain("half-flush");

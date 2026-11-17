@@ -26,7 +26,7 @@ const a = (id: string, name: string, fan: number, summary: string, conditions: s
   ({ id, name, fan, enabled: true, category: "additional", summary, conditions, example, ...extra });
 
 /** Faan that only the players can know: they are ticked by hand in the "Poin tambahan" checklist. */
-export const MANUAL_FAN_IDS = ["heavenly-hand", "earthly-hand", "fully-exposed", "three-concealed-pungs"] as const;
+export const MANUAL_FAN_IDS = ["heavenly-hand", "earthly-hand", "fully-exposed", "three-concealed-pungs", "self-draw-after-kong"] as const;
 
 export const FAN_TABLE: FanRuleConfig[] = [
   // ---------- Winning hand patterns ----------
@@ -104,6 +104,8 @@ export const FAN_TABLE: FanRuleConfig[] = [
   a("self-draw", "Self Draw", 1, "Menang dengan kartu yang diambil sendiri dari tumpukan.",
     ["Kartu kemenangan diambil sendiri"],
     { hand: "123m 456p 789s 111p 55s", win: "5s", method: "SELF_DRAW" }, { needsInput: "Menang sendiri atau dari buangan" }),
+  a("self-draw-after-kong", "Self Draw After Kong", 1, "Menang dari kartu pengganti (replacement tile) setelah menyatakan kong.",
+    ["Menang dengan kartu pengganti setelah deklarasi kong", "Hanya untuk Self Draw"], undefined, { needsInput: "Apakah menang setelah menyatakan kong" }),
   a("last-tile", "Last Tile", 1, "Menang dengan kartu terakhir.",
     ["Kartu kemenangan adalah kartu terakhir"],
     { hand: "123m 456p 789s 111p 55s", win: "5s", lastTile: true }, { needsInput: "Apakah ini kartu terakhir" }),

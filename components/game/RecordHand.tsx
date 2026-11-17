@@ -66,8 +66,8 @@ export function RecordHand({ game, players, handsPlayed, edit, onDone, onCancel 
   const canSubmit = kind === "draw" || (kind === "win" && winner && method && (method === "SELF_DRAW" || discarderId) && preview && !("error" in preview));
 
   return (
-    <div className="fixed inset-0 z-30 overflow-y-auto bg-base" role="dialog" aria-modal="true" aria-label="Catat tangan">
-      <div className="mx-auto max-w-md space-y-4 px-5 pb-32 pt-6 md:max-w-2xl">
+    <div className="fixed inset-0 z-50 h-[100dvh] overflow-y-auto bg-base" role="dialog" aria-modal="true" aria-label="Catat tangan">
+      <div className="mx-auto max-w-md space-y-4 px-5 pb-32 pt-4 md:max-w-2xl">
         <div className="flex items-center justify-between"><h2 className="text-xl">{edit ? `Ubah tangan #${edit.hand_number}` : `Tangan #${handsPlayed + 1}`}</h2><button type="button" className="text-sm underline" onClick={onCancel}>Batal</button></div>
         <p className="text-sm text-muted">Ronde {WIND_LABEL[ROUND_TO_WIND[viewGame.current_round_wind]]} · Dealer {players.find((p) => p.seat_position === viewGame.current_dealer_seat)?.player_name}</p>
 

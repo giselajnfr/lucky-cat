@@ -1,11 +1,11 @@
 export type TvPlayer = { name: string; seat: number; score: number };
 export type TvTable = { table_id: string; table_number: number; status: "WAITING" | "PLAYING" | "PAUSED" | "FINISHED";
-  round_wind: string | null; dealer_seat: number | null; starting_points?: number | null; hand_number: number | null; players: TvPlayer[] };
+  room_code?: string | null; round_wind: string | null; dealer_seat: number | null; starting_points?: number | null; hand_number: number | null; players: TvPlayer[] };
 export type TvSettings = { mode: "live" | "main" | "spotlight" | "leaderboard" | "rotate"; spotlight_table_id: string | null;
   rotation_interval_ms: number; highlight_duration_ms: number; sound_enabled: boolean; animations_enabled: boolean;
   leaderboard_type: "highest_score" | "most_wins" | "highest_fan" };
 /** One line of the live main leaderboard: a player at a table, ranked by points won or lost against the starting points. */
-export type MainRow = { name: string; table: number; score: number; start: number; net: number };
+export type MainRow = { name: string; table: number; roomCode?: string | null; score: number; start: number; net: number };
 export const TV_MODE_LABEL: Record<TvSettings["mode"], string> = { live: "Live · Per Table", main: "Live · Main Leaderboard", spotlight: "Table Spotlight", leaderboard: "Today's Stats", rotate: "Auto Rotate" };
 export type LeaderRow = { name: string; score: number; wins_today: number; best_fan_today: number };
 export type WinningHandEvent = { eventId: string; gameId?: string; tableNumber: number; winner: { id: string; name: string };
