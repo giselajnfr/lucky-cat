@@ -14,12 +14,7 @@ export function HandView({ concealed, melds, flowers = [], width = 30, balanced 
       <div className="space-y-2">
         <div className="flex w-full items-end gap-x-1.5">
           {melds.map((m, i) => <div key={i} className="flex gap-0.5 rounded-lg bg-base/40 p-1" style={group(m.tiles.length)}>{m.tiles.map((t, j) => cell(t, `m${i}-${j}`))}</div>)}
-          {(groups ?? [sorted]).map((g, gi, all) => (
-            <div key={gi} className="flex shrink-0 items-center gap-1">
-              <div className="flex gap-0.5" style={group(g.length)}>{g.map((t, i) => cell(t, `${gi}-${t}${i}`))}</div>
-              {gi < all.length - 1 && <span aria-hidden="true" className="px-0.5 text-sm font-bold text-muted">/</span>}
-            </div>
-          ))}
+          {(groups ?? [sorted]).map((g, gi) => <div key={gi} className="flex gap-0.5" style={group(g.length)}>{g.map((t, i) => cell(t, `${gi}-${t}${i}`))}</div>)}
         </div>
         {flowers.length > 0 && <div className="flex gap-0.5 opacity-90" style={{ maxWidth: flowers.length * (Math.round(width * 0.8) + 2) }}>{flowers.map((t) => <div key={t} className="min-w-0 flex-1 [&>span]:block"><Tile t={t} fluid /></div>)}</div>}
       </div>
