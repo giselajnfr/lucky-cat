@@ -28,11 +28,11 @@ export function TvControls() {
       <p className="font-bold">{tvs > 0 ? `🟢 Live — ${tvs} screen${tvs > 1 ? "s" : ""} connected` : "🔴 No TV connected"} · <a className="underline" href="/tv" target="_blank">Open /tv</a></p>
       <label className={row}>Mode
         <select className="input max-w-[13rem]" value={s.mode} onChange={(e) => save({ mode: e.target.value as TvSettings["mode"] })}>
-          <option value="live">Live Tables</option><option value="spotlight">Table Spotlight</option><option value="leaderboard">Leaderboard</option><option value="rotate">Auto Rotate</option></select></label>
+          <option value="live">Live · Per Table</option><option value="main">Live · Main Leaderboard</option><option value="spotlight">Table Spotlight</option><option value="leaderboard">Today&apos;s Stats Leaderboard</option><option value="rotate">Auto Rotate</option></select></label>
       <label className={row}>Spotlight table
         <select className="input max-w-[13rem]" value={s.spotlight_table_id ?? ""} onChange={(e) => save({ spotlight_table_id: e.target.value || null })}>
           <option value="">First active</option>{tables.map((t) => <option key={t.id} value={t.id}>Table {t.table_number}</option>)}</select></label>
-      <label className={row}>Leaderboard
+      <label className={row}>Stats leaderboard
         <select className="input max-w-[13rem]" value={s.leaderboard_type} onChange={(e) => save({ leaderboard_type: e.target.value as TvSettings["leaderboard_type"] })}>
           <option value="highest_score">Highest score</option><option value="most_wins">Most wins today</option><option value="highest_fan">Highest fan today</option></select></label>
       <label className={row}>Rotation interval (seconds)
@@ -41,6 +41,7 @@ export function TvControls() {
         <input className="input max-w-[7rem]" type="number" min={3} max={60} value={s.highlight_duration_ms / 1000} onChange={(e) => save({ highlight_duration_ms: Math.min(60, Math.max(3, Number(e.target.value))) * 1000 })} /></label>
       <label className={row}>Sound effects <input type="checkbox" className="h-6 w-6" checked={s.sound_enabled} onChange={(e) => save({ sound_enabled: e.target.checked })} /></label>
       <label className={row}>Winning hand animations <input type="checkbox" className="h-6 w-6" checked={s.animations_enabled} onChange={(e) => save({ animations_enabled: e.target.checked })} /></label>
+      <p className="text-xs text-muted">Two screens? Open <code>/tv?view=tables</code> on one and <code>/tv?view=main</code> on the other: the link overrides the mode above for that screen only.</p>
       <p className="text-xs text-muted">Browsers block autoplay audio: after turning sound on, tap “Enable sound” once on the TV screen.</p>
     </div>
   );

@@ -5,24 +5,41 @@ import { LogoMark } from "@/components/ui/LogoMark";
 import { WinningEventQueue } from "@/lib/tv/eventQueue";
 import { createChime } from "@/lib/tv/chime";
 import { useTvFeed } from "@/lib/tv/useTvFeed";
-import { MEDALS, ROUND_NAME, STATUS_LABEL, WIND_NAME, seatWind, type LeaderRow, type TvTable, type WinningHandEvent } from "@/lib/tv/types";
+import { MEDALS, ROUND_NAME, STATUS_LABEL, TV_MODE_LABEL, WIND_NAME, seatWind, type LeaderRow, type MainRow, type TvSettings, type TvTable, type WinningHandEvent } from "@/lib/tv/types";
 
-const PER_PAGE = 8;
+const PER_PAGE = 8;       // tables per page (per-table mode)
+const MAIN_COLS = 2;
+const MAIN_ROWS = 8;      // rows per column on the main leaderboard -> 16 players per page
 const ranked = (t: TvTable) => [...t.players].sort((a, b) => b.score - a.score);
 const fmt = (n: number) => n.toLocaleString("en-US");
+const net = (n: number) => (n > 0 ? `+${fmtScore(n)}` : fmtScore(n));
+const pad = (n: number) => String(n).padStart(2, "0");
 
-function TableCard({ t, big }: { t: TvTable; big: boolean }) {
+/** Grid shape for n tables so the cards always fill the screen (never a half-empty row of tiny cards). */
+const gridFor = (n: number) => (n <= 1 ? { cols: 1, rows: 1 } : n === 2 ? { cols: 2, rows: 1 } : n === 3 ? { cols: 3, rows: 1 } : n <= 4 ? { cols: 2, rows: 2 } : n <= 6 ? { cols: 3, rows: 2 } : { cols: 4, rows: 2 });
+/** Type sizes per column count (literal class names so Tailwind generates them). */
+const SIZE: Record<number, { title: string; sub: string; name: string; score: string; pill: string }> = {
+  1: { title: "text-[4vw]", sub: "text-[2vw]", name: "text-[3.4vw]", score: "text-[3.6vw]", pill: "text-[1.6vw]" },
+  2: { title: "text-[3vw]", sub: "text-[1.6vw]", name: "text-[2.6vw]", score: "text-[2.8vw]", pill: "text-[1.3vw]" },
+  3: { title: "text-[2.4vw]", sub: "text-[1.3vw]", name: "text-[2vw]", score: "text-[2.2vw]", pill: "text-[1.1vw]" },
+  4: { title: "text-[1.9vw]", sub: "text-[1.1vw]", name: "text-[1.6vw]", score: "text-[1.8vw]", pill: "text-[0.95vw]" },
+};
+
+function TableCard({ t, cols }: { t: TvTable; cols: number }) {
+  const z = SIZE[cols] ?? SIZE[4];
+  const start = t.starting_points ?? 0;
   return (
-    <div className="flex flex-col justify-between rounded-[1.5vw] border-[0.2vw] border-line bg-card p-[1.4vw]">
-      <div className="flex items-baseline justify-between">
-        <h3 className={`font-extrabold ${big ? "text-[2.6vw]" : "text-[1.9vw]"}`}>TABLE {String(t.table_number).padStart(2, "0")}</h3>
-        <span className="text-[1.3vw] text-muted">{STATUS_LABEL[t.status]}</span>
+    <div className="flex min-h-0 flex-col rounded-[1.4vw] border-[0.18vw] border-line bg-card p-[1.4vw]">
+      <div className="flex items-center justify-between gap-[1vw]">
+        <h3 className={`font-extrabold ${z.title}`}>TABLE {pad(t.table_number)}</h3>
+        <span className={`shrink-0 rounded-full bg-base/60 px-[1vw] py-[0.3vw] font-semibold ${z.pill}`}>{STATUS_LABEL[t.status]}</span>
       </div>
-      <p className="text-[1.5vw] font-semibold text-muted">{t.round_wind ? ROUND_NAME[t.round_wind] : "Waiting for players"}</p>
-      <ul className="mt-[0.8vw] space-y-[0.3vw]">
+      <p className={`mt-[0.4vw] font-semibold text-muted ${z.sub}`}>{t.round_wind ? `${ROUND_NAME[t.round_wind]} · Hand ${t.hand_number ?? "-"}` : "Waiting for players"}</p>
+      <ul className="mt-[1vw] flex min-h-0 flex-1 flex-col justify-evenly gap-[0.5vw]">
         {ranked(t).map((p, i) => (
-          <li key={p.seat} className={`flex justify-between font-bold ${big ? "text-[2.2vw]" : "text-[1.6vw]"}`}>
-            <span>{MEDALS[i]} {p.name}{p.seat === t.dealer_seat ? " 👑" : ""}</span><span className={scoreTone(p.score, false, t.starting_points ?? 0)}>{fmtScore(p.score)}</span>
+          <li key={p.seat} className={`flex min-h-0 items-center justify-between gap-[1vw] rounded-[0.8vw] bg-base/40 px-[1vw] py-[0.5vw] font-bold ${z.name}`}>
+            <span className="flex min-w-0 items-center gap-[0.8vw]"><span className="shrink-0">{MEDALS[i]}</span><span className="truncate">{p.name}</span>{p.seat === t.dealer_seat && <span className="shrink-0">👑</span>}</span>
+            <span className={`shrink-0 tabular-nums ${z.score} ${scoreTone(p.score, false, start)}`}>{fmtScore(p.score)}</span>
           </li>
         ))}
       </ul>
@@ -30,15 +47,24 @@ function TableCard({ t, big }: { t: TvTable; big: boolean }) {
   );
 }
 
+function TablesGrid({ list }: { list: TvTable[] }) {
+  const { cols, rows } = gridFor(list.length);
+  return (
+    <div className="grid h-full gap-[1.2vw] px-[2vw] pb-[2vw] pt-[0.5vw]" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}>
+      {list.map((t) => <TableCard key={t.table_id} t={t} cols={cols} />)}
+    </div>
+  );
+}
+
 function Spotlight({ t }: { t: TvTable }) {
-  const dealer = t.dealer_seat ?? 0;
+  const dealer = t.dealer_seat ?? 0, start = t.starting_points ?? 0;
   return (
     <div className="flex h-full flex-col justify-center gap-[2vw] px-[6vw]">
-      <h2 className="text-[6vw] font-extrabold">TABLE {String(t.table_number).padStart(2, "0")} 🀄</h2>
+      <h2 className="text-[6vw] font-extrabold">TABLE {pad(t.table_number)} 🀄</h2>
       <p className="text-[3vw] font-bold text-muted">{t.round_wind ? ROUND_NAME[t.round_wind] : ""} · Hand {t.hand_number ?? "-"}</p>
       <div className="grid grid-cols-2 gap-[3vw]">
         <ul className="space-y-[1vw] text-[3.4vw] font-extrabold">
-          {ranked(t).map((p, i) => <li key={p.seat} className="flex justify-between">{MEDALS[i]} {p.name}{p.seat === dealer ? " 👑" : ""}<span className={scoreTone(p.score, false, t.starting_points ?? 0)}>{fmtScore(p.score)}</span></li>)}
+          {ranked(t).map((p, i) => <li key={p.seat} className="flex justify-between">{MEDALS[i]} {p.name}{p.seat === dealer ? " 👑" : ""}<span className={scoreTone(p.score, false, start)}>{fmtScore(p.score)}</span></li>)}
         </ul>
         <ul className="space-y-[1vw] text-[2.6vw] font-bold text-muted">
           {[...t.players].sort((a, b) => a.seat - b.seat).map((p) => <li key={p.seat}>{WIND_NAME[seatWind(p.seat, dealer)].toUpperCase()} — <span className="text-cream">{p.name}</span></li>)}
@@ -48,7 +74,39 @@ function Spotlight({ t }: { t: TvTable }) {
   );
 }
 
-function Leaderboard({ rows, type }: { rows: LeaderRow[]; type: string }) {
+/** Live main leaderboard: every player from every table, ranked by points won/lost against that table's starting points. */
+function MainBoard({ rows, page, pages }: { rows: MainRow[]; page: number; pages: number }) {
+  const per = MAIN_COLS * MAIN_ROWS;
+  const slice = rows.slice(page * per, (page + 1) * per);
+  return (
+    <div className="flex h-full flex-col px-[3vw] pb-[2vw]">
+      <div className="mb-[1.2vw] flex items-end justify-between">
+        <div><h2 className="text-[3.6vw] font-extrabold">🏆 MAIN LEADERBOARD</h2><p className="text-[1.6vw] font-semibold text-muted">All players · all tables · live</p></div>
+        <p className="text-[1.5vw] font-semibold text-muted">{rows.length} players{pages > 1 ? ` · page ${page + 1}/${pages}` : ""}</p>
+      </div>
+      {rows.length === 0 ? <p className="flex flex-1 items-center justify-center text-[3vw] font-bold text-muted">No players yet</p> : (
+        <ol className="grid min-h-0 flex-1 grid-flow-col gap-x-[2vw] gap-y-[0.8vw]" style={{ gridTemplateRows: `repeat(${MAIN_ROWS}, minmax(0, 1fr))`, gridTemplateColumns: `repeat(${MAIN_COLS}, minmax(0, 1fr))` }}>
+          {slice.map((r, i) => {
+            const rank = page * per + i, top = rank < 3;
+            return (
+              <li key={`${r.table}-${r.name}-${rank}`} className={`flex min-h-0 items-center gap-[1.2vw] rounded-[1vw] px-[1.4vw] ${top ? "border-[0.15vw] border-cream/40 bg-card" : "bg-card/70"}`}>
+                <span className="w-[3.6vw] shrink-0 text-center text-[2.4vw] font-extrabold text-muted">{MEDALS[rank] && rank < 3 ? MEDALS[rank] : rank + 1}</span>
+                <span className="min-w-0 flex-1 truncate text-[2.3vw] font-bold">{r.name}</span>
+                <span className="shrink-0 rounded-full bg-base/60 px-[1vw] py-[0.2vw] text-[1.2vw] font-semibold text-muted">T{pad(r.table)}</span>
+                <span className="w-[10vw] shrink-0 text-right">
+                  <span className={`block text-[2.4vw] font-extrabold tabular-nums ${scoreTone(r.net, false, 0)}`}>{net(r.net)}</span>
+                  {r.start > 0 && <span className="block text-[1vw] text-muted">total {fmtScore(r.score)}</span>}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </div>
+  );
+}
+
+function StatsBoard({ rows, type }: { rows: LeaderRow[]; type: string }) {
   const sorted = [...rows].sort((a, b) => type === "most_wins" ? b.wins_today - a.wins_today : type === "highest_fan" ? b.best_fan_today - a.best_fan_today : b.score - a.score).slice(0, 8);
   const label = type === "most_wins" ? "Most Wins Today" : type === "highest_fan" ? "Highest Fan Today" : "Highest Score";
   const val = (r: LeaderRow) => type === "most_wins" ? `${r.wins_today} wins` : type === "highest_fan" ? `${r.best_fan_today} fan` : fmtScore(r.score);
@@ -68,7 +126,7 @@ function Highlight({ e, animate, more }: { e: WinningHandEvent; animate: boolean
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-[1.2vw] bg-base p-[3vw] text-center">
       <p className={`text-[4vw] font-extrabold ${animate ? "animate-pulse" : ""}`}>🎉 HU! 🎉</p>
       <h1 className="text-[8vw] font-extrabold leading-none">🀄 {e.winner.name.toUpperCase()} HU!</h1>
-      <p className="text-[2.4vw] font-semibold text-muted">TABLE {String(e.tableNumber).padStart(2, "0")} · {ROUND_NAME[e.roundWind] ?? e.roundWind} · {e.winningMethod === "self_draw" ? "Self Draw" : "Discard Win"}</p>
+      <p className="text-[2.4vw] font-semibold text-muted">TABLE {pad(e.tableNumber)} · {ROUND_NAME[e.roundWind] ?? e.roundWind} · {e.winningMethod === "self_draw" ? "Self Draw" : "Discard Win"}</p>
       <div className="flex flex-wrap justify-center gap-[1.5vw] text-[3vw] font-bold">{e.detectedFan.map((f) => <span key={f.name}>🀄 {f.name} <span className="text-muted">{f.fan}</span></span>)}</div>
       <p className="text-[7vw] font-extrabold">{e.totalFan > 0 ? `${e.totalFan} FAN` : `${e.points} POIN`}</p>
       <p className="text-[4vw] font-bold">+{fmt(e.points)} POINTS</p>
@@ -80,6 +138,9 @@ function Highlight({ e, animate, more }: { e: WinningHandEvent; animate: boolean
   );
 }
 
+/** ?view=tables | main | spotlight | leaderboard | rotate overrides the admin mode for THIS screen only (e.g. two TVs). */
+const VIEWS: Record<string, TvSettings["mode"]> = { tables: "live", live: "live", main: "main", spotlight: "spotlight", leaderboard: "leaderboard", rotate: "rotate" };
+
 export function TvDisplay() {
   const queue = useRef(new WinningEventQueue<WinningHandEvent>());
   const chime = useRef(createChime());
@@ -87,9 +148,12 @@ export function TvDisplay() {
   const [tick, setTick] = useState(0);
   const [soundOn, setSoundOn] = useState(false);
   const [slide, setSlide] = useState(0);
+  const [override, setOverride] = useState<TvSettings["mode"] | null>(null);
+  useEffect(() => { const v = new URLSearchParams(window.location.search).get("view"); setOverride(v && VIEWS[v] ? VIEWS[v] : null); }, []);
 
   const onWin = useCallback((e: WinningHandEvent) => { if (queue.current.enqueue(e)) setTick((n) => n + 1); }, []);
   const { tables, settings, leaders, online } = useTvFeed(onWin);
+  const mode = override ?? settings.mode;
 
   // Idle -> pick the next queued winning hand.
   useEffect(() => { if (!current) { const n = queue.current.next(); if (n) setCurrent(n); } }, [tick, current]);
@@ -103,43 +167,47 @@ export function TvDisplay() {
 
   const active = useMemo(() => tables.filter((t) => t.status !== "WAITING" || t.players.length), [tables]);
   const pages = Math.max(1, Math.ceil(active.length / PER_PAGE));
-  // Rotation: live pages -> each table spotlight -> leaderboard.
+  const mainRows = useMemo<MainRow[]>(() => active.flatMap((t) => t.players.map((p) => ({ name: p.name, table: t.table_number, score: p.score, start: t.starting_points ?? 0, net: p.score - (t.starting_points ?? 0) })))
+    .sort((a, b) => b.net - a.net || b.score - a.score || a.name.localeCompare(b.name)), [active]);
+  const mainPages = Math.max(1, Math.ceil(mainRows.length / (MAIN_COLS * MAIN_ROWS)));
+  // Rotation: table pages -> each table spotlight -> main leaderboard pages -> today's stats.
   const slides = useMemo(() => [
     ...Array.from({ length: pages }, (_, i) => ({ kind: "live" as const, page: i })),
-    ...active.map((t) => ({ kind: "spot" as const, id: t.table_id })), { kind: "board" as const },
-  ], [pages, active]);
+    ...active.map((t) => ({ kind: "spot" as const, id: t.table_id })),
+    ...Array.from({ length: mainPages }, (_, i) => ({ kind: "main" as const, page: i })),
+    { kind: "board" as const },
+  ], [pages, mainPages, active]);
   useEffect(() => {
-    const m = settings.mode;
-    if (m !== "rotate" && !(m === "live" && pages > 1)) return;
+    if (mode !== "rotate" && !(mode === "live" && pages > 1) && !(mode === "main" && mainPages > 1)) return;
     const id = setInterval(() => setSlide((s) => s + 1), settings.rotation_interval_ms);
     return () => clearInterval(id);
-  }, [settings.mode, settings.rotation_interval_ms, pages]);
+  }, [mode, settings.rotation_interval_ms, pages, mainPages]);
 
-  const grid = (list: TvTable[]) => (
-    <div className={`grid h-full gap-[1.2vw] p-[2vw] ${list.length <= 4 ? "grid-cols-2 auto-rows-fr" : "grid-cols-4 auto-rows-fr"}`}>
-      {list.map((t) => <TableCard key={t.table_id} t={t} big={list.length <= 4} />)}
-    </div>
-  );
+  const spot = (id?: string | null) => { const t = active.find((x) => x.table_id === id) ?? active[0]; return t ? <Spotlight t={t} /> : null; };
+  const tablesPage = (p: number) => <TablesGrid list={active.slice(p * PER_PAGE, (p + 1) * PER_PAGE)} />;
   let body: React.ReactNode;
-  const spot = (id?: string | null) => { const t = active.find((x) => x.table_id === id) ?? active[0]; return t ? <Spotlight t={t} /> : grid([]); };
-  if (settings.mode === "leaderboard") body = <Leaderboard rows={leaders} type={settings.leaderboard_type} />;
-  else if (settings.mode === "spotlight") body = spot(settings.spotlight_table_id);
-  else if (settings.mode === "rotate") {
+  if (mode === "leaderboard") body = <StatsBoard rows={leaders} type={settings.leaderboard_type} />;
+  else if (mode === "main") body = <MainBoard rows={mainRows} page={slide % mainPages} pages={mainPages} />;
+  else if (mode === "spotlight") body = spot(settings.spotlight_table_id);
+  else if (mode === "rotate") {
     const s = slides[slide % slides.length];
-    body = s.kind === "live" ? grid(active.slice(s.page * PER_PAGE, (s.page + 1) * PER_PAGE)) : s.kind === "spot" ? spot(s.id) : <Leaderboard rows={leaders} type={settings.leaderboard_type} />;
-  } else { const p = slide % pages; body = grid(active.slice(p * PER_PAGE, (p + 1) * PER_PAGE)); }
+    body = s.kind === "live" ? tablesPage(s.page) : s.kind === "spot" ? spot(s.id) : s.kind === "main" ? <MainBoard rows={mainRows} page={s.page} pages={mainPages} /> : <StatsBoard rows={leaders} type={settings.leaderboard_type} />;
+  } else body = tablesPage(slide % pages);
+  const needsTables = mode !== "leaderboard";
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-base text-cream">
+    // Explicit unitless line-height: the app's body line-height is a fixed length that would make vw-sized text overlap.
+    <div className="fixed inset-0 z-50 overflow-hidden bg-base leading-[1.2] text-cream">
       <header className="flex h-[9vh] items-center justify-between px-[2.5vw]">
         <div className="flex items-center gap-[1.2vw]"><LogoMark size="6.5vh" /><h1 className="text-[2.6vw] font-bold">Lucky Cat Mahjong</h1></div>
         <div className="flex items-center gap-[1.5vw] text-[1.4vw] text-muted">
+          <span className="rounded-full border border-line bg-card px-[1.2vw] py-[0.3vw] font-semibold text-cream">{TV_MODE_LABEL[mode]}</span>
           {settings.sound_enabled && !soundOn && <button onClick={async () => setSoundOn(await chime.current.enable())} className="rounded-[0.8vw] border border-line bg-card px-[1.2vw] py-[0.4vw] font-bold text-cream">🔊 Enable sound</button>}
           <span>{online ? "🟢 Live" : "🔴 Reconnecting…"}</span>
         </div>
       </header>
       <main className="relative h-[91vh]">
-        {active.length === 0 && settings.mode !== "leaderboard" ? <p className="flex h-full items-center justify-center text-[3vw] font-bold text-muted">No tables are playing right now</p> : body}
+        {active.length === 0 && needsTables ? <p className="flex h-full items-center justify-center text-[3vw] font-bold text-muted">No tables are playing right now</p> : body}
         {current && <Highlight e={current} animate={settings.animations_enabled} more={queue.current.size} />}
       </main>
     </div>

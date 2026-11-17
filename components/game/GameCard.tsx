@@ -9,7 +9,7 @@ export type GameCardData = {
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
 
 const Chevron = () => (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0 text-muted"><path d="M9 6l6 6-6 6" /></svg>
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0 text-cream/70"><path d="M9 6l6 6-6 6" /></svg>
 );
 
 /**
@@ -45,7 +45,7 @@ export function GameCard({ g }: { g: GameCardData }) {
   const sub = waiting ? "Belum dimulai" : `Ronde ${ROUND[g.current_round_wind as keyof typeof ROUND]} · Tangan ${hands + 1}`;
   const names = ps.map((p) => p.player_name).join(", ");
   return (
-    <Link href={`/game/${g.id}`} className={`flex items-center gap-3 rounded-2xl border border-line bg-card px-4 py-4 transition hover:bg-card/80 ${ring}`}>
+    <Link href={`/game/${g.id}`} className={`flex items-center gap-3 rounded-2xl border border-l-4 border-cream/25 bg-[#7A4034] px-4 py-4 shadow-md shadow-black/25 transition hover:bg-[#86483B] ${amber ? "border-l-warn" : "border-l-pos"} ${ring}`}>
       <div className="min-w-0 flex-1">
         <p className={`flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider ${amber ? "text-warn" : "text-pos"}`}>
           {amber ? <span className="h-2 w-2 rounded-full bg-warn" aria-hidden /> : (
@@ -53,8 +53,8 @@ export function GameCard({ g }: { g: GameCardData }) {
           {status}
         </p>
         <p className="mt-1.5 truncate text-lg font-extrabold">{title}</p>
-        <p className="mt-0.5 text-sm text-muted">{sub}</p>
-        {!waiting && names && <p className="mt-2 truncate text-sm text-muted">{names}</p>}
+        <p className="mt-0.5 text-sm text-cream/80">{sub}</p>
+        {!waiting && names && <p className="mt-2 truncate text-sm text-cream/80">{names}</p>}
       </div>
       <Chevron />
     </Link>
