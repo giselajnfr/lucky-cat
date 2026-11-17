@@ -135,42 +135,44 @@ export default function Page() {
         ) },
         { id: "aturan", label: "Aturan lain", content: (
       <section id="aturan" className="scroll-mt-4 space-y-3">
-        <div className="card space-y-5 text-sm">
-          <section className="space-y-2">
-            <h3 className="text-xl font-extrabold tracking-tight text-cream">1. Cara menghitung poin</h3>
-            <p>Jumlahkan faan dari pola tangan dan faan tambahan. Total faan yang didapat kemudian dikonversi menjadi base points menggunakan tabel Hong Kong Mahjong.</p>
-          </section>
-          <section className="space-y-2">
-            <h3 className="text-xl font-extrabold tracking-tight text-cream">2. Convert faan to points</h3>
-            <p>Setiap jumlah faan memiliki nilai base points tersendiri. Contoh: 4 faan = 16 base points.</p>
-            <div className="overflow-hidden rounded-xl border border-line">
-              <div className="grid grid-cols-2 bg-base/40 px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted"><span>Faan</span><span className="text-right">Base points</span></div>
-              {FAAN_TO_BASE_POINTS.map((points, faan) => (
-                <div key={faan} className="grid grid-cols-2 border-t border-line px-3 py-2"><b>{faan}</b><span className="text-right tabular-nums">{points}</span></div>
-              ))}
+        <section className="card space-y-2 text-sm">
+          <h3 className="text-xl font-extrabold tracking-tight text-cream">Cara menghitung poin</h3>
+          <p>Jumlahkan faan dari pola tangan dan faan tambahan. Total faan yang didapat kemudian dikonversi menjadi base points menggunakan tabel Hong Kong Mahjong.</p>
+        </section>
+
+        <section className="card space-y-2 text-sm">
+          <h3 className="text-xl font-extrabold tracking-tight text-cream">Faan → base points</h3>
+          <p>Setiap jumlah faan memiliki nilai base points tersendiri. Contoh: 4 faan = 16 base points.</p>
+          <div className="overflow-hidden rounded-xl border border-line">
+            <div className="grid grid-cols-2 bg-base/40 px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted"><span>Faan</span><span className="text-right">Base points</span></div>
+            {FAAN_TO_BASE_POINTS.map((points, faan) => (
+              <div key={faan} className="grid grid-cols-2 border-t border-line px-3 py-2"><b>{faan}</b><span className="text-right tabular-nums">{points}</span></div>
+            ))}
+          </div>
+        </section>
+
+        <section className="card space-y-3 text-sm">
+          <h3 className="text-xl font-extrabold tracking-tight text-cream">Siapa yang bayar?</h3>
+          <div className="space-y-3">
+            <div><p className="font-bold text-cream">Self Draw</p><p>Ketiga pemain lain masing-masing membayar <b>2× base points</b> kepada pemenang. Contoh 4 faan = 16 base points, jadi setiap pemain membayar 32 poin dan pemenang menerima 96 poin.</p></div>
+            <div><p className="font-bold text-cream">Discard Win</p><p>Pembayaran mengikuti mode yang digunakan pada game:</p>
+              <ul className="list-disc space-y-1 pl-5">
+                <li><b>Discarder Pays All:</b> pemain yang membuang kartu membayar 3× base points. Contoh 4 faan = 16, discarder membayar 48 poin.</li>
+                <li><b>Half Pay / Split:</b> discarder membayar 2× base points, sedangkan dua pemain lainnya masing-masing membayar 1×. Contoh 4 faan = 16, discarder membayar 32 poin dan dua pemain lainnya masing-masing 16 poin; pemenang menerima 64 poin.</li>
+              </ul>
             </div>
-          </section>
-          <section className="space-y-2">
-            <h3 className="text-xl font-extrabold tracking-tight text-cream">3. Siapa yang bayar?</h3>
-            <div className="space-y-3">
-              <div><p className="font-bold text-cream">Self Draw</p><p>Ketiga pemain lain masing-masing membayar <b>2× base points</b> kepada pemenang. Contoh 4 faan = 16 base points, jadi setiap pemain membayar 32 poin dan pemenang menerima 96 poin.</p></div>
-              <div><p className="font-bold text-cream">Discard Win</p><p>Pembayaran mengikuti mode yang digunakan pada game:</p>
-                <ul className="list-disc space-y-1 pl-5">
-                  <li><b>Discarder Pays All:</b> pemain yang membuang kartu membayar 3× base points. Contoh 4 faan = 16, discarder membayar 48 poin.</li>
-                  <li><b>Half Pay / Split:</b> discarder membayar 2× base points, sedangkan dua pemain lainnya masing-masing membayar 1×. Contoh 4 faan = 16, discarder membayar 32 poin dan dua pemain lainnya masing-masing 16 poin; pemenang menerima 64 poin.</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-          <section className="space-y-1.5">
-            <h3 className="text-xl font-extrabold tracking-tight text-cream">4. Batas faan</h3>
-            <p>Konversi poin mengikuti tabel hingga maksimum <b>13 faan = 384 base points</b>. Batas faan permainan mengikuti pengaturan meja.</p>
-          </section>
-          <section className="space-y-1.5">
-            <h3 className="text-xl font-extrabold tracking-tight text-cream">5. Syarat minimum</h3>
-            <p>Untuk menang, total harus mencapai minimum <b>{rs.minimumFanToWin} faan</b> sesuai pengaturan meja. Jika belum mencapai minimum, tangan belum dihitung sebagai kemenangan.</p>
-          </section>
-        </div>
+          </div>
+        </section>
+
+        <section className="card space-y-1.5 text-sm">
+          <h3 className="text-xl font-extrabold tracking-tight text-cream">Batas faan</h3>
+          <p>Konversi poin mengikuti tabel hingga maksimum <b>13 faan = 384 base points</b>. Batas faan permainan mengikuti pengaturan meja.</p>
+        </section>
+
+        <section className="card space-y-1.5 text-sm">
+          <h3 className="text-xl font-extrabold tracking-tight text-cream">Syarat minimum</h3>
+          <p>Untuk menang, total harus mencapai minimum <b>{rs.minimumFanToWin} faan</b> sesuai pengaturan meja. Jika belum mencapai minimum, tangan belum dihitung sebagai kemenangan.</p>
+        </section>
       </section>
         ) },
       ]} />
