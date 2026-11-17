@@ -97,7 +97,7 @@ function MainBoard({ rows, page, pages }: { rows: MainRow[]; page: number; pages
               <li key={`${r.table}-${r.name}-${rank}`} className={`flex min-h-0 items-center gap-[1.4vw] rounded-[1.2vw] px-[1.8vw] py-[1.2vh] ${top ? "border-[0.15vw] border-cream/40 bg-card" : "bg-card/70"}`}>
                 <span className="w-[3.6vw] shrink-0 text-center text-[1.9vw] font-extrabold leading-none text-muted">{MEDALS[rank] && rank < 3 ? MEDALS[rank] : rank + 1}</span>
                 <span className="min-w-0 flex-1 truncate text-[1.9vw] font-bold leading-none">{r.name}</span>
-                <span className="shrink-0 rounded-full bg-base/60 px-[1.1vw] py-[0.6vh] text-[1.1vw] font-semibold leading-tight text-muted">{r.roomCode ? `Code ${r.roomCode}` : `Table ${pad(r.table)}`}</span>
+                <span className="shrink-0 rounded-full bg-base/60 px-[1.1vw] py-[0.6vh] text-[1.1vw] font-semibold leading-tight text-muted">{`TABLE ${pad(r.table)}`}</span>
                 <span className="w-[9vw] shrink-0 pl-[0.5vw] text-right">
                   <span className={`block text-[1.9vw] font-extrabold leading-none tabular-nums ${scoreTone(r.net, false, 0)}`}>{net(r.net)}</span>
                   {r.start > 0 && <span className="mt-[0.9vh] block text-[0.9vw] leading-none text-muted">total {fmtScore(r.score)}</span>}
