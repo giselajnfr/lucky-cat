@@ -144,9 +144,9 @@ export default function Page() {
           <h3 className="text-xl font-extrabold tracking-tight text-cream">Faan → base points</h3>
           <p>Setiap jumlah faan memiliki nilai base points tersendiri. Contoh: 4 faan = 16 base points.</p>
           <div className="overflow-hidden rounded-xl border border-line">
-            <div className="grid grid-cols-2 bg-base/40 px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted"><span>Faan</span><span className="text-right">Base points</span></div>
+            <div className="grid grid-cols-2 bg-base/40 px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted"><span>Faan</span><span>Base points</span></div>
             {FAAN_TO_BASE_POINTS.map((points, faan) => (
-              <div key={faan} className="grid grid-cols-2 border-t border-line px-3 py-2"><b>{faan}</b><span className="text-right tabular-nums">{points}</span></div>
+              <div key={faan} className="grid grid-cols-2 border-t border-line px-3 py-2"><b>{faan}</b><span className="tabular-nums">{points}</span></div>
             ))}
           </div>
         </section>
