@@ -21,6 +21,22 @@ function exampleGroups(hand: string): string[][] {
   }
   return out.length > 8 ? [out.flat()] : out;   // e.g. Thirteen Orphans: one plain row
 }
+
+/** Show only the tile groups that demonstrate each pattern; the remaining winning-hand tiles are intentionally omitted. */
+const PATTERN_GROUPS: Record<string, number> = {
+  "double-chow": 2, "double-double-chows": 4, "four-into-one": 2,
+  "min-max-chow": 2, "min-max-pung": 2,
+  "three-sequence-pung": 3, "four-sequence-pung": 4,
+  "three-suits-pung": 3, "three-suits-chow": 3,
+  "all-concealed-triplets": 4,
+  "pure-straight": 3,
+};
+function FocusedPatternExample({ rule, hand }: { rule: FanRuleConfig; hand: string }) {
+  const count = PATTERN_GROUPS[rule.id];
+  if (!count) return <HandView concealed={exampleToInput(rule.example!).concealedTiles} groups={exampleGroups(hand)} melds={exampleToInput(rule.example!).melds} winningTile={exampleToInput(rule.example!).winningTile} flowers={exampleToInput(rule.example!).flowers} width={32} fit />;
+  const tokens = hand.trim().split(/\s+/).slice(0, count);
+  return <div className="flex flex-wrap items-center gap-x-3 gap-y-1">{tokens.map((token, i) => <div key={`${token}-${i}`}>{row(token, 34)}</div>)}</div>;
+}
 const H2 = ({ id, children }: { id: string; children: React.ReactNode }) => <h2 id={id} className="mb-3 scroll-mt-4 text-xl">{children}</h2>;
 
 function RuleCard({ r }: { r: FanRuleConfig }) {
@@ -33,7 +49,7 @@ function RuleCard({ r }: { r: FanRuleConfig }) {
       <p className="text-sm">{r.summary}</p>
       <ul className="list-disc space-y-0.5 pl-5 text-sm text-muted">{r.conditions.map((c) => <li key={c}>{c}</li>)}</ul>
       {r.needsInput && <p className="text-xs text-muted">Perlu diisi pemain: <b className="text-cream">{r.needsInput}</b></p>}
-      {ex && (<div><p className="mb-1.5 text-xs font-semibold text-muted">Contoh{ctx ? ` (${ctx})` : ""}</p><HandView concealed={ex.concealedTiles} groups={exampleGroups(r.example!.hand)} melds={ex.melds} winningTile={ex.winningTile} flowers={ex.flowers} width={32} fit /></div>)}
+      {ex && (<div><p className="mb-1.5 text-xs font-semibold text-muted">Contoh pola{ctx ? ` (${ctx})` : ""}</p><FocusedPatternExample rule={r} hand={r.example!.hand} /></div>)}
     </article>
   );
 }
@@ -50,23 +66,10 @@ const GROUPS: { title: string; ids: string[]; note?: string }[] = [
   { title: "Angin & naga", ids: ["seat-wind", "round-wind", "dragon-pong"], note: "Angin ganda: bila angin kursi sama dengan angin ronde, pong-nya bernilai 2 faan." },
   { title: "Bunga & musim", ids: ["no-flower", "suitable-flower", "full-flowers", "eight-flowers"], note: "Nomor bunga dan musim mengikuti angin: 1 Timur, 2 Selatan, 3 Barat, 4 Utara." },
 ];
-/** Show each valid wind/dragon set as its own group, separated by the same slash used in the reference guide. */
-const slashExamples = (items: string[]) => (
-  <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-    {items.map((tiles, i) => (
-      <div key={tiles} className="flex items-center gap-2">
-        {row(tiles, 34)}
-        {i < items.length - 1 && <span aria-hidden="true" className="text-base font-bold text-muted">/</span>}
-      </div>
-    ))}
-  </div>
-);
-const tilesFor = (id: string) =>
-  id === "seat-wind" || id === "round-wind"
-    ? slashExamples(["E E E", "S S S", "W W W", "N N N"])
-    : id === "dragon-pong"
-      ? slashExamples(["RD RD RD", "GD GD GD", "WD WD WD"])
-      : null;
+const slashRows = (items: string[]) => <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">{items.map((t, i) => <div key={t} className="flex items-center gap-2">{i > 0 && <span className="text-lg font-bold text-muted">/</span>}{row(t, 34)}</div>)}</div>;
+const tilesFor = (id: string) => id === "seat-wind" || id === "round-wind"
+  ? slashRows(["E E E", "S S S", "W W W", "N N N"])
+  : id === "dragon-pong" ? slashRows(["RD RD RD", "GD GD GD", "WD WD WD"]) : null;
 
 function AdditionalCard({ r }: { r: FanRuleConfig }) {
   const origin = HOUSE_RULE_IDS.includes(r.id) ? null : ruleOrigin(r.id);
