@@ -35,7 +35,7 @@ export default async function Page({ searchParams }: { searchParams?: { f?: stri
             const state = finished ? "Selesai" : g.status === "paused" ? "Dijeda" : !g.setup_complete ? "Menunggu pemain" : "Berlangsung";
             return (
               <li key={g.id}>
-                <Link href={finished ? `/history/${g.id}` : `/game/${g.id}`} className="card flex flex-col gap-1 transition hover:bg-card/80 md:flex-row md:items-center md:justify-between">
+                <Link href={finished ? `/admin/games/${g.id}/history` : `/admin/games/${g.id}`} className="card flex flex-col gap-1 transition hover:bg-card/80 md:flex-row md:items-center md:justify-between">
                   <div className="min-w-0">
                     <p className="font-bold">{g.name || `Game ${g.room_code}`} <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-semibold ${finished ? "bg-base text-muted" : "bg-pos/20 text-pos"}`}>{state}</span></p>
                     <p className="truncate text-sm text-muted">{ps.length ? ps.map((p) => p.player_name).join(", ") : "Belum ada pemain"}</p>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { StickyTabs } from "@/components/ui/StickyTabs";
 import { HandView } from "@/components/mahjong/HandView";
 import { Tile } from "@/components/mahjong/Tile";
-import { HK18_RULES, RULESETS, RULESET_IDS, exampleToInput, getRuleset, parseTiles } from "@/lib/scoring";
+import { HK18_RULES, HOUSE_RULE_IDS, RULESETS, RULESET_IDS, ruleOrigin, exampleToInput, getRuleset, parseTiles } from "@/lib/scoring";
 import type { FanRuleConfig, RulesetId } from "@/lib/scoring";
 
 const ROUND_NAME: Record<string, string> = { east: "Timur", south: "Selatan", west: "Barat", north: "Utara" };
@@ -21,6 +21,7 @@ function RuleCard({ r }: { r: FanRuleConfig }) {
     <article id={r.id} className="card scroll-mt-4 space-y-3">
       <div className="flex items-baseline justify-between gap-3"><h3 className="text-lg font-bold leading-tight text-cream">{r.name}</h3>
         <span className="shrink-0 rounded-full bg-cream px-3 py-1 text-sm font-extrabold text-base">{r.perUnit ? `${r.fan} per kartu` : `${r.fan} faan`}</span></div>
+      <p className="-mt-1"><span className="inline-block rounded-full border border-line px-2.5 py-0.5 text-[11px] font-semibold text-muted">{HOUSE_RULE_IDS.includes(r.id) ? "Aturan rumah" : RULESETS[ruleOrigin(r.id)].name.replace("Hong Kong", "HK")}</span></p>
       <p className="text-sm">{r.summary}</p>
       <ul className="list-disc space-y-0.5 pl-5 text-sm text-muted">{r.conditions.map((c) => <li key={c}>{c}</li>)}</ul>
       {r.needsInput && <p className="text-xs text-muted">Perlu diisi pemain: <b className="text-cream">{r.needsInput}</b></p>}
@@ -50,7 +51,6 @@ export default function Page({ searchParams }: { searchParams?: { ruleset?: stri
       <section>
         <div className="space-y-4">
           <p className="text-sm text-muted">Panduan Mahjong untuk pemula dan pemain lama. Nilai faan di halaman ini diambil dari konfigurasi yang sama dengan kalkulator.</p>
-          <div className="grid grid-cols-2 gap-2"><Link href="/quick-score" className="btn-secondary">Hitung skor</Link><Link href="/game" className="btn-secondary">Game Tracker</Link></div>
           <p className="text-sm">Mahjong dimainkan empat orang dengan 136 kartu (ditambah kartu bunga dan musim). Tujuannya menyusun <b>4 set dan 1 pasangan</b> dari 14 kartu, lebih dulu dari lawan.</p>
           <div className="card space-y-3"><h3>Jenis kartu</h3>
             <div><p className="mb-1 text-xs font-semibold text-muted">Karakter (萬) 1–9</p>{row("123456789m")}</div>
@@ -72,10 +72,10 @@ export default function Page({ searchParams }: { searchParams?: { ruleset?: stri
         </div></section>
         ) },
         { id: "pola", label: "Pola tangan", content: (
-      <section><div className="space-y-3">{pattern.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
+      <section><p className="mb-3 text-sm text-muted">Label di tiap aturan menunjukkan aturan itu berasal dari HK Classic, HK New 6, atau HK New 18.</p><div className="space-y-3">{pattern.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
         ) },
         { id: "tambahan", label: "Faan tambahan", content: (
-      <section><p className="mb-3 text-sm text-muted">Ditambahkan di atas pola tangan.</p><div className="space-y-3">{additional.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
+      <section><p className="mb-3 text-sm text-muted">Ditambahkan di atas pola tangan. Label di tiap aturan menunjukkan aturan itu berasal dari HK Classic, HK New 6, atau HK New 18.</p><div className="space-y-3">{additional.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
         ) },
         { id: "aturan", label: "Aturan lain", content: (
       <section id="aturan" className="scroll-mt-4 space-y-3">

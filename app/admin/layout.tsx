@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LogoMark } from "@/components/ui/LogoMark";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { AdminNav } from "@/components/admin/AdminNav";
@@ -11,6 +12,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-screen md:flex">
       <nav className="border-b border-line bg-card p-3 md:min-h-screen md:w-56 md:border-b-0 md:border-r">
         <div className="mb-2 flex items-center gap-2 px-3"><LogoMark size="32px" /><p className="text-lg font-bold">Admin</p></div>
+        {/* Mode switch: you stay in admin mode until you switch yourself. */}
+        <div className="mx-1 mb-3 grid grid-cols-2 gap-1 rounded-xl border border-line bg-base/50 p-1 text-sm font-bold" role="group" aria-label="Mode">
+          <span aria-current="true" className="rounded-lg bg-cream py-1.5 text-center text-base">Admin</span>
+          <Link href="/home" className="rounded-lg py-1.5 text-center text-muted transition hover:bg-card hover:text-cream">User</Link>
+        </div>
         <AdminNav items={NAV as [string, string][]} />
         <p className="mt-4 hidden px-3 text-xs text-muted md:block">{profile?.display_name}</p>
         <div className="mt-2 px-1 md:px-3"><LogoutButton className="btn-ghost !min-h-[40px] !px-2 !text-neg" /></div>
