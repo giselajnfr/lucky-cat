@@ -1,4 +1,7 @@
 "use client";
+import { ruleName } from "@/lib/i18n/ruleNames";
+import { currentLang } from "@/lib/i18n/locale";
+import { errText } from "@/lib/i18n/errors";
 import { useState } from "react";
 import { HandView } from "@/components/mahjong/HandView";
 import { WIND_LABEL, type CalcPayload } from "./HandCalculator";
@@ -32,11 +35,11 @@ export function ScoreCard({ payload, winnerName, title }: { payload: CalcPayload
     });
     return { blob: await svgToPng(b.svg, b.width, b.height), name: `mahjong-${result.basePoints}-poin.png` };
   }
-  async function save() { setBusy("save"); setMsg(null); try { const i = await image(); downloadBlob(i.blob, i.name); setMsg("Gambar tersimpan."); } catch (e) { setMsg((e as Error).message); } setBusy(null); }
+  async function save() { setBusy("save"); setMsg(null); try { const i = await image(); downloadBlob(i.blob, i.name); setMsg("Gambar tersimpan."); } catch (e) { setMsg(errText((e as Error).message)); } setBusy(null); }
   async function share() {
     setBusy("share"); setMsg(null);
-    try { const i = await image(); if (!(await shareBlob(i.blob, i.name, `${result.basePoints} poin · ${method}`))) { downloadBlob(i.blob, i.name); setMsg("Perangkat ini tidak mendukung berbagi. Gambar diunduh sebagai gantinya."); } }
-    catch (e) { setMsg((e as Error).message); }
+    try { const i = await image(); if (!(await shareBlob(i.blob, i.name, `${result.basePoints} ${currentLang() === "en" ? "points" : "poin"} · ${method}`))) { downloadBlob(i.blob, i.name); setMsg("Perangkat ini tidak mendukung berbagi. Gambar diunduh sebagai gantinya."); } }
+    catch (e) { setMsg(errText((e as Error).message)); }
     setBusy(null);
   }
 
@@ -65,7 +68,7 @@ export function ScoreCard({ payload, winnerName, title }: { payload: CalcPayload
         <ul className="divide-y divide-line/60">
           {result.detectedFan.map((f) => (
             <li key={f.id} className="py-2 text-sm">
-              <div className="flex items-baseline justify-between"><span>✓ {f.name}{f.count > 1 && <span className="text-muted"> ×{f.count}</span>}</span><span className="font-bold">+{f.fan} faan</span></div>
+              <div className="flex items-baseline justify-between"><span>✓ {ruleName(currentLang(), f.name)}{f.count > 1 && <span className="text-muted"> ×{f.count}</span>}</span><span className="font-bold">+{f.fan} faan</span></div>
               {f.why && <p className="mt-0.5 text-xs text-muted">{f.why}</p>}
             </li>
           ))}
@@ -80,7 +83,7 @@ export function ScoreCard({ payload, winnerName, title }: { payload: CalcPayload
         {result.excludedFan.length > 0 && (
           <div className="mt-2 text-xs text-muted">
             <p className="font-semibold">Tidak dihitung (bentrok / sudah termasuk):</p>
-            <ul className="list-disc pl-4">{result.excludedFan.map((e) => <li key={e.id}>{e.name} → {ruleById(e.byId)?.name ?? e.byId}{e.reason ? `. ${e.reason}` : ""}</li>)}</ul>
+            <ul className="list-disc pl-4">{result.excludedFan.map((e) => <li key={e.id}>{ruleName(currentLang(), e.name)} → {ruleName(currentLang(), ruleById(e.byId)?.name ?? e.byId)}{e.reason ? `. ${e.reason}` : ""}</li>)}</ul>
           </div>
         )}
         {result.waits && result.waits.length > 0 && result.waits[0] !== undefined && (

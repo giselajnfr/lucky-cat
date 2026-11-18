@@ -1,4 +1,5 @@
 "use client";
+import { errText } from "@/lib/i18n/errors";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -17,7 +18,7 @@ export function CalcCodeForm() {
     if (code.length !== CODE_LENGTH) return;
     setBusy(true); setError(null);
     const { data, error } = await supabase.rpc("redeem_calc_code", { p_code: code });
-    if (error) { setError(/too many/i.test(error.message) ? "Terlalu banyak kode salah. Coba lagi beberapa menit lagi." : error.message); setBusy(false); return; }
+    if (error) { setError(/too many/i.test(error.message) ? "Terlalu banyak kode salah. Coba lagi beberapa menit lagi." : errText(error.message)); setBusy(false); return; }
     if (!data) { setError("Kode tidak valid, sudah kedaluwarsa, dicabut, atau sudah penuh. Minta kode baru ke staf."); setBusy(false); return; }
     router.refresh();   // the page now sees the access and shows the calculator
   }

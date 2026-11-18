@@ -1,4 +1,6 @@
 "use client";
+import { ruleName } from "@/lib/i18n/ruleNames";
+import { appLocale, currentLang } from "@/lib/i18n/locale";
 import { useMemo, useState } from "react";
 import { BarList, Columns, LineChart, Split } from "@/components/charts/Charts";
 import { monthlyActivity, overall, patternCounts, playerDirectory, playerStats, winRateByPlayer, type SGame, type SHand, type SPlayer } from "@/lib/stats/aggregate";
@@ -31,10 +33,10 @@ export function StatsView({ games, players, hands, historyHref = "/history/{id}"
         <>
           <section className="grid grid-cols-2 gap-3">{stat("Game dimainkan", ps.gamesPlayed)}{stat("Menang", ps.wins)}{stat("Persentase menang", `${ps.winPct}%`)}{stat("Rata-rata poin menang", ps.avgWinningPoints)}
             {stat("Tangan terbaik", ps.highestHand ? `${ps.highestHand.total_fan} faan` : "—")}{stat("Total poin menang", ps.totalWinPoints)}{stat("Skor bersih", ps.netScore)}{stat("Self Draw", `${ps.selfDrawPct}%`)}</section>
-          <section className="card"><h2 className="section-label mb-3">Pola paling sering</h2><BarList data={ps.topPatterns.map((p) => ({ name: p.name, value: p.count }))} empty="Belum ada kemenangan." /></section>
+          <section className="card"><h2 className="section-label mb-3">Pola paling sering</h2><BarList data={ps.topPatterns.map((p) => ({ name: ruleName(currentLang(), p.name), value: p.count }))} empty="Belum ada kemenangan." /></section>
           <section className="card"><h2 className="section-label mb-3">Performa dari waktu ke waktu (skor bersih kumulatif)</h2>
             <LineChart series={[{ name: ps.name, values: ps.performance.map((p) => p.cumulative) }]} xLabels={ps.performance.length ? [ps.performance[0].date.slice(0, 10), ps.performance[ps.performance.length - 1].date.slice(0, 10)] : undefined} /></section>
-          <section><h2 className="section-label mb-2">Riwayat game</h2><ul className="space-y-2">{[...ps.history].reverse().map((h) => (<li key={h.gameId}><a className="card flex justify-between !p-3 text-sm" href={historyHref.replace("{id}", h.gameId)}><span>{new Date(h.date).toLocaleDateString("id-ID", { dateStyle: "medium" })}</span><b>{h.score} poin{h.rank ? ` · #${h.rank}` : ""}</b></a></li>))}</ul></section>
+          <section><h2 className="section-label mb-2">Riwayat game</h2><ul className="space-y-2">{[...ps.history].reverse().map((h) => (<li key={h.gameId}><a className="card flex justify-between !p-3 text-sm" href={historyHref.replace("{id}", h.gameId)}><span>{new Date(h.date).toLocaleDateString(appLocale(), { dateStyle: "medium" })}</span><b>{h.score} poin{h.rank ? ` · #${h.rank}` : ""}</b></a></li>))}</ul></section>
         </>
       ) : (
         <>
@@ -42,7 +44,7 @@ export function StatsView({ games, players, hands, historyHref = "/history/{id}"
             {stat("Total poin", o.totalPoints)}{stat("Rata-rata per menang", o.avgPointsPerWin)}{stat("Tangan tertinggi", o.highestHand ? `${o.highestHand.total_fan} faan` : "—")}{stat("Seri", o.draws)}</section>
           <section className="card"><h2 className="section-label mb-3">Self Draw vs dari buangan</h2><Split a={o.selfDrawWins} b={o.discardWins} aLabel="Self Draw" bLabel="Dari buangan" /></section>
           <section className="card"><h2 className="section-label mb-3">Win rate per pemain</h2><BarList unit="%" data={winRateByPlayer(filtered, players, hands).map((p) => ({ name: p.name, value: p.value, note: `${p.wins}/${p.hands}` }))} /></section>
-          <section className="card"><h2 className="section-label mb-3">Distribusi pola menang</h2><BarList data={patternCounts(scopeHands).slice(0, 8).map((p) => ({ name: p.name, value: p.count }))} empty="Belum ada pola tercatat." /></section>
+          <section className="card"><h2 className="section-label mb-3">Distribusi pola menang</h2><BarList data={patternCounts(scopeHands).slice(0, 8).map((p) => ({ name: ruleName(currentLang(), p.name), value: p.count }))} empty="Belum ada pola tercatat." /></section>
           <section className="card"><h2 className="section-label mb-3">Aktivitas bulanan</h2><Columns data={monthlyActivity(filtered).map((m) => ({ label: m.month.slice(2), value: m.count }))} /></section>
         </>
       )}

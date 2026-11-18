@@ -28,3 +28,7 @@ button, .btn-primary, .btn-secondary, .btn-danger, .btn-ghost { @apply font-sans
 .seg { @apply grid grid-cols-2 gap-1 rounded-xl border border-line bg-well p-1; }
 .seg-item { @apply flex min-h-[44px] items-center justify-center rounded-lg text-sm font-semibold text-muted transition; }
 .seg-on { @apply bg-cream font-bold text-base; }
+
+/* English mode: hide the page for a moment while remaining Indonesian text is translated (reveals itself after 1.2s even if JS fails). */
+html[data-i18n="pending"] body { visibility: hidden; animation: lc-reveal 0s linear 1.2s forwards; }
+@keyframes lc-reveal { to { visibility: visible; } }

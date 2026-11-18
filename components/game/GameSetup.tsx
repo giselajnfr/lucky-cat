@@ -1,4 +1,6 @@
 "use client";
+import { errText } from "@/lib/i18n/errors";
+import { appLocale } from "@/lib/i18n/locale";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { CAP_CHOICES, MAX_START_POINTS, PRESETS, START_POINT_CHOICES, digits } from "@/lib/game/presets";
@@ -14,7 +16,7 @@ const SEATS = [
   { seat: 3, char: "北", letter: "N", name: "Utara" },
 ];
 type Seat = { playerId: string | null; name: string };
-const fmtNum = (n: number) => n.toLocaleString("id-ID");
+const fmtNum = (n: number) => n.toLocaleString(appLocale());
 
 /** The first thing players see after joining with the room code: names, rule book, starting points, faan cap, then start. */
 export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => void }) {
@@ -71,7 +73,7 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
     });
     if (error) {
       if (/already been set up/i.test(error.message)) { onDone(); return; }   // another player at the table was faster: just show their setup
-      setError(error.message); setBusy(false); return;
+      setError(errText(error.message)); setBusy(false); return;
     }
     onDone();
   }

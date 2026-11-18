@@ -1,4 +1,5 @@
 "use client";
+import { errText } from "@/lib/i18n/errors";
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -36,7 +37,7 @@ export function AdminManagement({ users, currentUserId }: { users: ManagedUser[]
     setMessage("");
     startTransition(async () => {
       const result = await promoteUserToAdmin(selectedUser.id);
-      setMessage(result.ok ? "User berhasil dijadikan admin." : result.error ?? "Gagal menambahkan admin.");
+      setMessage(result.ok ? "User berhasil dijadikan admin." : (result.error ? errText(result.error) : "Gagal menambahkan admin."));
       if (result.ok) {
         setSelectedId("");
         setSearch("");
@@ -50,7 +51,7 @@ export function AdminManagement({ users, currentUserId }: { users: ManagedUser[]
     setMessage("");
     startTransition(async () => {
       const result = await demoteAdmin(target.id);
-      setMessage(result.ok ? "Akses admin berhasil dihapus. Akun tetap menjadi user biasa." : result.error ?? "Gagal menghapus admin.");
+      setMessage(result.ok ? "Akses admin berhasil dihapus. Akun tetap menjadi user biasa." : (result.error ? errText(result.error) : "Gagal menghapus admin."));
       router.refresh();
     });
   }

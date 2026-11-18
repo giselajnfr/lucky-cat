@@ -1,4 +1,5 @@
 "use client";
+import { errText } from "@/lib/i18n/errors";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -40,7 +41,7 @@ export function AdminLiveTables() {
 
   async function call(fn: string, args: Record<string, unknown>) {
     const { error } = await supabase.rpc(fn, args);
-    if (error) alert(error.message); else load();
+    if (error) alert(errText(error.message)); else load();
   }
 
   /**
@@ -54,7 +55,7 @@ export function AdminLiveTables() {
     if (hands > 0) {
       if (!confirm(`Game di meja ini belum diakhiri (${hands} tangan tercatat).\n\nAkhiri game, simpan hasilnya, lalu lepas meja?`)) return;
       const { error } = await supabase.rpc("admin_set_game_status", { p_game: g.id, p_status: "finished" });
-      if (error) { alert(error.message); return; }
+      if (error) { alert(errText(error.message)); return; }
     } else {
       if (!confirm("Belum ada tangan yang dicatat di meja ini.\n\nHapus ruang ini lalu lepas meja?")) return;
       await supabase.from("games").delete().eq("id", g.id);   // best effort: only the game's owner may delete; the release below still runs
@@ -71,11 +72,11 @@ export function AdminLiveTables() {
       if (hands > 0) {
         if (!confirm(`${label} masih punya game berjalan (${hands} tangan tercatat).\n\nAkhiri game, simpan hasilnya, lalu hapus meja?`)) return;
         const { error } = await supabase.rpc("admin_set_game_status", { p_game: g.id, p_status: "finished" });
-        if (error) { alert(error.message); return; }
+        if (error) { alert(errText(error.message)); return; }
       } else {
         if (!confirm(`${label} punya ruang yang belum dimainkan.\n\nHapus ruang itu dan hapus meja?`)) return;
         const { error } = await supabase.from("games").delete().eq("id", g.id);
-        if (error) { alert(error.message); return; }
+        if (error) { alert(errText(error.message)); return; }
       }
     }
     await call("admin_delete_table", { p_table: r.id });

@@ -1,4 +1,6 @@
 "use client";
+import { currentLang } from "@/lib/i18n/locale";
+import { ruleName } from "@/lib/i18n/ruleNames";
 import { useEffect, useMemo, useState } from "react";
 import { Tile } from "@/components/mahjong/Tile";
 import { HandView } from "@/components/mahjong/HandView";
@@ -172,7 +174,7 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
         <div><h2 className="section-label">Poin tambahan</h2><p className="mt-1 text-xs text-muted">Centang yang terjadi di tangan ini. Faan angin, naga, dan bunga dihitung otomatis dari kartu.</p></div>
         <ul className="space-y-2">
           {(config.fanTable ?? FAN_TABLE).filter((r) => r.category === "additional" && r.enabled && (CHECKABLE.includes(r.id) || (r.id === "self-draw" && !lockedMethod))).map((rule) => {
-            const text = EXTRA_TEXT[rule.id] ?? { title: rule.name, hint: rule.summary };
+            const text = EXTRA_TEXT[rule.id] ?? { title: ruleName(currentLang(), rule.name), hint: rule.summary };
             const flag = (MANUAL_FAN_IDS as readonly string[]).includes(rule.id);
             const blocked = (rule.id === "self-draw-after-kong" && effMethod !== "SELF_DRAW")
               || ((rule.id === "robbing-kong" || rule.id === "concealed-hand" || rule.id === "fully-exposed") && effMethod !== "DISCARD")

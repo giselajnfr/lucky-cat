@@ -1,11 +1,13 @@
 "use client";
+import { errText } from "@/lib/i18n/errors";
+import { appLocale } from "@/lib/i18n/locale";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { USE_CHOICES, VALIDITY_CHOICES, codeStatus, type CalcCodeRow, type CodeStatus } from "@/lib/calc/codes";
 
 const TONE: Record<CodeStatus, string> = { aktif: "bg-pos/15 text-pos", penuh: "bg-warn/15 text-warn", kedaluwarsa: "border border-line text-muted", dicabut: "border border-neg/50 text-neg" };
-const fmt = (iso: string) => new Date(iso).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
+const fmt = (iso: string) => new Date(iso).toLocaleString(appLocale(), { dateStyle: "medium", timeStyle: "short" });
 
 /** Admin: generate access codes for the quick calculator, copy them, and revoke them. */
 export function CalcCodesAdmin({ codes }: { codes: CalcCodeRow[] }) {
@@ -24,13 +26,13 @@ export function CalcCodesAdmin({ codes }: { codes: CalcCodeRow[] }) {
     e.preventDefault(); setBusy(true); setError(null);
     const { data, error } = await supabase.rpc("admin_create_calc_code", { p_label: label, p_hours: hours, p_max_uses: max });
     setBusy(false);
-    if (error) { setError(error.message); return; }
+    if (error) { setError(errText(error.message)); return; }
     setFresh(data as string); setLabel(""); router.refresh();
   }
   async function revoke(id: string) {
     if (!confirm("Cabut kode ini? Semua orang yang memakainya kehilangan akses.")) return;
     const { error } = await supabase.rpc("admin_revoke_calc_code", { p_id: id });
-    if (error) setError(error.message); else router.refresh();
+    if (error) setError(errText(error.message)); else router.refresh();
   }
   async function copy(code: string) {
     try { await navigator.clipboard.writeText(code); setNote(`Kode ${code} disalin`); } catch { setNote(`Salin manual: ${code}`); }

@@ -1,4 +1,6 @@
 "use client";
+import { ruleName } from "@/lib/i18n/ruleNames";
+import { currentLang } from "@/lib/i18n/locale";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fmtScore, scoreTone } from "@/lib/ui/score";
 import { LogoMark } from "@/components/ui/LogoMark";
@@ -148,7 +150,7 @@ function Highlight({ e, animate, more }: { e: WinningHandEvent; animate: boolean
           <div className="rounded-[1.2vw] border border-line bg-base/55 px-[2vw] py-[1.5vh]"><p className="text-[1.1vw] font-bold uppercase tracking-[0.16em] text-muted">Total faan</p><p className="mt-[0.5vh] text-[3.2vw] font-black leading-none text-cream">{e.totalFan > 0 ? e.totalFan : "—"}</p></div>
           <div className="rounded-[1.2vw] border border-line bg-base/55 px-[2vw] py-[1.5vh]"><p className="text-[1.1vw] font-bold uppercase tracking-[0.16em] text-muted">Points won</p><p className="mt-[0.5vh] text-[3.2vw] font-black leading-none text-cream">+{fmt(e.points)}</p></div>
         </div>
-        {e.detectedFan.length > 0 && <div className="mb-[2vh] w-full max-w-[76vw]"><p className="mb-[1vh] text-[1.05vw] font-extrabold uppercase tracking-[0.2em] text-muted">Winning patterns</p><div className="flex flex-wrap justify-center gap-[0.7vw]">{e.detectedFan.map((f) => <span key={f.name} className="inline-flex items-center gap-[0.65vw] rounded-full border border-line bg-base/60 px-[1.2vw] py-[0.8vh] text-[1.25vw] font-semibold text-cream">{f.name}<span className="rounded-full bg-cream px-[0.65vw] py-[0.25vh] text-[1vw] font-extrabold text-base">{f.fan}F</span></span>)}</div></div>}
+        {e.detectedFan.length > 0 && <div className="mb-[2vh] w-full max-w-[76vw]"><p className="mb-[1vh] text-[1.05vw] font-extrabold uppercase tracking-[0.2em] text-muted">Winning patterns</p><div className="flex flex-wrap justify-center gap-[0.7vw]">{e.detectedFan.map((f) => <span key={f.name} className="inline-flex items-center gap-[0.65vw] rounded-full border border-line bg-base/60 px-[1.2vw] py-[0.8vh] text-[1.25vw] font-semibold text-cream">{ruleName(currentLang(), f.name)}<span className="rounded-full bg-cream px-[0.65vw] py-[0.25vh] text-[1vw] font-extrabold text-base">{f.fan}F</span></span>)}</div></div>}
         {e.handTiles.length > 0 && <div className="mb-[1.8vh] w-full"><p className="mb-[1.2vh] text-[1.05vw] font-extrabold uppercase tracking-[0.2em] text-muted">Winning hand</p><div className="flex flex-wrap items-center justify-center gap-[0.65vw]">{e.handTiles.map((t, i) => <div key={`${t}-${i}`} className="w-[4.6vw] shrink-0 drop-shadow-md"><Tile t={t} fluid /></div>)}</div></div>}
         {e.photoUrl && (
           // eslint-disable-next-line @next/next/no-img-element

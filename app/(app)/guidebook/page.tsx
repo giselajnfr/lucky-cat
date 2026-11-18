@@ -1,11 +1,19 @@
+import { ruleName } from "@/lib/i18n/ruleNames";
 import { StickyTabs } from "@/components/ui/StickyTabs";
 import { HandView } from "@/components/mahjong/HandView";
 import { Tile } from "@/components/mahjong/Tile";
 import { HK18_RULES, HOUSE_RULE_IDS, RULESETS, FAAN_TO_BASE_POINTS, ruleOrigin, exampleToInput, getRuleset, parseTiles } from "@/lib/scoring";
 import type { FanRuleConfig } from "@/lib/scoring";
+import { getLang, getT } from "@/lib/i18n/server";
+import { ruleNeeds, ruleShort, ruleSummary } from "@/lib/i18n/ruleText";
+import { LanguageToggle } from "@/components/i18n/LanguageToggle";
+import type { Key } from "@/lib/i18n/dictionary";
 
-const ROUND_NAME: Record<string, string> = { east: "Timur", south: "Selatan", west: "Barat", north: "Utara" };
-const WIND = { E: "Timur", S: "Selatan", W: "Barat", N: "Utara" } as const;
+/** Renders a dictionary string that contains <b> tags (strings are our own, never user input). */
+function Rich({ k, vars, as: Tag = "span" }: { k: Key; vars?: Record<string, string | number>; as?: "span" | "p" | "li" }) {
+  return <Tag dangerouslySetInnerHTML={{ __html: getT()(k, vars) }} />;
+}
+
 /** A row of tiles: always one single line. Tiles are up to 46px wide and shrink on narrow screens so the row never wraps. */
 const row = (s: string, w = 46) => {
   const tiles = parseTiles(s);
@@ -40,30 +48,25 @@ function FocusedPatternExample({ rule, hand }: { rule: FanRuleConfig; hand: stri
 const H2 = ({ id, children }: { id: string; children: React.ReactNode }) => <h2 id={id} className="mb-3 scroll-mt-4 text-xl">{children}</h2>;
 
 function RuleCard({ r }: { r: FanRuleConfig }) {
+  const t = getT(), lang = getLang();
   const ex = r.example ? exampleToInput(r.example) : null;
-  const ctx = r.example && [r.example.method === "SELF_DRAW" ? "Self Draw" : r.example.method === "DISCARD" ? "dari buangan" : null, r.example.seat ? `kursi ${WIND[r.example.seat]}` : null, r.example.round ? `ronde ${WIND[r.example.round]}` : null, r.example.lastTile ? "kartu terakhir" : null, r.example.robbingKong ? "rampas kong" : null].filter(Boolean).join(" · ");
+  const ctx = r.example && [r.example.method === "SELF_DRAW" ? t("guide.ctx.self") : r.example.method === "DISCARD" ? t("guide.ctx.discard") : null, r.example.seat ? t("guide.ctx.seat", { w: t(`wind.${r.example.seat}` as Key) }) : null, r.example.round ? t("guide.ctx.round", { w: t(`wind.${r.example.round}` as Key) }) : null, r.example.lastTile ? t("guide.ctx.last") : null, r.example.robbingKong ? t("guide.ctx.rob") : null].filter(Boolean).join(" · ");
   return (
     <article id={r.id} className="card scroll-mt-4 space-y-3">
-      <div className="flex items-baseline justify-between gap-3"><h3 className="text-xl font-extrabold leading-tight text-cream">{r.name}{!HOUSE_RULE_IDS.includes(r.id) && ruleOrigin(r.id) !== "classic" ? <span className="ml-2 inline-block align-middle rounded-full border border-line px-2.5 py-1 text-[11px] font-bold text-muted">{RULESETS[ruleOrigin(r.id)].name.replace("Hong Kong ", "HK ")}</span> : null}</h3>
-        <span className="shrink-0 rounded-full bg-cream px-3 py-1 text-sm font-extrabold text-base">{r.perUnit ? `${r.fan} per kartu` : `${r.fan} faan`}</span></div>
-      <p className="text-sm" style={{ color: "rgb(196 173 142 / var(--tw-text-opacity, 1))" }}>{r.summary}</p>
-      {r.needsInput && <p className="text-xs text-muted">Perlu diisi pemain: <b className="text-cream">{r.needsInput}</b></p>}
+      <div className="flex items-baseline justify-between gap-3"><h3 className="text-xl font-extrabold leading-tight text-cream">{ruleName(lang, r.name)}{!HOUSE_RULE_IDS.includes(r.id) && ruleOrigin(r.id) !== "classic" ? <span className="ml-2 inline-block align-middle rounded-full border border-line px-2.5 py-1 text-[11px] font-bold text-muted">{RULESETS[ruleOrigin(r.id)].name.replace("Hong Kong ", "HK ")}</span> : null}</h3>
+        <span className="shrink-0 rounded-full bg-cream px-3 py-1 text-sm font-extrabold text-base">{r.perUnit ? t("guide.perTile", { fan: r.fan }) : t("guide.faan", { fan: r.fan })}</span></div>
+      <p className="text-sm" style={{ color: "rgb(196 173 142 / var(--tw-text-opacity, 1))" }}>{ruleSummary(lang, r.id, r.summary)}</p>
+      {r.needsInput && <p className="text-xs text-muted">{t("guide.needs")} <b className="text-cream">{ruleNeeds(lang, r.needsInput)}</b></p>}
       {ex && (<div>{ctx && <p className="mb-1.5 text-xs font-semibold text-muted">{ctx}</p>}<FocusedPatternExample rule={r} hand={r.example!.hand} /></div>)}
     </article>
   );
 }
 
-/** Compact "Faan tambahan" lists, grouped like a cheat sheet: one short line per rule, tiles only for winds and dragons. */
-const SHORT: Record<string, string> = {
-  "seat-wind": "Pong/kong angin sesuai kursi pemenang.", "round-wind": "Pong/kong angin ronde yang sedang berjalan.", "dragon-pong": "Pong/kong naga (merah, hijau atau putih).",
-  "no-flower": "Tidak punya bunga atau musim sama sekali.", "suitable-flower": "Bunga/musim bernomor sama dengan kursi pemenang.", "full-flowers": "Empat bunga atau empat musim lengkap.", "eight-flowers": "Kedelapan bunga dan musim. Menggantikan Full Flowers.",
-  "self-draw": "Kartu menang diambil sendiri dari tumpukan.", "self-draw-after-kong": "Menang dari kartu pengganti setelah menyatakan kong.", "concealed-hand": "Menang dari buangan tanpa set terbuka.", "last-tile": "Menang dengan kartu terakhir.", "robbing-kong": "Menang dengan kartu yang dipakai lawan untuk menambah kong.",
-  "single-wait": "Menunggu satu kartu: melengkapi pasangan.", "heavenly-hand": "Dong menang dengan tangan awalnya.", "earthly-hand": "Pemain non-dong menang dari buangan pertama dong.", "fully-exposed": "Semua set dibuka, menang dari buangan untuk melengkapi pasangan.", "three-concealed-pungs": "Tiga pong/kong tertutup.", "fully-concealed": "Self Draw tanpa set terbuka (menggantikan Self Draw + Concealed Hand).",
-};
-const UNIT: Record<string, string> = { "dragon-pong": "1 per set", "suitable-flower": "1 per kartu", "full-flowers": "2 per set" };
-const GROUPS: { title: string; ids: string[]; note?: string }[] = [
-  { title: "Angin & naga", ids: ["seat-wind", "round-wind", "dragon-pong"], note: "Angin ganda: bila angin kursi sama dengan angin ronde, pong-nya bernilai 2 faan." },
-  { title: "Bunga & musim", ids: ["no-flower", "suitable-flower", "full-flowers", "eight-flowers"], note: "Nomor bunga dan musim mengikuti angin: 1 Timur, 2 Selatan, 3 Barat, 4 Utara." },
+/** Compact "Bonus faan" lists, grouped like a cheat sheet: one short line per rule, tiles only for winds and dragons. */
+const UNIT: Record<string, Key> = { "dragon-pong": "guide.u.perSet", "suitable-flower": "guide.u.perTile", "full-flowers": "guide.u.perSet2" };
+const GROUPS: { title: Key; ids: string[]; note?: Key }[] = [
+  { title: "guide.g.windsDragons", ids: ["seat-wind", "round-wind", "dragon-pong"], note: "guide.g.windsNote" },
+  { title: "guide.g.flowers", ids: ["no-flower", "suitable-flower", "full-flowers", "eight-flowers"], note: "guide.g.flowersNote" },
 ];
 const slashRows = (items: string[]) => <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">{items.map((t, i) => <div key={t} className="flex items-center gap-2">{i > 0 && <span className="text-lg font-bold text-muted">/</span>}{row(t, 34)}</div>)}</div>;
 const tilesFor = (id: string) => id === "seat-wind" || id === "round-wind"
@@ -71,80 +74,83 @@ const tilesFor = (id: string) => id === "seat-wind" || id === "round-wind"
   : id === "dragon-pong" ? slashRows(["RD RD RD", "GD GD GD", "WD WD WD"]) : null;
 
 function AdditionalCard({ r }: { r: FanRuleConfig }) {
+  const t = getT(), lang = getLang();
   const origin = HOUSE_RULE_IDS.includes(r.id) ? null : ruleOrigin(r.id);
   return (
     <article id={r.id} className="card scroll-mt-4 !px-4 !py-3">
-      <div className="flex items-baseline justify-between gap-3"><h3 className="text-lg font-extrabold leading-tight text-cream">{r.name}{origin && origin !== "classic" ? <span className="ml-2 inline-block align-middle rounded-full border border-line px-2 py-0.5 text-[10px] font-bold text-muted">{RULESETS[origin].name.replace("Hong Kong ", "HK ")}</span> : null}</h3>
-        <span className="shrink-0 rounded-full bg-cream px-3 py-0.5 text-sm font-extrabold text-base">{UNIT[r.id] ?? `${r.fan} faan`}</span></div>
-      <p className="mt-1 text-sm text-muted">{SHORT[r.id] ?? r.summary}</p>
+      <div className="flex items-baseline justify-between gap-3"><h3 className="text-lg font-extrabold leading-tight text-cream">{ruleName(lang, r.name)}{origin && origin !== "classic" ? <span className="ml-2 inline-block align-middle rounded-full border border-line px-2 py-0.5 text-[10px] font-bold text-muted">{RULESETS[origin].name.replace("Hong Kong ", "HK ")}</span> : null}</h3>
+        <span className="shrink-0 rounded-full bg-cream px-3 py-0.5 text-sm font-extrabold text-base">{UNIT[r.id] ? t(UNIT[r.id]) : t("guide.faan", { fan: r.fan })}</span></div>
+      <p className="mt-1 text-sm text-muted">{ruleShort(lang, r.id, r.summary)}</p>
       {tilesFor(r.id)}
     </article>
   );
 }
 function AdditionalList({ rules }: { rules: FanRuleConfig[] }) {
+  const t = getT();
   const used = new Set(GROUPS.flatMap((g) => g.ids));
   const groups = [...GROUPS.map((g) => ({ ...g, rules: g.ids.map((id) => rules.find((r) => r.id === id)).filter(Boolean) as FanRuleConfig[] })),
-    { title: "Cara menang", note: undefined as string | undefined, ids: [], rules: rules.filter((r) => !used.has(r.id)) }].filter((g) => g.rules.length);
+    { title: "guide.g.win" as Key, note: undefined as Key | undefined, ids: [] as string[], rules: rules.filter((r) => !used.has(r.id)) }].filter((g) => g.rules.length);
   return (
     <div className="space-y-6">{groups.map((g) => (
-      <div key={g.title} className="space-y-2.5"><h2 className="section-label">{g.title}</h2>
+      <div key={g.title} className="space-y-2.5"><h2 className="section-label">{t(g.title)}</h2>
         {g.rules.map((r) => <AdditionalCard key={r.id} r={r} />)}
-        {g.note && <p className="px-1 text-xs text-muted">{g.note}</p>}</div>))}
+        {g.note && <p className="px-1 text-xs text-muted">{t(g.note)}</p>}</div>))}
     </div>
   );
 }
 
 export default function Page() {
+  const t = getT();
   const p = HK18_RULES.progression;
   const rs = getRuleset();   // the full rule set (New 18 = superset); each rule is labelled with where it comes from
   const pattern = rs.scoringRules.filter((r) => r.category === "pattern" && r.enabled);
   const additional = rs.scoringRules.filter((r) => r.category === "additional" && r.enabled);
-  const header = <h1 className="text-[1.9rem] font-extrabold leading-tight">Aturan Mahjong</h1>;
+  const header = <div className="flex items-center justify-between gap-3"><h1 className="text-[1.9rem] font-extrabold leading-tight">{t("guide.title")}</h1><LanguageToggle /></div>;
   return (
     <main>
       <StickyTabs header={header} tabs={[
-        { id: "dasar", label: "Dasar", content: (
+        { id: "dasar", label: t("guide.tab.basics"), content: (
       <section>
         <div className="space-y-4">
-          <p className="text-sm text-muted">Panduan Mahjong untuk pemula dan pemain lama. Nilai faan di halaman ini diambil dari konfigurasi yang sama dengan kalkulator.</p>
-          <p className="text-sm">Mahjong dimainkan empat orang dengan 136 kartu (ditambah kartu bunga dan musim). Tujuannya menyusun <b>4 set dan 1 pasangan</b> dari 14 kartu, lebih dulu dari lawan.</p>
-          <div className="card space-y-3"><h3>Jenis kartu</h3>
-            <div><p className="mb-1 text-xs font-semibold text-muted">Karakter (萬) 1–9</p>{row("123456789m")}</div>
-            <div><p className="mb-1 text-xs font-semibold text-muted">Bambu 1–9</p>{row("123456789s")}</div>
-            <div><p className="mb-1 text-xs font-semibold text-muted">Lingkaran (Dots) 1–9</p>{row("123456789p")}</div>
-            <div><p className="mb-1 text-xs font-semibold text-muted">Angin: Timur, Selatan, Barat, Utara</p>{row("E S W N")}</div>
-            <div><p className="mb-1 text-xs font-semibold text-muted">Naga: Merah, Hijau, Putih</p>{row("RD GD WD")}</div>
-            <div><p className="mb-1 text-xs font-semibold text-muted">Bunga (1–4) dan Musim (Semi, Panas, Gugur, Dingin = 1–4)</p>{row("F1 F2 F3 F4 S1 S2 S3 S4")}</div>
-            <p className="text-xs text-muted">Bunga dan musim tidak masuk tangan. Kartu itu diletakkan di samping dan hanya menambah faan.</p></div>
-          <div className="card space-y-3"><h3>Set dan pasangan</h3>
-            <div><p className="text-sm"><b>Chow</b>: tiga angka berurutan, satu jenis.</p>{row("345m")}</div>
-            <div><p className="text-sm"><b>Pong</b>: tiga kartu yang sama.</p>{row("777p")}</div>
-            <div><p className="text-sm"><b>Kong</b>: empat kartu yang sama (dihitung satu set).</p>{row("RD RD RD RD")}</div>
-            <div><p className="text-sm"><b>Pasangan</b>: dua kartu yang sama.</p>{row("EE")}</div></div>
-          <div className="card space-y-2 text-sm"><h3>Jalannya permainan</h3>
-            <ol className="list-decimal space-y-1 pl-5"><li>Setiap pemain mengambil lalu membuang satu kartu secara bergiliran.</li><li>Kartu buangan boleh diambil untuk Chow (hanya dari pemain sebelumnya), Pong, atau Kong.</li><li>Menang dari kartu buangan lawan disebut <b>menang dari buangan</b>. Menang dari kartu yang diambil sendiri disebut <b>Self Draw</b>.</li><li>Jika kartu habis tanpa pemenang, tangan itu <b>seri</b> dan tidak ada poin berpindah.</li></ol></div>
-          <div className="card space-y-2 text-sm"><h3>Minimum {rs.minimumFanToWin} faan · maksimum {rs.maximumFan ?? 13} faan</h3>
-            <p>Untuk menang, kumpulkan minimal <b>{rs.minimumFanToWin} faan</b>. Semua faan pola dan bonus dijumlahkan, hingga batas maksimum <b>{rs.maximumFan ?? 13} faan</b>. Pilih mode <b>Chicken Hand</b> (tanpa minimum), <b>Beginner</b> (3 faan), atau <b>Advanced</b> (5 faan) saat membuat meja.</p></div>
+          <p className="text-sm text-muted">{t("guide.intro")}</p>
+          <p className="text-sm"><Rich k="guide.overview" /></p>
+          <div className="card space-y-3"><h3>{t("guide.tiles")}</h3>
+            <div><p className="mb-1 text-xs font-semibold text-muted">{t("guide.t.char")}</p>{row("123456789m")}</div>
+            <div><p className="mb-1 text-xs font-semibold text-muted">{t("guide.t.bamboo")}</p>{row("123456789s")}</div>
+            <div><p className="mb-1 text-xs font-semibold text-muted">{t("guide.t.dots")}</p>{row("123456789p")}</div>
+            <div><p className="mb-1 text-xs font-semibold text-muted">{t("guide.t.winds")}</p>{row("E S W N")}</div>
+            <div><p className="mb-1 text-xs font-semibold text-muted">{t("guide.t.dragons")}</p>{row("RD GD WD")}</div>
+            <div><p className="mb-1 text-xs font-semibold text-muted">{t("guide.t.flowers")}</p>{row("F1 F2 F3 F4 S1 S2 S3 S4")}</div>
+            <p className="text-xs text-muted">{t("guide.t.note")}</p></div>
+          <div className="card space-y-3"><h3>{t("guide.sets")}</h3>
+            <div><p className="text-sm"><Rich k="guide.chow" /></p>{row("345m")}</div>
+            <div><p className="text-sm"><Rich k="guide.pong" /></p>{row("777p")}</div>
+            <div><p className="text-sm"><Rich k="guide.kong" /></p>{row("RD RD RD RD")}</div>
+            <div><p className="text-sm"><Rich k="guide.pair" /></p>{row("EE")}</div></div>
+          <div className="card space-y-2 text-sm"><h3>{t("guide.flow")}</h3>
+            <ol className="list-decimal space-y-1 pl-5"><li>{t("guide.flow1")}</li><li>{t("guide.flow2")}</li><Rich as="li" k="guide.flow3" /><Rich as="li" k="guide.flow4" /></ol></div>
+          <div className="card space-y-2 text-sm"><h3>{t("guide.min", { min: rs.minimumFanToWin, max: rs.maximumFan ?? 13 })}</h3>
+            <Rich as="p" k="guide.minBody" vars={{ min: rs.minimumFanToWin, max: rs.maximumFan ?? 13 }} /></div>
         </div></section>
         ) },
-        { id: "pola", label: "Pola tangan", content: (
+        { id: "pola", label: t("guide.tab.patterns"), content: (
       <section><div className="space-y-3">{pattern.map((r) => <RuleCard key={r.id} r={r} />)}</div></section>
         ) },
-        { id: "tambahan", label: "Faan tambahan", content: (
-      <section><p className="mb-3 text-sm text-muted">Ditambahkan di atas faan pola tangan.</p><AdditionalList rules={additional} /></section>
+        { id: "tambahan", label: t("guide.tab.extra"), content: (
+      <section><p className="mb-3 text-sm text-muted">{t("guide.extraIntro")}</p><AdditionalList rules={additional} /></section>
         ) },
-        { id: "aturan", label: "Aturan lain", content: (
+        { id: "aturan", label: t("guide.tab.other"), content: (
       <section id="aturan" className="scroll-mt-4 space-y-3">
         <section className="card space-y-2 text-sm">
-          <h3 className="text-xl font-extrabold tracking-tight text-cream">Cara menghitung poin</h3>
-          <p>Jumlahkan faan dari pola tangan dan faan tambahan. Total faan yang didapat kemudian dikonversi menjadi base points menggunakan tabel Hong Kong Mahjong.</p>
+          <h3 className="text-xl font-extrabold tracking-tight text-cream">{t("guide.calc")}</h3>
+          <p>{t("guide.calcBody")}</p>
         </section>
 
         <section className="card space-y-2 text-sm">
-          <h3 className="text-xl font-extrabold tracking-tight text-cream">Faan → base points</h3>
-          <p>Setiap jumlah faan memiliki nilai base points tersendiri. Contoh: 4 faan = 16 base points.</p>
+          <h3 className="text-xl font-extrabold tracking-tight text-cream">{t("guide.table")}</h3>
+          <p>{t("guide.tableBody")}</p>
           <div className="overflow-hidden rounded-xl border border-line">
-            <div className="grid grid-cols-2 bg-base/40 px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted"><span>Faan</span><span>Base points</span></div>
+            <div className="grid grid-cols-2 bg-base/40 px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted"><span>{t("guide.col.faan")}</span><span>{t("guide.col.base")}</span></div>
             {FAAN_TO_BASE_POINTS.map((points, faan) => (
               <div key={faan} className="grid grid-cols-2 border-t border-line px-3 py-2"><b>{faan}</b><span className="tabular-nums">{points}</span></div>
             ))}
@@ -152,26 +158,26 @@ export default function Page() {
         </section>
 
         <section className="card space-y-3 text-sm">
-          <h3 className="text-xl font-extrabold tracking-tight text-cream">Siapa yang bayar?</h3>
+          <h3 className="text-xl font-extrabold tracking-tight text-cream">{t("guide.who")}</h3>
           <div className="space-y-3">
-            <div><p className="font-bold text-cream">Self Draw</p><p>Ketiga pemain lain masing-masing membayar <b>2× base points</b> kepada pemenang. Contoh 4 faan = 16 base points, jadi setiap pemain membayar 32 poin dan pemenang menerima 96 poin.</p></div>
-            <div><p className="font-bold text-cream">Discard Win</p><p>Pembayaran mengikuti mode yang digunakan pada game:</p>
+            <div><p className="font-bold text-cream">Self Draw</p><Rich as="p" k="guide.selfBody" /></div>
+            <div><p className="font-bold text-cream">Discard Win</p><p>{t("guide.discardIntro")}</p>
               <ul className="list-disc space-y-1 pl-5">
-                <li><b>Discarder Pays All:</b> pemain yang membuang kartu membayar 3× base points. Contoh 4 faan = 16, discarder membayar 48 poin.</li>
-                <li><b>Half Pay / Split:</b> discarder membayar 2× base points, sedangkan dua pemain lainnya masing-masing membayar 1×. Contoh 4 faan = 16, discarder membayar 32 poin dan dua pemain lainnya masing-masing 16 poin; pemenang menerima 64 poin.</li>
+                <Rich as="li" k="guide.discardAll" />
+                <Rich as="li" k="guide.discardHalf" />
               </ul>
             </div>
           </div>
         </section>
 
         <section className="card space-y-1.5 text-sm">
-          <h3 className="text-xl font-extrabold tracking-tight text-cream">Batas faan</h3>
-          <p>Konversi poin mengikuti tabel hingga maksimum <b>13 faan = 384 base points</b>. Batas faan permainan mengikuti pengaturan meja.</p>
+          <h3 className="text-xl font-extrabold tracking-tight text-cream">{t("guide.cap")}</h3>
+          <Rich as="p" k="guide.capBody" />
         </section>
 
         <section className="card space-y-1.5 text-sm">
-          <h3 className="text-xl font-extrabold tracking-tight text-cream">Syarat minimum</h3>
-          <p>Untuk menang, total harus mencapai minimum <b>{rs.minimumFanToWin} faan</b> sesuai pengaturan meja. Jika belum mencapai minimum, tangan belum dihitung sebagai kemenangan.</p>
+          <h3 className="text-xl font-extrabold tracking-tight text-cream">{t("guide.minTitle")}</h3>
+          <Rich as="p" k="guide.minReq" vars={{ min: rs.minimumFanToWin }} />
         </section>
       </section>
         ) },

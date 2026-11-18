@@ -3,13 +3,15 @@ import { LogoMark } from "@/components/ui/LogoMark";
 import { AccountMenu } from "@/components/auth/AccountMenu";
 import { GameCard, type GameCardData } from "@/components/game/GameCard";
 import { createClient } from "@/lib/supabase/server";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const supabase = createClient();
+  const t = getT();
   const { data: { user } } = await supabase.auth.getUser();
-  const name: string = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "teman";
+  const name: string = user?.user_metadata?.display_name || user?.email?.split("@")[0] || t("home.guest");
   const { data: prof } = user ? await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle() : { data: null };
   const isAdmin = prof?.role === "ADMIN";
 
@@ -32,33 +34,33 @@ export default async function Home() {
       </header>
 
       <div>
-        <h1 className="text-[1.75rem] leading-tight">Halo, {name}!</h1>
-        <p className="mt-0.5 text-sm text-muted">Mau main mahjong hari ini?</p>
+        <h1 className="text-[1.75rem] leading-tight">{t("home.hello", { name })}</h1>
+        <p className="mt-0.5 text-sm text-muted">{t("home.ask")}</p>
       </div>
 
       {/* One primary action; the other two are clearly secondary. */}
-      <section className="space-y-3" aria-label="Mulai">
-        <Link href="/game/join" className="btn-primary !min-h-[60px]">Gabung dengan kode</Link>
+      <section className="space-y-3" aria-label={t("home.start")}>
+        <Link href="/game/join" className="btn-primary !min-h-[60px]">{t("home.join")}</Link>
         <div className={`grid gap-3 ${isAdmin ? "grid-cols-2" : "grid-cols-1"}`}>
-          <Link href="/quick-score" className="btn-secondary">Hitung skor cepat</Link>
-          {isAdmin && <Link href="/admin/tables" className="btn-secondary !border-warn !text-warn">Buka meja (admin)</Link>}
+          <Link href="/quick-score" className="btn-secondary">{t("home.quick")}</Link>
+          {isAdmin && <Link href="/admin/tables" className="btn-secondary !border-warn !text-warn">{t("home.openTable")}</Link>}
         </div>
-        <p className="text-xs text-muted">Minta kode ruang dari staf di meja kamu, lalu masukkan di sini.</p>
+        <p className="text-xs text-muted">{t("home.hint")}</p>
       </section>
 
-      <section aria-label="Game berlangsung">
+      <section aria-label={t("home.live")}>
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="section-label">Sedang berlangsung</h2>
-          <Link href="/game" className="text-xs font-semibold text-muted underline">Semua</Link>
+          <h2 className="section-label">{t("home.liveTitle")}</h2>
+          <Link href="/game" className="text-xs font-semibold text-muted underline">{t("home.all")}</Link>
         </div>
         {liveGames.length ? <ul className="space-y-3">{liveGames.map((g) => <li key={g.id}><GameCard g={g} /></li>)}</ul>
-          : <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">Tidak ada game yang sedang berlangsung. Gabung dengan kode untuk mulai.</p>}
+          : <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">{t("home.noLive")}</p>}
       </section>
 
-      <section aria-label="Game selesai" className="mt-2">
-        <div className="mb-3 flex items-baseline justify-between"><h2 className="section-label">Selesai</h2><Link href="/game?tab=selesai" className="text-xs font-semibold text-muted underline">Lihat semua</Link></div>
+      <section aria-label={t("home.done")} className="mt-2">
+        <div className="mb-3 flex items-baseline justify-between"><h2 className="section-label">{t("home.doneTitle")}</h2><Link href="/game?tab=selesai" className="text-xs font-semibold text-muted underline">{t("home.seeAll")}</Link></div>
         {doneGames.length ? <ul className="space-y-2">{doneGames.map((g) => <li key={g.id}><GameCard g={g} /></li>)}</ul>
-          : <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">Belum ada game selesai. Hasilnya muncul di sini setelah game berakhir.</p>}
+          : <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">{t("home.noDone")}</p>}
       </section>
     </main>
   );

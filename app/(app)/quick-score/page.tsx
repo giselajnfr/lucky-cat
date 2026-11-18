@@ -1,3 +1,4 @@
+import { appLocale } from "@/lib/i18n/locale";
 import Link from "next/link";
 import { QuickScore } from "@/components/calculator/QuickScore";
 import { CalcCodeForm } from "@/components/calculator/CalcCodeForm";
@@ -19,7 +20,7 @@ export default async function Page() {
       {allowed ? (
         <>
           <p className="mt-1 text-sm text-muted">Aturan HK18, minimum 3 faan. <Link href="/guidebook" className="underline">Lihat aturan rumah</Link></p>
-          {until && <p className="mt-1 text-xs text-muted">Akses sampai {new Date(until as string).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}</p>}
+          {until && <p className="mt-1 text-xs text-muted">Akses sampai {new Date(until as string).toLocaleString(appLocale(), { dateStyle: "medium", timeStyle: "short" })}</p>}
           <QuickScore />
         </>
       ) : <CalcCodeForm />}

@@ -1,3 +1,5 @@
+import { errText } from "@/lib/i18n/errors";
+import { appLocale } from "@/lib/i18n/locale";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardLive } from "@/components/admin/DashboardLive";
 import { ActivityFeed, AttentionPanel, HourlyChart, KpiStrip, SectionHead, TableBoard, TodayHighlights, type Kpi } from "@/components/admin/DashboardPanels";
@@ -10,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 const TABLE_SELECT = "id, table_number, status, games(id, room_code, status, current_round_wind, current_dealer_seat, setup_complete, starting_points, session_minutes, session_started_at, game_players(player_name, seat_position, current_score), game_hands(count))";
 const HAND_SELECT = "id, game_id, winning_method, total_fan, final_points, created_at, winner:game_players!winner_player_id(player_name), games(room_code), hand_fan_details(fan_name, category)";
-const dateLong = new Intl.DateTimeFormat("id-ID", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", year: "numeric" });
+const dateLong = { format: (d: Date | number) => new Intl.DateTimeFormat(appLocale(), { timeZone: TZ, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(d) };
 
 export default async function AdminDashboard() {
   const s = createClient();
@@ -61,7 +63,7 @@ export default async function AdminDashboard() {
     { label: "Game selesai hari ini", value: String(finishedToday.length), sub: avg ? `Rata-rata ${fmtDur(avg)}` : "Belum ada yang selesai" },
   ];
 
-  const loadError = tablesR.error?.message ?? handsR.error?.message ?? gamesR.error?.message;
+  const loadError = (tablesR.error?.message ?? handsR.error?.message ?? gamesR.error?.message);
 
   return (
     <main className="space-y-5">
@@ -73,7 +75,7 @@ export default async function AdminDashboard() {
         <DashboardLive updatedAt={fmtTime(now)} />
       </header>
 
-      {loadError && <p className="card text-sm text-neg" role="alert">Sebagian data gagal dimuat: {loadError}</p>}
+      {loadError && <p className="card text-sm text-neg" role="alert">Sebagian data gagal dimuat: {errText(loadError)}</p>}
 
       <AttentionPanel items={attention} hasTables={tables.length > 0} />
       <KpiStrip items={kpis} />

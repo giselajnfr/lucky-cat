@@ -1,4 +1,5 @@
 "use client";
+import { errText } from "@/lib/i18n/errors";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -25,7 +26,7 @@ export function OpenRoomForm({ tableId }: { tableId: string }) {
   async function submit(e: React.FormEvent) {
     e.preventDefault(); if (!valid) return; setBusy(true); setError(null);
     const { error } = await supabase.rpc("admin_open_room", { p_table: tableId, p_minutes: minutes });
-    if (error) { setError(error.message); setBusy(false); return; }
+    if (error) { setError(errText(error.message)); setBusy(false); return; }
     router.push("/admin/tables"); router.refresh();
   }
 

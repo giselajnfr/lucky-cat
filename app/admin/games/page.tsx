@@ -1,10 +1,12 @@
+import { errText } from "@/lib/i18n/errors";
+import { appLocale } from "@/lib/i18n/locale";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ruleSummary } from "@/lib/game/presets";
 
 export const dynamic = "force-dynamic";
 const FILTERS = [["all", "Semua"], ["live", "Berlangsung"], ["finished", "Selesai"]] as const;
-const dt = (iso: string) => new Date(iso).toLocaleString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const dt = (iso: string) => new Date(iso).toLocaleString(appLocale(), { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 type Row = { id: string; name: string | null; room_code: string; status: string; setup_complete: boolean; played_at: string; finished_at: string | null;
   rule_preset: "chicken" | "beginner" | "advanced"; min_fan: number; max_fan: number | null; ruleset?: string; game_players: { player_name: string; current_score: number }[]; game_hands: { count: number }[] };
@@ -26,7 +28,7 @@ export default async function Page({ searchParams }: { searchParams?: { f?: stri
         {FILTERS.map(([id, label]) => <Link key={id} href={`/admin/games?f=${id}`} aria-current={f === id ? "true" : undefined}
           className={`rounded-full border px-4 py-2 text-sm font-semibold ${f === id ? "border-cream bg-cream text-base" : "border-line bg-card text-cream"}`}>{label}</Link>)}
       </div>
-      {error && <p className="card text-sm text-neg">{error.message}</p>}
+      {error && <p className="card text-sm text-neg">{errText(error.message)}</p>}
       {games.length === 0 && !error ? <p className="card text-sm text-muted">Belum ada game.</p> : (
         <ul className="space-y-2">
           {games.map((g) => {

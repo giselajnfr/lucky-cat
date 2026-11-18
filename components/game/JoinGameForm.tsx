@@ -1,4 +1,5 @@
 "use client";
+import { errText } from "@/lib/i18n/errors";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -20,7 +21,7 @@ export function JoinGameForm({ initialCode = "" }: { initialCode?: string }) {
     setBusy(true); setError(null);
     const { data, error } = await supabase.rpc("join_game", { code });
     if (error) {
-      setError(/not found/i.test(error.message) ? "Kode ruang tidak ditemukan. Periksa lagi huruf dan angkanya." : error.message);
+      setError(/not found/i.test(error.message) ? "Kode ruang tidak ditemukan. Periksa lagi huruf dan angkanya." : errText(error.message));
       setBusy(false); return;
     }
     router.push(`/game/${data}`); router.refresh();

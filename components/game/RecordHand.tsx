@@ -1,4 +1,5 @@
 "use client";
+import { errText } from "@/lib/i18n/errors";
 import { useCallback, useMemo, useState } from "react";
 import { HandCalculator, WIND_LABEL, type CalcInitial, type CalcPayload } from "@/components/calculator/HandCalculator";
 import { ScoreCard } from "@/components/calculator/ScoreCard";
@@ -54,7 +55,7 @@ export function RecordHand({ game, players, handsPlayed, edit, onDone, onCancel 
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error ?? "Gagal mencatat tangan");
       onDone();
-    } catch (e) { setError((e as Error).message); setBusy(false); }
+    } catch (e) { setError(errText((e as Error).message)); setBusy(false); }
   }
 
   const chip = (on: boolean) => `min-h-[48px] rounded-xl border px-3 text-sm font-semibold ${on ? "border-cream bg-cream text-base" : "border-line bg-card text-cream"}`;

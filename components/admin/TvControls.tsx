@@ -1,4 +1,5 @@
 "use client";
+import { errText } from "@/lib/i18n/errors";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { DEFAULT_TV_SETTINGS, type TvSettings } from "@/lib/tv/types";
@@ -20,7 +21,7 @@ export function TvControls() {
   async function save(patch: Partial<TvSettings>) {
     setS((p) => ({ ...p, ...patch }));
     const { error } = await supabase.from("tv_settings").update(patch).eq("id", 1);
-    if (error) alert(error.message);
+    if (error) alert(errText(error.message));
   }
   const row = "flex items-center justify-between gap-3";
   return (

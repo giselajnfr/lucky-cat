@@ -1,3 +1,5 @@
+import { ruleName } from "@/lib/i18n/ruleNames";
+import { appLocale, currentLang } from "@/lib/i18n/locale";
 import Link from "next/link";
 import { BackLink } from "@/components/layout/BackLink";
 import { fmtScore, scoreTone } from "@/lib/ui/score";
@@ -31,12 +33,12 @@ export async function GameHistoryView({ id, backHref, backLabel, gameHref }: { i
   return (
     <main className="space-y-5">
       <div><BackLink href={backHref} label={backLabel} /><h1 className="text-[1.6rem] leading-tight">{(game as { name?: string | null }).name || `Game ${game.room_code}`}</h1>
-        <p className="mt-2 text-xs leading-relaxed text-muted">{new Date(game.played_at).toLocaleString("id-ID", { dateStyle: "long", timeStyle: "short" })}{sum.durationMinutes != null ? ` · ${sum.durationMinutes} menit` : ""} · {sum.totalHands} tangan · {game.status === "finished" ? "Selesai" : "Belum selesai"}</p></div>
+        <p className="mt-2 text-xs leading-relaxed text-muted">{new Date(game.played_at).toLocaleString(appLocale(), { dateStyle: "long", timeStyle: "short" })}{sum.durationMinutes != null ? ` · ${sum.durationMinutes} menit` : ""} · {sum.totalHands} tangan · {game.status === "finished" ? "Selesai" : "Belum selesai"}</p></div>
       <Link href={gameHref} className="btn-secondary">Lihat dan ubah tangan</Link>
       <section className="card"><h2 className="section-label mb-3">Peringkat akhir</h2>
         <ol className="space-y-2">{sum.rankings.map((r) => (<li key={r.id} className="flex items-center justify-between rounded-xl bg-base/40 px-3 py-2.5"><span><b className="mr-2">{r.rank}</b>{r.player_name}<span className="ml-2 text-xs text-muted">{r.wins} menang</span></span><b><span className={scoreTone(r.current_score, false, game.starting_points)}>{fmtScore(r.current_score)}</span></b></li>))}</ol></section>
       <section className="card"><h2 className="section-label mb-3">Perkembangan skor</h2><LineChart series={prog.series.map((x) => ({ name: x.name, values: x.values }))} /></section>
-      <section className="card"><h2 className="section-label mb-3">Pola menang</h2><BarList data={sum.patterns.slice(0, 8).map((x) => ({ name: x.name, value: x.count }))} empty="Tidak ada kemenangan." />
+      <section className="card"><h2 className="section-label mb-3">Pola menang</h2><BarList data={sum.patterns.slice(0, 8).map((x) => ({ name: ruleName(currentLang(), x.name), value: x.count }))} empty="Tidak ada kemenangan." />
         {sum.highestHand && <p className="mt-3 text-sm text-muted">Tangan tertinggi: <b className="text-cream">{sum.highestHand.total_fan} faan</b> oleh {name(sum.highestHand.winner_player_id)}</p>}</section>
       <section><h2 className="section-label mb-2">Semua tangan</h2>
         <ol className="space-y-3">{rows.map((x) => { const d = x.hand_detail as HandDetail | null; return (

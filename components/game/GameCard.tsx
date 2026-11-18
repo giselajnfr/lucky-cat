@@ -1,3 +1,4 @@
+import { appLocale } from "@/lib/i18n/locale";
 import Link from "next/link";
 
 const ROUND = { east: "Timur", south: "Selatan", west: "Barat", north: "Utara" } as const;
@@ -6,7 +7,7 @@ export type GameCardData = {
   id: string; name: string | null; room_code: string; status: string; setup_complete: boolean; starting_points: number;
   current_round_wind: string; played_at: string; finished_at?: string | null; game_players: P[]; game_hands?: { count: number }[] | null;
 };
-const shortDate = (iso: string) => new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString(appLocale(), { day: "numeric", month: "short" });
 
 const Chevron = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0 text-cream/70"><path d="M9 6l6 6-6 6" /></svg>

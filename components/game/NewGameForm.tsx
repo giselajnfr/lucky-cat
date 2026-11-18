@@ -1,4 +1,5 @@
 "use client";
+import { errText } from "@/lib/i18n/errors";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -57,11 +58,11 @@ export function NewGameForm({ tableId }: { tableId?: string }) {
       p_name: name, p_played_at: new Date(when).toISOString(), p_starting_points: Number(start || "0"), p_round_wind: round, p_min_fan: Math.min(99, Math.max(1, Number(minFan) || 1)), p_last_round_wind: last,
       p_players: seats.map((s, seat) => (s.playerId ? { seat, player_id: s.playerId } : { seat, name: s.name.trim() })),
     });
-    if (error) { setError(error.message); setBusy(false); return; }
+    if (error) { setError(errText(error.message)); setBusy(false); return; }
     if (tableId) {   // seat the new game at its cafe table, then show the room code on the table card
       const { data: g } = await supabase.from("games").select("room_code").eq("id", data).single();
       const { error: e2 } = await supabase.rpc("admin_assign_game", { p_table: tableId, p_code: g?.room_code });
-      if (e2) { setError(e2.message); setBusy(false); return; }
+      if (e2) { setError(errText(e2.message)); setBusy(false); return; }
       router.push("/admin/tables"); router.refresh(); return;
     }
     router.push(`/game/${data}`); router.refresh();

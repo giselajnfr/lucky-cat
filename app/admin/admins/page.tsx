@@ -1,3 +1,4 @@
+import { errText } from "@/lib/i18n/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { AdminManagement } from "@/components/admin/AdminManagement";
@@ -11,7 +12,7 @@ export default async function AdminsPage() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return <main><h1 className="text-3xl font-extrabold">Admin Management</h1><p className="card mt-4 text-sm text-neg">Gagal memuat daftar user: {error.message}</p></main>;
+    return <main><h1 className="text-3xl font-extrabold">Admin Management</h1><p className="card mt-4 text-sm text-neg">Gagal memuat daftar user: {errText(error.message)}</p></main>;
   }
 
   return <main className="space-y-5">
