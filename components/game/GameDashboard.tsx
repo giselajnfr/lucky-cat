@@ -8,6 +8,7 @@ import { WIND_LABEL } from "@/components/calculator/HandCalculator";
 import { RecordHand } from "./RecordHand";
 import { BackLink } from "@/components/layout/BackLink";
 import { RoomCode } from "./RoomCode";
+import { FinalResult } from "./FinalResult";
 import { GameSetup } from "./GameSetup";
 import { SessionClock } from "./SessionClock";
 import { ruleSummary } from "@/lib/game/presets";
@@ -108,6 +109,7 @@ export function GameDashboard({ initial, canPlay, canManage, backHref = "/game",
         })}
       </section>
       <p className="text-sm text-muted">Total poin beredar: {players.reduce((s, p) => s + p.current_score, 0)} · {hands.length} tangan dimainkan</p>
+      {finished && hands.length > 0 && <FinalResult game={game} players={players} hands={hands} />}
 
       {lastOver && !finished && <p className="card border-cream text-sm">Ronde terakhir sudah selesai. Kamu bisa mengakhiri game sekarang atau terus bermain.</p>}
       {msg && <p role="alert" className="text-sm font-semibold text-neg">{msg}</p>}
