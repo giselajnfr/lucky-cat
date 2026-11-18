@@ -8,11 +8,17 @@ import { Tile } from "@/components/mahjong/Tile";
 import { WinningEventQueue } from "@/lib/tv/eventQueue";
 import { createChime } from "@/lib/tv/chime";
 import { useTvFeed } from "@/lib/tv/useTvFeed";
-import { MEDALS, ROUND_NAME, STATUS_LABEL, TV_MODE_LABEL, WIND_NAME, seatWind, type LeaderRow, type MainRow, type TvSettings, type TvTable, type WinningHandEvent } from "@/lib/tv/types";
+import { ROUND_NAME, TV_MODE_LABEL, WIND_NAME, seatWind, type LeaderRow, type MainRow, type TvSettings, type TvTable, type WinningHandEvent } from "@/lib/tv/types";
 
 const PER_PAGE = 8;       // tables per page (per-table mode)
-const MAIN_COLS = 2;
-const MAIN_ROWS = 6;      // rows per column on the main leaderboard -> 12 players per page (fewer, roomier cards)
+const MAIN_ROWS = 8;      // one clean column, 8 players per page: big enough to read from across the room
+/** Shared column template so the header row and every player row line up exactly. */
+const MAIN_GRID = "grid-cols-[5vw_minmax(0,1fr)_12vw_13vw_16vw]";
+const TV_STATUS: Record<string, { label: string; dot: string }> = {
+  WAITING: { label: "Waiting", dot: "bg-warn" }, PLAYING: { label: "Playing", dot: "bg-pos" },
+  PAUSED: { label: "Paused", dot: "bg-warn" }, FINISHED: { label: "Finished", dot: "bg-muted" },
+};
+const netTone = (n: number) => (n > 0 ? "text-pos" : n < 0 ? "text-neg" : "text-cream");
 const ranked = (t: TvTable) => [...t.players].sort((a, b) => b.score - a.score);
 const fmt = (n: number) => n.toLocaleString("en-US");
 const net = (n: number) => (n > 0 ? `+${fmtScore(n)}` : fmtScore(n));
@@ -28,6 +34,17 @@ const SIZE: Record<number, { title: string; sub: string; name: string; score: st
   4: { title: "text-[1.9vw]", sub: "text-[1.1vw]", name: "text-[1.6vw]", score: "text-[1.8vw]", pill: "text-[0.95vw]" },
 };
 
+function Dot({ className = "" }: { className?: string }) {
+  return <span className={`inline-block h-[0.8vw] w-[0.8vw] shrink-0 rounded-full ${className}`} />;
+}
+const Sep = () => <span className="mx-[0.9vw] inline-block h-[0.35vw] w-[0.35vw] rounded-full bg-line align-middle" />;
+
+/** Rank marker: 1st is a solid cream disc, 2nd/3rd a soft cream disc, the rest a plain number. No emoji. */
+function RankBadge({ rank, size = "2.9vw", text = "text-[1.7vw]" }: { rank: number; size?: string; text?: string }) {
+  const tone = rank === 0 ? "bg-cream text-base" : rank === 1 ? "bg-cream/30 text-cream" : rank === 2 ? "bg-cream/15 text-cream" : "text-muted";
+  return <span className={`flex shrink-0 items-center justify-center rounded-full font-extrabold leading-none tabular-nums ${text} ${tone}`} style={{ width: size, height: size }}>{rank + 1}</span>;
+}
+
 function TableCard({ t, cols }: { t: TvTable; cols: number }) {
   const z = SIZE[cols] ?? SIZE[4];
   const start = t.starting_points ?? 0;
@@ -35,13 +52,13 @@ function TableCard({ t, cols }: { t: TvTable; cols: number }) {
     <div className="flex min-h-0 flex-col rounded-[1.4vw] border-[0.18vw] border-line bg-card p-[1.4vw]">
       <div className="flex items-center justify-between gap-[1vw]">
         <h3 className={`font-extrabold ${z.title}`}>TABLE {pad(t.table_number)}</h3>
-        <span className={`shrink-0 rounded-full bg-base/60 px-[1vw] py-[0.3vw] font-semibold ${z.pill}`}>{STATUS_LABEL[t.status]}</span>
+        <span className={`inline-flex shrink-0 items-center gap-[0.6vw] rounded-full bg-base/60 px-[1vw] py-[0.3vw] font-semibold ${z.pill}`}><Dot className={TV_STATUS[t.status].dot} />{TV_STATUS[t.status].label}</span>
       </div>
       <p className={`mt-[0.4vw] font-semibold text-muted ${z.sub}`}>{t.round_wind ? `${ROUND_NAME[t.round_wind]} · Hand ${t.hand_number ?? "-"}` : "Waiting for players"}</p>
       <ul className="mt-[1vw] flex min-h-0 flex-1 flex-col justify-evenly gap-[0.5vw]">
         {ranked(t).map((p, i) => (
           <li key={p.seat} className={`flex min-h-0 items-center justify-between gap-[1vw] rounded-[0.8vw] bg-base/40 px-[1vw] py-[0.5vw] font-bold ${z.name}`}>
-            <span className="flex min-w-0 items-center gap-[0.8vw]"><span className="shrink-0">{MEDALS[i]}</span><span className="truncate">{p.name}</span>{p.seat === t.dealer_seat && <span className="shrink-0">👑</span>}</span>
+            <span className="flex min-w-0 items-center gap-[0.8vw]"><RankBadge rank={i} size={cols >= 3 ? "2.2vw" : "2.8vw"} text={cols >= 3 ? "text-[1.2vw]" : "text-[1.5vw]"} /><span className="truncate">{p.name}</span>{p.seat === t.dealer_seat && <span className={`shrink-0 rounded-full border border-line px-[0.7vw] py-[0.1vw] font-bold uppercase tracking-[0.12em] text-muted ${z.pill}`}>Dealer</span>}</span>
             <span className={`shrink-0 tabular-nums ${z.score} ${scoreTone(p.score, false, start)}`}>{fmtScore(p.score)}</span>
           </li>
         ))}
@@ -63,11 +80,11 @@ function Spotlight({ t }: { t: TvTable }) {
   const dealer = t.dealer_seat ?? 0, start = t.starting_points ?? 0;
   return (
     <div className="flex h-full flex-col justify-center gap-[2vw] px-[6vw]">
-      <h2 className="text-[6vw] font-extrabold">TABLE {pad(t.table_number)} 🀄</h2>
+      <h2 className="text-[6vw] font-extrabold">TABLE {pad(t.table_number)}</h2>
       <p className="text-[3vw] font-bold text-muted">{t.round_wind ? ROUND_NAME[t.round_wind] : ""} · Hand {t.hand_number ?? "-"}</p>
       <div className="grid grid-cols-2 gap-[3vw]">
         <ul className="space-y-[1vw] text-[3.4vw] font-extrabold">
-          {ranked(t).map((p, i) => <li key={p.seat} className="flex justify-between">{MEDALS[i]} {p.name}{p.seat === dealer ? " 👑" : ""}<span className={scoreTone(p.score, false, start)}>{fmtScore(p.score)}</span></li>)}
+          {ranked(t).map((p, i) => <li key={p.seat} className="flex items-center justify-between"><span className="flex items-center gap-[1.2vw]"><RankBadge rank={i} size="4.4vw" text="text-[2.4vw]" />{p.name}{p.seat === dealer && <span className="rounded-full border border-line px-[1vw] py-[0.2vw] text-[1.3vw] font-bold uppercase tracking-[0.12em] text-muted">Dealer</span>}</span><span className={scoreTone(p.score, false, start)}>{fmtScore(p.score)}</span></li>)}
         </ul>
         <ul className="space-y-[1vw] text-[2.6vw] font-bold text-muted">
           {[...t.players].sort((a, b) => a.seat - b.seat).map((p) => <li key={p.seat}>{WIND_NAME[seatWind(p.seat, dealer)].toUpperCase()} — <span className="text-cream">{p.name}</span></li>)}
@@ -78,36 +95,40 @@ function Spotlight({ t }: { t: TvTable }) {
 }
 
 /** Live main leaderboard: every player from every table, ranked by points won/lost against that table's starting points.
- *  Margins and heights use vh/vw so the spacing stays generous on any TV; the title sits on ONE line to give the player cards room. */
-function MainBoard({ rows, page, pages }: { rows: MainRow[]; page: number; pages: number }) {
-  const per = MAIN_COLS * MAIN_ROWS;
-  const slice = rows.slice(page * per, (page + 1) * per);
+ *  One clean column (rank, player, table, total, won/lost). All sizes use vw/vh so it scales to any TV. */
+function MainBoard({ rows, page, pages, tables }: { rows: MainRow[]; page: number; pages: number; tables: number }) {
+  const slice = rows.slice(page * MAIN_ROWS, (page + 1) * MAIN_ROWS);
   return (
-    <div className="flex h-full flex-col px-[5vw] pb-[5vh] pt-[3vh]">
-      <div className="mb-[4vh] flex items-baseline justify-between gap-[2vw]">
-        <div className="flex items-baseline gap-[2vw]">
-          <h2 className="text-[3vw] font-extrabold">🏆 MAIN LEADERBOARD</h2>
-          <p className="text-[1.5vw] font-semibold text-muted">All players · all tables · live</p>
+    <div className="flex h-full flex-col px-[4vw] pb-[3.5vh] pt-[1vh]">
+      <div className="flex items-end justify-between gap-[2vw] pb-[2.4vh]">
+        <div>
+          <p className="text-[1.1vw] font-bold uppercase tracking-[0.3em] text-muted">Live standings</p>
+          <h2 className="mt-[0.8vh] text-[3.4vw] font-extrabold leading-none">Main Leaderboard</h2>
         </div>
-        <p className="shrink-0 text-[1.5vw] font-semibold text-muted">{rows.length} players{pages > 1 ? ` · page ${page + 1}/${pages}` : ""}</p>
+        <p className="text-[1.4vw] font-semibold text-muted">{rows.length} players<Sep />{tables} tables{pages > 1 && <><Sep />Page {page + 1} of {pages}</>}</p>
       </div>
       {rows.length === 0 ? <p className="flex flex-1 items-center justify-center text-[3vw] font-bold text-muted">No players yet</p> : (
-        <ol className="grid min-h-0 flex-1 grid-flow-col gap-x-[3.5vw] gap-y-[2.6vh]" style={{ gridTemplateRows: `repeat(${MAIN_ROWS}, minmax(0, 1fr))`, gridTemplateColumns: `repeat(${MAIN_COLS}, minmax(0, 1fr))` }}>
-          {slice.map((r, i) => {
-            const rank = page * per + i, top = rank < 3;
-            return (
-              <li key={`${r.table}-${r.name}-${rank}`} className={`flex min-h-0 items-center gap-[1.4vw] rounded-[1.2vw] px-[1.8vw] py-[1.2vh] ${top ? "border-[0.15vw] border-cream/40 bg-card" : "bg-card/70"}`}>
-                <span className="w-[3.6vw] shrink-0 text-center text-[1.9vw] font-extrabold leading-none text-muted">{MEDALS[rank] && rank < 3 ? MEDALS[rank] : rank + 1}</span>
-                <span className="min-w-0 flex-1 truncate text-[1.9vw] font-bold leading-none">{r.name}</span>
-                <span className="shrink-0 rounded-full bg-base/60 px-[1.1vw] py-[0.6vh] text-[1.1vw] font-semibold leading-tight text-muted">{`TABLE ${pad(r.table)}`}</span>
-                <span className="w-[9vw] shrink-0 pl-[0.5vw] text-right">
-                  <span className={`block text-[1.9vw] font-extrabold leading-none tabular-nums ${scoreTone(r.net, false, 0)}`}>{net(r.net)}</span>
-                  {r.start > 0 && <span className="mt-[0.9vh] block text-[0.9vw] leading-none text-muted">total {fmtScore(r.score)}</span>}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
+        <>
+          <div className={`grid ${MAIN_GRID} items-center border-b border-line/70 px-[2vw] pb-[1.2vh] text-[1vw] font-bold uppercase tracking-[0.2em] text-muted`}>
+            <span className="text-center">#</span><span>Player</span><span className="text-center">Table</span><span className="text-right">Total</span><span className="text-right">Won / Lost</span>
+          </div>
+          <ol className="mt-[1.2vh] grid min-h-0 flex-1 content-start gap-y-[1.1vh]" style={{ gridTemplateRows: `repeat(${MAIN_ROWS}, minmax(0, 1fr))` }}>
+            {slice.map((r, i) => {
+              const rank = page * MAIN_ROWS + i, top = rank < 3;
+              return (
+                <li key={`${r.table}-${r.name}-${rank}`} className={`relative grid ${MAIN_GRID} min-h-0 items-center rounded-[1vw] px-[2vw] ${rank === 0 ? "border border-cream/40 bg-card" : top ? "bg-card" : "bg-card/55"}`}>
+                  {top && <span className={`absolute left-0 top-[18%] h-[64%] w-[0.3vw] rounded-r-full ${rank === 0 ? "bg-cream" : "bg-cream/50"}`} />}
+                  <span className="flex justify-center"><RankBadge rank={rank} /></span>
+                  <span className={`min-w-0 truncate text-[2.2vw] leading-none ${top ? "font-extrabold" : "font-bold"}`}>{r.name}</span>
+                  <span className="justify-self-center rounded-full border border-line px-[1.1vw] py-[0.5vh] text-[1.15vw] font-bold leading-tight text-muted">Table {pad(r.table)}</span>
+                  <span className="text-right text-[1.7vw] font-semibold tabular-nums text-muted">{fmtScore(r.score)}</span>
+                  <span className={`text-right text-[2.6vw] font-extrabold leading-none tabular-nums ${netTone(r.net)}`}>{net(r.net)}</span>
+                </li>
+              );
+            })}
+          </ol>
+          {pages > 1 && <div className="mt-[2vh] flex justify-center gap-[0.7vw]">{Array.from({ length: pages }, (_, n) => <span key={n} className={`h-[0.7vh] rounded-full transition-all ${n === page ? "w-[3vw] bg-cream" : "w-[0.7vh] bg-line"}`} />)}</div>}
+        </>
       )}
     </div>
   );
@@ -119,10 +140,10 @@ function StatsBoard({ rows, type }: { rows: LeaderRow[]; type: string }) {
   const val = (r: LeaderRow) => type === "most_wins" ? `${r.wins_today} wins` : type === "highest_fan" ? `${r.best_fan_today} fan` : fmtScore(r.score);
   return (
     <div className="flex h-full flex-col justify-center gap-[1.5vw] px-[10vw]">
-      <h2 className="text-[5vw] font-extrabold">🏆 TODAY&apos;S LEADERBOARD</h2>
+      <h2 className="text-[5vw] font-extrabold">TODAY&apos;S LEADERBOARD</h2>
       <p className="text-[2.2vw] font-semibold text-muted">{label}</p>
       <ol className="space-y-[0.8vw] text-[3vw] font-bold">
-        {sorted.map((r, i) => <li key={r.name} className="flex justify-between rounded-[1vw] bg-card px-[1.5vw] py-[0.6vw]"><span>{MEDALS[i] ?? `${i + 1}.`} {r.name}</span><span>{val(r)}</span></li>)}
+        {sorted.map((r, i) => <li key={r.name} className="flex items-center justify-between rounded-[1vw] bg-card px-[1.5vw] py-[0.6vw]"><span className="flex items-center gap-[1.4vw]"><RankBadge rank={i} size="4vw" text="text-[2.2vw]" />{r.name}</span><span className="tabular-nums">{val(r)}</span></li>)}
       </ol>
     </div>
   );
@@ -142,7 +163,7 @@ function Highlight({ e, animate, more }: { e: WinningHandEvent; animate: boolean
           </div>
         </div>
         <div className="my-[2.4vh] flex flex-col items-center">
-          <p className={`mb-[1vh] text-[2vw] font-bold tracking-[0.28em] text-cream/70 ${animate ? "animate-pulse" : ""}`}>🀄 HU! 🀄</p>
+          <p className={`mb-[1vh] text-[2vw] font-bold tracking-[0.28em] text-cream/70 ${animate ? "animate-pulse" : ""}`}>HU!</p>
           <h1 className="text-[5.2vw] font-black leading-[1.05] tracking-tight text-cream">{e.winner.name}</h1>
           <p className="mt-[1vh] text-[1.55vw] font-semibold text-muted">Winning player</p>
         </div>
@@ -193,7 +214,7 @@ export function TvDisplay() {
   const pages = Math.max(1, Math.ceil(active.length / PER_PAGE));
   const mainRows = useMemo<MainRow[]>(() => active.flatMap((t) => t.players.map((p) => ({ name: p.name, table: t.table_number, roomCode: t.room_code, score: p.score, start: t.starting_points ?? 0, net: p.score - (t.starting_points ?? 0) })))
     .sort((a, b) => b.net - a.net || b.score - a.score || a.name.localeCompare(b.name)), [active]);
-  const mainPages = Math.max(1, Math.ceil(mainRows.length / (MAIN_COLS * MAIN_ROWS)));
+  const mainPages = Math.max(1, Math.ceil(mainRows.length / MAIN_ROWS));
   // Rotation: table pages -> each table spotlight -> main leaderboard pages -> today's stats.
   const slides = useMemo(() => [
     ...Array.from({ length: pages }, (_, i) => ({ kind: "live" as const, page: i })),
@@ -211,23 +232,23 @@ export function TvDisplay() {
   const tablesPage = (p: number) => <TablesGrid list={active.slice(p * PER_PAGE, (p + 1) * PER_PAGE)} />;
   let body: React.ReactNode;
   if (mode === "leaderboard") body = <StatsBoard rows={leaders} type={settings.leaderboard_type} />;
-  else if (mode === "main") body = <MainBoard rows={mainRows} page={slide % mainPages} pages={mainPages} />;
+  else if (mode === "main") body = <MainBoard rows={mainRows} page={slide % mainPages} pages={mainPages} tables={active.length} />;
   else if (mode === "spotlight") body = spot(settings.spotlight_table_id);
   else if (mode === "rotate") {
     const s = slides[slide % slides.length];
-    body = s.kind === "live" ? tablesPage(s.page) : s.kind === "spot" ? spot(s.id) : s.kind === "main" ? <MainBoard rows={mainRows} page={s.page} pages={mainPages} /> : <StatsBoard rows={leaders} type={settings.leaderboard_type} />;
+    body = s.kind === "live" ? tablesPage(s.page) : s.kind === "spot" ? spot(s.id) : s.kind === "main" ? <MainBoard rows={mainRows} page={s.page} pages={mainPages} tables={active.length} /> : <StatsBoard rows={leaders} type={settings.leaderboard_type} />;
   } else body = tablesPage(slide % pages);
   const needsTables = mode !== "leaderboard";
 
   return (
     // Explicit unitless line-height: the app's body line-height is a fixed length that would make vw-sized text overlap.
     <div className="fixed inset-0 z-50 overflow-hidden bg-base leading-[1.2] text-cream">
-      <header className="flex h-[9vh] items-center justify-between px-[2.5vw]">
-        <div className="flex items-center gap-[1.2vw]"><LogoMark size="6.5vh" /><h1 className="text-[2.6vw] font-bold">Lucky Cat Mahjong</h1></div>
+      <header className="flex h-[9vh] items-center justify-between px-[4vw]">
+        <div className="flex items-center gap-[1.2vw]"><LogoMark size="6.5vh" /><h1 className="text-[2.2vw] font-extrabold tracking-tight">Lucky Cat Mahjong</h1></div>
         <div className="flex items-center gap-[1.5vw] text-[1.4vw] text-muted">
-          <span className="rounded-full border border-line bg-card px-[1.2vw] py-[0.3vw] font-semibold text-cream">{TV_MODE_LABEL[mode]}</span>
-          {settings.sound_enabled && !soundOn && <button onClick={async () => setSoundOn(await chime.current.enable())} className="rounded-[0.8vw] border border-line bg-card px-[1.2vw] py-[0.4vw] font-bold text-cream">🔊 Enable sound</button>}
-          <span>{online ? "🟢 Live" : "🔴 Reconnecting…"}</span>
+          <span className="rounded-full border border-line px-[1.2vw] py-[0.3vw] text-[1.2vw] font-bold uppercase tracking-[0.16em] text-muted">{TV_MODE_LABEL[mode]}</span>
+          {settings.sound_enabled && !soundOn && <button onClick={async () => setSoundOn(await chime.current.enable())} className="rounded-[0.8vw] border border-line bg-card px-[1.2vw] py-[0.4vw] font-bold text-cream">Enable sound</button>}
+          <span className="inline-flex items-center gap-[0.7vw] font-bold uppercase tracking-[0.16em]"><Dot className={online ? "bg-pos" : "animate-pulse bg-neg"} />{online ? "Live" : "Reconnecting"}</span>
         </div>
       </header>
       <main className="relative h-[91vh]">
