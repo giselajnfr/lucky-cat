@@ -1,3 +1,7 @@
+import { ruleName } from "@/lib/i18n/ruleNames";
+import { currentLang } from "@/lib/i18n/locale";
+import { translatePhrase } from "@/lib/i18n/phrases";
+const L = (x: string) => (currentLang() === "en" ? translatePhrase(x) : x);   // the image is built as an SVG string, so the on-page translator never sees it
 import { tileInner } from "@/components/mahjong/tileArt";
 import { sortTiles } from "@/lib/scoring/tiles";
 import type { Meld } from "@/lib/scoring/types";
@@ -30,19 +34,19 @@ export function buildScorecardSvg(d: ScorecardData): { svg: string; width: numbe
   }
   const rows = d.breakdown.map((b, i) => {
     const y = i * 38;
-    return `<text x="0" y="${y + 24}" font-size="22" fill="#F7ECD0" font-family="${FONT}">${esc(b.name)}${b.count && b.count > 1 ? ` ×${b.count}` : ""}</text><text x="${W - pad * 2}" y="${y + 24}" font-size="22" font-weight="800" fill="#F7ECD0" text-anchor="end" font-family="${FONT}">+${b.fan}</text><line x1="0" x2="${W - pad * 2}" y1="${y + 38}" y2="${y + 38}" stroke="#7A564C"/>`;
+    return `<text x="0" y="${y + 24}" font-size="22" fill="#F7ECD0" font-family="${FONT}">${esc(ruleName(currentLang(), b.name))}${b.count && b.count > 1 ? ` ×${b.count}` : ""}</text><text x="${W - pad * 2}" y="${y + 24}" font-size="22" font-weight="800" fill="#F7ECD0" text-anchor="end" font-family="${FONT}">+${b.fan}</text><line x1="0" x2="${W - pad * 2}" y1="${y + 38}" y2="${y + 38}" stroke="#7A564C"/>`;
   }).join("");
   const top = 36 + 40 + 100 + 38 + 20;
   const boxY = top, listY = boxY + boxH + 40, H = listY + d.breakdown.length * 38 + 70;
-  const method = d.method === "SELF_DRAW" ? "Self Draw" : "Menang dari buangan";
-  const sub = [method, d.seatLabel, d.roundLabel].filter(Boolean).join(" · ");
+  const method = d.method === "SELF_DRAW" ? "Self Draw" : L("Menang dari buangan");
+  const sub = [method, d.seatLabel && L(d.seatLabel), d.roundLabel && L(d.roundLabel)].filter(Boolean).join(" · ");
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" rx="28" fill="#461F1A"/>
 <text x="${pad}" y="58" font-size="18" font-weight="800" letter-spacing="3" fill="#C4AD8E" font-family="${FONT}">LUCKY CAT MAHJONG · HK18</text>
-<text x="${pad}" y="${36 + 40 + 84}" font-size="96" font-weight="800" fill="#F7ECD0" font-family="${FONT}">${d.total} POIN</text>
+<text x="${pad}" y="${36 + 40 + 84}" font-size="96" font-weight="800" fill="#F7ECD0" font-family="${FONT}">${d.total} ${currentLang() === "en" ? "POINTS" : "POIN"}</text>
 <text x="${pad}" y="${36 + 40 + 84 + 40}" font-size="24" fill="#C4AD8E" font-family="${FONT}">${esc(sub)}${d.winnerName ? ` · ${esc(d.winnerName)}` : ""}</text>
 <g transform="translate(${pad},${boxY})"><rect width="${W - pad * 2}" height="${boxH}" rx="18" fill="#5B2F26" stroke="#7A564C"/>${tiles}</g>
-<g transform="translate(${pad},${listY})"><text x="0" y="-12" font-size="14" font-weight="800" letter-spacing="3" fill="#C4AD8E" font-family="${FONT}">RINCIAN</text>${rows}</g>
-<text x="${W / 2}" y="${H - 26}" font-size="15" fill="#C4AD8E" text-anchor="middle" font-family="${FONT}">${esc(d.title ?? "Hitungan skor Mahjong")}</text></svg>`;
+<g transform="translate(${pad},${listY})"><text x="0" y="-12" font-size="14" font-weight="800" letter-spacing="3" fill="#C4AD8E" font-family="${FONT}">${L("RINCIAN")}</text>${rows}</g>
+<text x="${W / 2}" y="${H - 26}" font-size="15" fill="#C4AD8E" text-anchor="middle" font-family="${FONT}">${esc(L(d.title ?? "Hitungan skor Mahjong"))}</text></svg>`;
   return { svg, width: W, height: H };
 }
 

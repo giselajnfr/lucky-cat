@@ -1,3 +1,4 @@
+import { appLocale } from "@/lib/i18n/locale";
 /**
  * Score display rules. A table's scores start at the starting points (the "modal"), so colour compares a score with
  * THAT, not with zero: below the starting points = red, otherwise green. The number is shown as it is, without a "+";
@@ -7,7 +8,7 @@
 export const MINUS = "\u2212";
 
 export function fmtScore(n: number): string {
-  const a = Math.abs(n).toLocaleString("id-ID");
+  const a = Math.abs(n).toLocaleString(appLocale());
   return n < 0 ? `${MINUS}${a}` : a;
 }
 

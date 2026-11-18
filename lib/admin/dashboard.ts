@@ -1,3 +1,5 @@
+import { ruleName } from "@/lib/i18n/ruleNames";
+import { appLocale, currentLang } from "@/lib/i18n/locale";
 /**
  * Admin dashboard logic. Pure functions only (no React, no database), so every rule is unit-tested.
  * Relative imports on purpose: vitest in this repo has no "@/" alias.
@@ -12,8 +14,8 @@ export const dayStartMs = (now: number = Date.now()) => Math.floor((now + OFFSET
 /** 0..23, hour of day in Jakarta. */
 export const jakartaHour = (t: number | string) => Math.floor((((new Date(t).getTime() + OFFSET) % DAY) + DAY) % DAY / HOUR);
 
-const timeFmt = new Intl.DateTimeFormat("id-ID", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false });
-const dateFmt = new Intl.DateTimeFormat("id-ID", { timeZone: TZ, day: "numeric", month: "short" });
+const timeFmt = { format: (d: Date | number) => new Intl.DateTimeFormat(appLocale(), { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false }).format(d) };
+const dateFmt = { format: (d: Date | number) => new Intl.DateTimeFormat(appLocale(), { timeZone: TZ, day: "numeric", month: "short" }).format(d) };
 export const fmtTime = (t: number | string | Date) => timeFmt.format(new Date(t));
 
 /** "Hari ini 22.55", "Kemarin 08.23", "15 Nov 19.12". */
@@ -131,7 +133,7 @@ export function todaySummary(hands: TodayHand[]) {
 
   const counts = new Map<string, number>();
   for (const h of wins) for (const name of new Set(patternsOf(h))) counts.set(name, (counts.get(name) ?? 0) + 1);
-  const patterns = [...counts.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, 5);
+  const patterns = [...counts.entries()].map(([name, count]) => ({ name: ruleName(currentLang(), name), count })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, 5);
 
   return {
     total: hands.length, wins: wins.length, draws: hands.length - wins.length,

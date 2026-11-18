@@ -79,3 +79,10 @@ In the Supabase SQL Editor, with your account already set to ADMIN:
 
 
 Run `supabase/migration_010_discard_payment_mode.sql` after migration 009 to add the per-table discard settlement choice (Discarder Pays All or Split) and update `setup_game`.
+
+## Languages (ID / EN)
+- Dictionary keys (`lib/i18n/dictionary.ts`): home page, rules guide, nav, auth. Everything else uses the phrase table (`lib/i18n/phrases.ts`, `phrasesExtra.ts`) applied by `<AutoTranslate/>` in English mode.
+- `npm run check:i18n` lists Indonesian text in the source that English mode cannot translate yet (add a line to `phrasesExtra.ts`). Template-string fragments in the output are usually fine: test the full rendered text.
+- Database/API errors: wrap with `errText(message)` from `lib/i18n/errors.ts` (Indonesian translation of Supabase `RAISE EXCEPTION` text; add a line when you add a new exception).
+- Number/date formatting uses `appLocale()`; on the server it reads the request cookie, so concurrent requests cannot mix languages.
+- Rule names (Chicken Hand, Pong…) intentionally stay in English mahjong terminology in both languages.
