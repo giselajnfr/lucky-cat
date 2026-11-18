@@ -22,22 +22,27 @@ export function FinalResult({ game, players, hands }: { game: GameRow; players: 
     const fmt = (n: number) => `${n > 0 ? "+" : n < 0 ? MINUS : ""}${Math.abs(n).toLocaleString(appLocale())}`;
     return [...players].sort((a, b) => b.current_score - a.current_score || a.seat_position - b.seat_position).map((p) => {
       const net = p.current_score - game.starting_points, w = wins(p.id);
-      return { name: p.player_name, rank: 1 + players.filter((o) => o.current_score > p.current_score).length, net, netText: fmt(net), wins: w, winText: w === 1 ? t("final.win1") : t("final.winN", { n: w }) };
+      return { name: p.player_name, rank: 1 + players.filter((o) => o.current_score > p.current_score).length, net, netText: fmt(net), balText: p.current_score.toLocaleString(appLocale()), wins: w, winText: w === 1 ? t("final.win1") : t("final.winN", { n: w }) };
     });
   }, [players, hands, game.starting_points, t]);
   const champs = ranked.filter((p) => p.rank === 1);
   const champName = champs.map((p) => p.name).join(" & ");
-  const champLine = champs[0] ? `${t("final.pts", { pts: champs[0].netText })} · ${champs[0].winText}` : "";
+  const champLine = champs[0] ? `${t("final.pts", { pts: champs[0].netText })} · ${t("final.balance", { n: champs[0].balText })} · ${champs[0].winText}` : "";
 
   // Re-draw the story card whenever the photo or the result changes.
   const sig = JSON.stringify(ranked) + (photo ? photo.name + photo.size : "");
   useEffect(() => {
     let dead = false, url: string | null = null;
     setBusy(true); setMsg(null);
+    const now = new Date(), loc = appLocale();
     renderFinalCard({
-      photo, champions: champName, championLine: champLine, championLabel: t("final.champion"),
-      players: ranked.map((p) => ({ name: p.name, rank: p.rank, score: p.netText, sub: p.winText })),
-      footer: t("final.footer", { code: game.room_code, n: hands.length }),
+      photo, brand: "LUCKY CAT MAHJONG", heading: t("final.heading"),
+      dateLabel: now.toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "short", year: "numeric" }),
+      dayLabel: now.toLocaleDateString(loc, { day: "numeric", month: "long" }).toUpperCase(),
+      subline: `${t("final.room", { code: game.room_code })} · ${now.toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "short", year: "numeric" })}`,
+      championLabel: t("final.champion"), champions: champName, championLine: champLine,
+      players: ranked.map((p) => ({ name: p.name, rank: p.rank, score: p.netText, wins: p.winText, balance: t("final.balance", { n: p.balText }) })),
+      roomLine: t("final.footer", { code: game.room_code, n: hands.length }), madeWith: t("final.madeWith"),
     }).then((b) => { if (dead) return; url = URL.createObjectURL(b); setBlob(b); setCardUrl(url); setBusy(false); })
       .catch(() => { if (!dead) { setMsg(t("final.err")); setBusy(false); } });
     return () => { dead = true; if (url) setTimeout(() => URL.revokeObjectURL(url!), 1000); };
@@ -57,7 +62,7 @@ export function FinalResult({ game, players, hands }: { game: GameRow; players: 
     <section aria-label={t("final.title")} className="space-y-4">
       <h2 className="text-xl">{t("final.title")}</h2>
       <div className="card text-center">
-        <p className="text-4xl" aria-hidden>👑</p>
+        <svg aria-hidden viewBox="0 0 100 55" className="mx-auto h-8 w-14 fill-cream"><path d="M0 55V11l25 17L50 0l25 28 25-17v44z" /></svg>
         <p className="section-label mt-1">{t("final.champion")}</p>
         <p className="mt-1 truncate text-3xl font-extrabold">{champName}</p>
         <p className="mt-1 text-sm text-muted">{champLine}</p>
@@ -81,8 +86,8 @@ export function FinalResult({ game, players, hands }: { game: GameRow; players: 
         <input ref={camRef} type="file" accept="image/*" capture="user" hidden onChange={pick} />
         <input ref={galRef} type="file" accept="image/*" hidden onChange={pick} />
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <button type="button" className="btn-secondary" onClick={() => camRef.current?.click()}>📷 {photo ? t("final.change") : t("final.photo")}</button>
-          <button type="button" className="btn-secondary" onClick={() => galRef.current?.click()}>🖼️ {t("final.gallery")}</button>
+          <button type="button" className="btn-secondary" onClick={() => camRef.current?.click()}>{photo ? t("final.change") : t("final.photo")}</button>
+          <button type="button" className="btn-secondary" onClick={() => galRef.current?.click()}>{t("final.gallery")}</button>
         </div>
         {photo && <button type="button" className="mt-2 w-full text-xs text-muted underline" onClick={() => setPhoto(null)}>{t("final.remove")}</button>}
         <p className="mt-2 text-center text-xs text-muted">{t("final.hint")}</p>
