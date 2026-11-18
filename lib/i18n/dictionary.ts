@@ -38,11 +38,11 @@ const id = {
   "guide.discardHalf": "<b>Half Pay / Split:</b> discarder membayar 2× base points, sedangkan dua pemain lainnya masing-masing membayar 1×. Contoh 4 faan = 16, discarder membayar 32 poin dan dua pemain lainnya masing-masing 16 poin; pemenang menerima 64 poin.",
   "guide.cap": "Batas faan", "guide.capBody": "Konversi poin mengikuti tabel hingga maksimum <b>13 faan = 384 base points</b>. Batas faan permainan mengikuti pengaturan meja.",
   "guide.minTitle": "Syarat minimum", "guide.minReq": "Untuk menang, total harus mencapai minimum <b>{min} faan</b> sesuai pengaturan meja. Jika belum mencapai minimum, tangan belum dihitung sebagai kemenangan.",
-  "final.title": "Hasil akhir", "final.champion": "Juara", "final.board": "Papan peringkat akhir", "final.cardTitle": "Kartu hasil akhir",
+  "final.title": "Hasil akhir", "final.heading": "Hasil Main Hari Ini", "final.room": "Ruang {code}", "final.balance": "saldo {n}", "final.madeWith": "DICATAT DENGAN LUCKY CAT MAHJONG", "final.champion": "Juara", "final.board": "Papan peringkat akhir", "final.cardTitle": "Kartu hasil akhir",
   "final.photo": "Ambil foto langsung", "final.gallery": "Pilih dari galeri", "final.change": "Ganti foto", "final.remove": "Tanpa foto",
   "final.hint": "Foto ini jadi latar kartu story. Lewati untuk memakai tampilan papan peringkat polos.", "final.share": "Bagikan ke Instagram Story", "final.save": "Simpan gambar",
   "final.saved": "Gambar tersimpan. Buka Instagram › Story › pilih gambar ini.", "final.preparing": "Menyiapkan kartu…", "final.err": "Gagal membuat kartu",
-  "final.win1": "1 menang", "final.winN": "{n} menang", "final.pts": "{pts} poin", "final.footer": "Ruang {code} · {n} tangan dimainkan", "final.shareText": "Hasil game Lucky Cat Mahjong: {name} juara!",
+  "final.win1": "1× menang", "final.winN": "{n}× menang", "final.pts": "{pts} poin", "final.footer": "Ruang {code} · {n} tangan dimainkan", "final.shareText": "Hasil game Lucky Cat Mahjong: {name} juara!",
 } as const;
 
 export type Key = keyof typeof id;
@@ -84,7 +84,7 @@ const en: Record<Key, string> = {
   "guide.discardHalf": "<b>Half Pay / Split:</b> the discarder pays 2× base points, while the other two players pay 1× each. Example: 4 faan = 16, the discarder pays 32 points and the other two pay 16 points each; the winner receives 64 points.",
   "guide.cap": "Faan limit", "guide.capBody": "Point conversion follows the table up to a maximum of <b>13 faan = 384 base points</b>. The game's faan limit follows the table settings.",
   "guide.minTitle": "Minimum requirement", "guide.minReq": "To win, the total must reach at least <b>{min} faan</b> per the table settings. If the minimum is not reached, the hand does not count as a win.",
-  "final.title": "Final result", "final.champion": "Champion", "final.board": "Final leaderboard", "final.cardTitle": "Final result card",
+  "final.title": "Final result", "final.heading": "Today's Results", "final.room": "Room {code}", "final.balance": "balance {n}", "final.madeWith": "RECORDED WITH LUCKY CAT MAHJONG", "final.champion": "Champion", "final.board": "Final leaderboard", "final.cardTitle": "Final result card",
   "final.photo": "Take a live photo", "final.gallery": "Choose from gallery", "final.change": "Change photo", "final.remove": "No photo",
   "final.hint": "This photo becomes the background of your story card. Skip it to use the clean leaderboard layout.", "final.share": "Share to Instagram Story", "final.save": "Save image",
   "final.saved": "Image saved. Open Instagram › Story › pick this image.", "final.preparing": "Preparing card…", "final.err": "Could not create the card",
