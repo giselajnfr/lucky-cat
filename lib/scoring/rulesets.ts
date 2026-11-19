@@ -110,7 +110,7 @@ export const RULESETS: Record<RulesetId, RulesetConfig> = {
     conflicts: [...CONFLICTS_COMMON, { rule: "thirteen-orphans", supersedes: ["all-types"], reason: "Thirteen Orphans adalah tangan khusus" }],
     notes: [
       "Minimum 3 faan adalah standar meja Hong Kong; batas (cap) yang umum 8, 10 atau 13 faan. Default Classic: 13. Ubah di rulesets.ts atau pilih batas lain saat membuat game.",
-      "Double Chow, 2-5-8 Pair, Single Wait dan Concealed Hand tidak dihitung di Classic (standar 舊章/清章 memberi 0 faan).",
+      "Double Chow, 2-5-8 Pair, Single Wait dan Concealed Hand tidak dihitung di Classic (memberi 0 faan).",
       "Seven Pairs (4 faan) termasuk pola dasar HK Classic dan berlaku di ketiga ruleset.",
       "Great Four Winds bernilai 13 (nilai rumah aplikasi ini). Beberapa sumber memberi 15 faan 'atau limit'.",
     ],

@@ -3,7 +3,7 @@ export type TvTable = { table_id: string; table_number: number; status: "WAITING
   room_code?: string | null; round_wind: string | null; dealer_seat: number | null; starting_points?: number | null; hand_number: number | null; players: TvPlayer[] };
 export type TvSettings = { mode: "live" | "main" | "spotlight" | "leaderboard" | "rotate"; spotlight_table_id: string | null;
   rotation_interval_ms: number; highlight_duration_ms: number; sound_enabled: boolean; animations_enabled: boolean;
-  leaderboard_type: "highest_score" | "most_wins" | "highest_fan" };
+  leaderboard_type: "highest_score" | "most_wins" | "highest_fan"; main_rows?: number };
 /** One line of the live main leaderboard: a player at a table, ranked by points won or lost against the starting points. */
 export type MainRow = { name: string; table: number; roomCode?: string | null; score: number; start: number; net: number };
 export const TV_MODE_LABEL: Record<TvSettings["mode"], string> = { live: "Live · Per Table", main: "Live · Main Leaderboard", spotlight: "Table Spotlight", leaderboard: "Today's Stats", rotate: "Auto Rotate" };
@@ -13,7 +13,7 @@ export type WinningHandEvent = { eventId: string; gameId?: string; tableNumber: 
   handTiles: string[]; photoUrl?: string | null; createdAt: string };
 
 export const DEFAULT_TV_SETTINGS: TvSettings = { mode: "live", spotlight_table_id: null, rotation_interval_ms: 15000,
-  highlight_duration_ms: 10000, sound_enabled: false, animations_enabled: true, leaderboard_type: "highest_score" };
+  highlight_duration_ms: 10000, sound_enabled: false, animations_enabled: true, leaderboard_type: "highest_score", main_rows: 8 };
 
 export const WIND_NAME: Record<string, string> = { E: "East", S: "South", W: "West", N: "North" };
 export const ROUND_NAME: Record<string, string> = { east: "East Round", south: "South Round", west: "West Round", north: "North Round" };

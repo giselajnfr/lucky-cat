@@ -24,8 +24,7 @@ const split = (n: string) => { const m = n.match(/^(.*?)(\s*\([^)]*[\u3400-\u9ff
 
 /** Name to show for a scoring rule. English mode (and unknown names) show the engine's English name. */
 export function ruleName(lang: Lang, name: string): string {
-  if (lang !== "id") return name;
-  const { base, zh } = split(name);
-  const t = ID[base];
-  return t ? t + zh : name;
+  const { base } = split(name);   // the Chinese suffix "(三暗刻)" is never shown
+  if (lang !== "id") return base;
+  return ID[base] ?? base;
 }
