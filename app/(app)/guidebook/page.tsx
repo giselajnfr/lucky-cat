@@ -123,7 +123,6 @@ export default function Page() {
         { id: "dasar", label: t("guide.tab.basics"), content: (
       <section>
         <div className="space-y-4">
-          <p className="text-sm text-muted">{t("guide.intro")}</p>
           <p className="text-sm"><Rich k="guide.overview" /></p>
           <div className="card space-y-3"><h3>{t("guide.tiles")}</h3>
             <div><p className="mb-1 text-xs font-semibold text-muted">{t("guide.t.char")}</p>{row("123456789m")}</div>
