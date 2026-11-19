@@ -67,10 +67,10 @@ export function AdminManagement({ users, currentUserId }: { users: ManagedUser[]
       {regularUsers.length ? <div className="space-y-2">
         <div className="flex w-full items-center gap-2">
           <div className="relative min-w-0 flex-1">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true">⌕</span>
+            <svg className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
             <input
               type="search"
-              className="input w-full min-w-0 pl-9"
+              className="input w-full min-w-0 !pl-12"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
