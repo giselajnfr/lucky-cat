@@ -158,17 +158,48 @@ function MainBoard({ rows, page, pages, tables, perPage }: { rows: MainRow[]; pa
   );
 }
 
-function StatsBoard({ rows, type }: { rows: LeaderRow[]; type: string }) {
-  const sorted = [...rows].sort((a, b) => type === "most_wins" ? b.wins_today - a.wins_today : type === "highest_fan" ? b.best_fan_today - a.best_fan_today : b.score - a.score).slice(0, 8);
-  const label = type === "most_wins" ? "Most Wins Today" : type === "highest_fan" ? "Highest Fan Today" : "Highest Score";
-  const val = (r: LeaderRow) => type === "most_wins" ? `${r.wins_today} wins` : type === "highest_fan" ? `${r.best_fan_today} fan` : fmtScore(r.score);
+/** Today's stats: top players by score / wins / best faan. Same layout language as the main leaderboard; sizes follow the row count so it always fits. */
+const STATS_GRID = "grid-cols-[6vw_minmax(0,1fr)_16vw_12vw_12vw]";
+function StatsBoard({ rows, type, perPage }: { rows: LeaderRow[]; type: string; perPage: number }) {
+  const sorted = [...rows].sort((a, b) => type === "most_wins" ? b.wins_today - a.wins_today : type === "highest_fan" ? b.best_fan_today - a.best_fan_today : b.score - a.score).slice(0, perPage);
+  const label = type === "most_wins" ? "Most wins today" : type === "highest_fan" ? "Highest faan today" : "Highest score";
+  const rh = 64 / perPage;
+  const f = (vw: number, k: number) => `min(${vw}vw, ${(rh * k).toFixed(2)}vh)`;
+  // The column that is being ranked is bright; the others are supporting numbers.
+  const hi = (col: "score" | "wins" | "fan") => (type === "most_wins" ? "wins" : type === "highest_fan" ? "fan" : "score") === col;
+  const cell = (col: "score" | "wins" | "fan") => `text-right tabular-nums ${hi(col) ? "font-extrabold text-cream" : "font-semibold text-muted"}`;
+  const head = (col: "score" | "wins" | "fan") => `text-right ${hi(col) ? "text-cream" : ""}`;
   return (
-    <div className="flex h-full flex-col justify-center gap-[1.5vw] px-[10vw]">
-      <h2 className="text-[5vw] font-extrabold">TODAY&apos;S LEADERBOARD</h2>
-      <p className="text-[2.2vw] font-semibold text-muted">{label}</p>
-      <ol className="space-y-[0.8vw] text-[3vw] font-bold">
-        {sorted.map((r, i) => <li key={r.name} className="flex items-center justify-between rounded-[1vw] bg-card px-[1.5vw] py-[0.6vw]"><span className="flex items-center gap-[1.4vw]"><RankBadge rank={i} size="4vw" text="text-[2.2vw]" />{r.name}</span><span className="tabular-nums">{val(r)}</span></li>)}
-      </ol>
+    <div className="flex h-full flex-col px-[4vw] pb-[3.5vh] pt-[1vh]">
+      <div className="flex items-end justify-between gap-[2vw] pb-[2vh]">
+        <div>
+          <p className="text-[1.1vw] font-bold uppercase tracking-[0.3em] text-muted">{label}</p>
+          <h2 className="mt-[0.8vh] text-[3.4vw] font-extrabold leading-none">Today&apos;s Leaderboard</h2>
+        </div>
+        <p className="text-[1.4vw] font-semibold text-muted">{rows.length} players today</p>
+      </div>
+      {sorted.length === 0 ? <p className="flex flex-1 items-center justify-center text-[3vw] font-bold text-muted">No games played today yet</p> : (
+        <>
+          <div className={`grid ${STATS_GRID} items-center border-b border-line/70 px-[2vw] pb-[1vh] text-[1vw] font-bold uppercase tracking-[0.2em] text-muted`}>
+            <span className="text-center">#</span><span>Player</span><span className={head("score")}>Score</span><span className={head("wins")}>Wins</span><span className={head("fan")}>Best faan</span>
+          </div>
+          <ol className="mt-[1vh] grid min-h-0 flex-1 content-start gap-y-[0.9vh]" style={{ gridTemplateRows: `repeat(${perPage}, minmax(0, 1fr))` }}>
+            {sorted.map((r, i) => {
+              const top = i < 3;
+              return (
+                <li key={r.name} className={`relative grid ${STATS_GRID} min-h-0 items-center rounded-[1vw] px-[2vw] ${i === 0 ? "border border-cream/40 bg-card" : top ? "bg-card" : "bg-card/55"}`}>
+                  {top && <span className={`absolute left-0 top-[18%] h-[64%] w-[0.3vw] rounded-r-full ${i === 0 ? "bg-cream" : "bg-cream/50"}`} />}
+                  <span className="flex justify-center"><RankBadge rank={i} size={f(2.9, 0.66)} fs={f(1.7, 0.4)} /></span>
+                  <span className={`min-w-0 truncate leading-none ${top ? "font-extrabold" : "font-bold"}`} style={{ fontSize: f(2.2, 0.52) }}>{r.name}</span>
+                  <span className={cell("score")} style={{ fontSize: f(hi("score") ? 2.6 : 1.7, hi("score") ? 0.62 : 0.4) }}>{fmtScore(r.score)}</span>
+                  <span className={cell("wins")} style={{ fontSize: f(hi("wins") ? 2.6 : 1.7, hi("wins") ? 0.62 : 0.4) }}>{r.wins_today}</span>
+                  <span className={cell("fan")} style={{ fontSize: f(hi("fan") ? 2.6 : 1.7, hi("fan") ? 0.62 : 0.4) }}>{r.best_fan_today}</span>
+                </li>
+              );
+            })}
+          </ol>
+        </>
+      )}
     </div>
   );
 }
@@ -257,12 +288,12 @@ export function TvDisplay({ view }: { view?: string } = {}) {
   const spot = (id?: string | null) => { const t = active.find((x) => x.table_id === id) ?? active[0]; return t ? <Spotlight t={t} /> : null; };
   const tablesPage = (p: number) => <TablesGrid list={active.slice(p * PER_PAGE, (p + 1) * PER_PAGE)} />;
   let body: React.ReactNode;
-  if (mode === "leaderboard") body = <StatsBoard rows={leaders} type={settings.leaderboard_type} />;
+  if (mode === "leaderboard") body = <StatsBoard rows={leaders} type={settings.leaderboard_type} perPage={perPage} />;
   else if (mode === "main") body = <MainBoard rows={mainRows} page={slide % mainPages} pages={mainPages} tables={active.length} perPage={perPage} />;
   else if (mode === "spotlight") body = spot(settings.spotlight_table_id);
   else if (mode === "rotate") {
     const s = slides[slide % slides.length];
-    body = s.kind === "live" ? tablesPage(s.page) : s.kind === "spot" ? spot(s.id) : s.kind === "main" ? <MainBoard rows={mainRows} page={s.page} pages={mainPages} tables={active.length} perPage={perPage} /> : <StatsBoard rows={leaders} type={settings.leaderboard_type} />;
+    body = s.kind === "live" ? tablesPage(s.page) : s.kind === "spot" ? spot(s.id) : s.kind === "main" ? <MainBoard rows={mainRows} page={s.page} pages={mainPages} tables={active.length} perPage={perPage} /> : <StatsBoard rows={leaders} type={settings.leaderboard_type} perPage={perPage} />;
   } else body = tablesPage(slide % pages);
   const needsTables = mode !== "leaderboard";
 

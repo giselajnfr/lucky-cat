@@ -21,20 +21,18 @@ export function TvControls() {
   async function save(patch: Partial<TvSettings>) {
     const before = s;
     setS((p) => ({ ...p, ...patch }));
-    const { data, error } = await supabase.from("tv_settings").update(patch).eq("id", 1).select("id");
-    // RLS can reject an update WITHOUT an error (0 rows changed): treat that as a failure too, so the screen never shows a mode that was not saved.
-    if (!error && (!data || data.length === 0)) {
-      setS(before);
-      alert("Pengaturan TV tidak tersimpan. Pastikan Anda login sebagai admin.");
-      return;
-    }
-    if (error) {
-      setS(before);   // do not pretend it was saved
-      // "Main Leaderboard" needs migration_008 (the database only allows live/spotlight/leaderboard/rotate until then).
-      alert(/tv_settings_mode_check|check constraint/i.test(error.message)
-        ? "Mode ini belum diaktifkan di database. Jalankan supabase/migration_008_tv_main_leaderboard.sql di Supabase SQL Editor. Sementara itu, buka layar TV lewat tombol \"Main Leaderboard\" di bawah."
-        : errText(error.message));
-    }
+    // One admin-only database function (migration_013): it also recreates the settings row if it is missing.
+    const { error } = await supabase.rpc("admin_update_tv_settings", { p: patch });
+    if (!error) return;
+    setS(before);   // never show a setting that was not saved
+    const m = error.message ?? "";
+    alert(/Could not find the function|admin_update_tv_settings/i.test(m) && !/Not allowed/i.test(m)
+      ? "Fungsi penyimpanan belum ada di database. Jalankan supabase/migration_013_tv_settings_rpc.sql di Supabase SQL Editor."
+      : /Not allowed/i.test(m)
+        ? "Akun ini bukan admin di database. Di Supabase, tabel profiles: kolom role untuk akun Anda harus ADMIN."
+        : /tv_settings_mode_check|check constraint/i.test(m)
+          ? "Mode ini belum diizinkan database. Jalankan supabase/migration_008_tv_main_leaderboard.sql di Supabase SQL Editor."
+          : errText(m));
   }
   const row = "flex items-center justify-between gap-3";
   return (
