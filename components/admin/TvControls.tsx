@@ -19,14 +19,27 @@ export function TvControls() {
   }, [supabase]);
 
   async function save(patch: Partial<TvSettings>) {
+    const before = s;
     setS((p) => ({ ...p, ...patch }));
     const { error } = await supabase.from("tv_settings").update(patch).eq("id", 1);
-    if (error) alert(errText(error.message));
+    if (error) {
+      setS(before);   // do not pretend it was saved
+      // "Main Leaderboard" needs migration_008 (the database only allows live/spotlight/leaderboard/rotate until then).
+      alert(/tv_settings_mode_check|check constraint/i.test(error.message)
+        ? "Mode ini belum diaktifkan di database. Jalankan supabase/migration_008_tv_main_leaderboard.sql di Supabase SQL Editor. Sementara itu, buka layar TV lewat tombol \"Main Leaderboard\" di bawah."
+        : errText(error.message));
+    }
   }
   const row = "flex items-center justify-between gap-3";
   return (
     <div className="card max-w-xl space-y-4">
       <p className="font-bold">{tvs > 0 ? `🟢 Live — ${tvs} screen${tvs > 1 ? "s" : ""} connected` : "🔴 No TV connected"} · <a className="underline" href="/tv" target="_blank">Open /tv</a></p>
+      <div className="flex flex-wrap gap-2 text-sm">
+        <span className="text-muted">Buka langsung:</span>
+        <a className="underline" href="/tv?view=main" target="_blank" rel="noreferrer">Main Leaderboard</a>
+        <a className="underline" href="/tv?view=tables" target="_blank" rel="noreferrer">Per Table</a>
+        <a className="underline" href="/tv?view=rotate" target="_blank" rel="noreferrer">Auto Rotate</a>
+      </div>
       <label className={row}>Mode
         <select className="input max-w-[13rem]" value={s.mode} onChange={(e) => save({ mode: e.target.value as TvSettings["mode"] })}>
           <option value="live">Live · Per Table</option><option value="main">Live · Main Leaderboard</option><option value="spotlight">Table Spotlight</option><option value="leaderboard">Today&apos;s Stats Leaderboard</option><option value="rotate">Auto Rotate</option></select></label>
