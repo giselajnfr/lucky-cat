@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body { max-width: 100vw; overflow-x: hidden; touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; }
 body { @apply bg-base font-sans text-base font-normal text-cream antialiased; }
 h1, h2 { @apply font-bold tracking-tight; }
 h3, h4 { @apply font-bold; }
@@ -32,3 +33,6 @@ button, .btn-primary, .btn-secondary, .btn-danger, .btn-ghost { @apply font-sans
 /* English mode: hide the page for a moment while remaining Indonesian text is translated (reveals itself after 1.2s even if JS fails). */
 html[data-i18n="pending"] body { visibility: hidden; animation: lc-reveal 0s linear 1.2s forwards; }
 @keyframes lc-reveal { to { visibility: visible; } }
+
+/* Wrapped button labels stay centred and balanced instead of ragged-left. */
+.btn-primary, .btn-secondary, .btn-outline, .btn-danger { text-align: center; text-wrap: balance; line-height: 1.2; }

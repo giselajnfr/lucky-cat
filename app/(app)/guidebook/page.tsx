@@ -17,7 +17,7 @@ function Rich({ k, vars, as: Tag = "span" }: { k: Key; vars?: Record<string, str
 /** A row of tiles: always one single line. Tiles are up to 46px wide and shrink on narrow screens so the row never wraps. */
 const row = (s: string, w = 46) => {
   const tiles = parseTiles(s);
-  return <div className="flex gap-1" style={{ maxWidth: tiles.length * (w + 4) }}>{tiles.map((t, i) => <div key={i} className="min-w-0 flex-1 [&>span]:block"><Tile t={t} fluid /></div>)}</div>;
+  return <div className="flex w-full gap-1" style={{ maxWidth: tiles.length * (w + 4) }}>{tiles.map((t, i) => <div key={i} className="min-w-0 flex-1 [&>span]:block"><Tile t={t} fluid /></div>)}</div>;
 };
 /** Rule example in the order it is written: one block per set, the pair last (so chows read 123 123 456, never 112233). */
 function exampleGroups(hand: string): string[][] {

@@ -42,8 +42,8 @@ export default async function Home() {
       <section className="space-y-3" aria-label={t("home.start")}>
         <Link href="/game/join" className="btn-primary !min-h-[60px]">{t("home.join")}</Link>
         <div className={`grid gap-3 ${isAdmin ? "grid-cols-2" : "grid-cols-1"}`}>
-          <Link href="/quick-score" className="btn-secondary">{t("home.quick")}</Link>
-          {isAdmin && <Link href="/admin/tables" className="btn-secondary !border-warn !text-warn">{t("home.openTable")}</Link>}
+          <Link href="/quick-score" className="btn-secondary whitespace-nowrap text-center !px-2">{t("home.quick")}</Link>
+          {isAdmin && <Link href="/admin/tables" className="btn-secondary whitespace-nowrap text-center !px-2 !border-warn !text-warn">{t("home.openTable")}</Link>}
         </div>
         <p className="text-xs text-muted">{t("home.hint")}</p>
       </section>
