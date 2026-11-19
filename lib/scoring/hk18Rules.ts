@@ -112,7 +112,7 @@ export const FAN_TABLE: FanRuleConfig[] = [
   a("robbing-kong", "Robbing Kong", 1, "Menang dengan merampas kartu yang dipakai lawan untuk menambah kong.",
     ["Menang dari kartu tambahan kong lawan", "Hanya untuk kemenangan dari buangan"],
     { hand: "123m 456p 789s 111p 55s", win: "5s", method: "DISCARD", robbingKong: true }, { needsInput: "Apakah ini merampas kong" }),
-  a("concealed-hand", "Concealed Hand", 1, "Menang dari buangan tanpa meld terbuka. Pada Self Draw yang dihitung adalah Self Draw, bukan Concealed Hand.",
+  a("concealed-hand", "Concealed Hand", 1, "Menang dari buangan tanpa meld terbuka (1 faan). Jika menang Self Draw dengan tangan tertutup, keduanya digabung menjadi Fully Concealed (3 faan).",
     ["Menang dari buangan", "Tidak ada meld terbuka (kong tertutup boleh)", "Tidak dihitung bersama Self Draw", "Tidak dihitung bersama Seven Pairs, Nine Gates, dan Thirteen Orphans (sudah termasuk)"],
     { hand: "123m 456p 789s 111p 55s", win: "5s", method: "DISCARD" }, { needsInput: "Meld mana yang terbuka" }),
 ];

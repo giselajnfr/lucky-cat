@@ -29,9 +29,10 @@ export function calculateScore(input: WinningHandInput, opts: ScoreOptions = {})
     const result: ScoringResult = {
       valid: true, errors: [], meetsMinimum: true, minimumFan: 0, canRecord: true, handDecomposition: decompositions[0],
       detectedFan: [], excludedFan: [], rawFan: 0, totalFan: 0, basePoints, reviewFlags: [],
-      explanation: [`Chicken Hand: ${basePoints} poin per kemenangan, tanpa faan`],
+      explanation: [`Chicken Hand: ${basePoints} poin per kemenangan, tanpa faan, tidak ada yang membayar`],
     };
-    if (opts.players) result.scoreDistribution = calculateScoreDistribution({ ...opts.players, method: input.winningMethod, basePoints, config: cfg });
+    // Chicken Hand pays from the bank: the winner gets the points, nobody else loses any (not zero-sum, on purpose).
+    if (opts.players) result.scoreDistribution = { winner: { playerId: opts.players.winnerId, points: basePoints }, payments: [] };
     return result;
   }
 
@@ -39,16 +40,16 @@ export function calculateScore(input: WinningHandInput, opts: ScoreOptions = {})
   const scored = decompositions.map((d) => ({ d, f: calculateFan(buildContext(input, d)) }));
   const best = scored.reduce((a, b) => (b.f.totalFan > a.f.totalFan ? b : a));
   const isChicken = best.f.detected.some((f) => f.id === "chicken-hand");
-  const meetsMinimum = best.f.totalFan >= cfg.minimumFan && !(isChicken && !cfg.chickenHandCanWinOnBonusFaan);
+  const meetsMinimum = best.f.fanForMinimum >= cfg.minimumFan && !(isChicken && !cfg.chickenHandCanWinOnBonusFaan);
   const basePoints = calculatePoints(best.f.totalFan, cfg);
 
   const explanation = [
     ...best.f.detected.map((f) => `${f.name}: ${f.fan} faan`),
-    `Total ${best.f.totalFan} faan (minimum ${cfg.minimumFan})`,
+    `Total ${best.f.totalFan} faan (minimum ${cfg.minimumFan}, tanpa poin bunga: ${best.f.fanForMinimum})`,
   ];
   const result: ScoringResult = {
     valid: true, errors: [], meetsMinimum, minimumFan: cfg.minimumFan, canRecord: meetsMinimum,
-    reason: meetsMinimum ? undefined : "Winning hand does not meet the minimum faan requirement",
+    reason: meetsMinimum ? undefined : "Winning hand does not meet the minimum faan requirement (flower and no-flower points do not count toward the minimum)",
     handDecomposition: best.d, detectedFan: best.f.detected, excludedFan: best.f.excludedFan,
     rawFan: best.f.rawFan, totalFan: best.f.totalFan, basePoints, reviewFlags: best.f.reviewFlags, explanation,
     maximumFan: cfg.maximumFan, rulesetId: cfg.rulesetId, rulesetName: cfg.rulesetName, waits: waitTypes(input, best.d),

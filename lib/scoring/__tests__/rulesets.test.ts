@@ -63,12 +63,31 @@ describe("the same hand scores differently per ruleset", () => {
     const h = "11m 33m 55p 77p 99s 22s EE";
     for (const r of ["classic", "new6", "new18"] as const) expect(calculateScore(input(r, h, "E")).valid).toBe(true);
   });
-  it("Fully Concealed: 3 faan replaces Self Draw in New 6; New 18 keeps the house rule (Self Draw 1)", () => {
+  it("Fully Concealed: Self Draw + Concealed Hand combine into ONE 3-faan rule in New 6 AND New 18 (not in Classic)", () => {
     const h = "123m 456p 789s 111p 55s";
-    const n6 = calculateScore(input("new6", h, "5s", { winningMethod: "SELF_DRAW" }));
-    expect(ids(n6)).toContain("fully-concealed"); expect(ids(n6)).not.toContain("self-draw");
-    const n18 = calculateScore(input("new18", h, "5s", { winningMethod: "SELF_DRAW" }));
-    expect(ids(n18)).toContain("self-draw"); expect(ids(n18)).not.toContain("fully-concealed");
+    const fan = (r: RulesetId, o: Partial<WinningHandInput> & { melds?: string } = {}) => calculateScore(input(r, h, "5s", { winningMethod: "SELF_DRAW", ...o }));
+    for (const r of ["new6", "new18"] as const) {
+      const res = fan(r);
+      expect(ids(res), r).toContain("fully-concealed");
+      expect(res.detectedFan.find((f) => f.id === "fully-concealed")?.fan, r).toBe(3);
+      expect(ids(res), r).not.toContain("self-draw"); expect(ids(res), r).not.toContain("concealed-hand");   // replaced, never counted twice
+    }
+    // identical hand = identical score in New 6 and New 18 (New 18 contains every New 6 rule)
+    expect(fan("new18").totalFan).toBe(fan("new6").totalFan);
+    // a set taken from a discard (Concealed Hand unticked) => plain Self Draw 1 faan
+    const opened = fan("new18", { hasOpenMelds: true });
+    expect(ids(opened)).toContain("self-draw"); expect(ids(opened)).not.toContain("fully-concealed");
+    // Classic has no Fully Concealed: Self Draw only
+    expect(ids(fan("classic"))).toContain("self-draw"); expect(ids(fan("classic"))).not.toContain("fully-concealed");
+    // a concealed DISCARD win is still plain Concealed Hand (1)
+    const d = calculateScore(input("new18", h, "5s"));
+    expect(ids(d)).toContain("concealed-hand"); expect(ids(d)).not.toContain("fully-concealed");
+  });
+  it("hierarchy: every enabled Classic rule is enabled in New 6, and every enabled New 6 rule is enabled in New 18, with the same fan", () => {
+    const on = (id: RulesetId) => new Map(RULESETS[id].scoringRules.filter((r) => r.enabled).map((r) => [r.id, r.fan]));
+    const [c, n6, n18] = [on("classic"), on("new6"), on("new18")];
+    for (const [id, fan] of c) expect(n6.get(id), `classic ${id} in new6`).toBe(fan);
+    for (const [id, fan] of n6) expect(n18.get(id), `new6 ${id} in new18`).toBe(fan);
   });
 });
 

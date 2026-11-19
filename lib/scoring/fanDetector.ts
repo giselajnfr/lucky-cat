@@ -3,6 +3,8 @@ import { PATTERN_CHECKS, PATTERN_WHY } from "./hk18Patterns";
 import type { DetectedFan, ScoringContext } from "./types";
 
 const FLOWER_IDS = ["suitable-flower", "no-flower"];
+/** Flower / no-flower points are added to the score only AFTER the hand reaches the minimum faan with other faan. (All 8 Flowers is a hand of its own and still counts.) */
+export const FLOWER_BONUS_IDS = ["suitable-flower", "no-flower", "full-flowers"];
 
 /** Detect every enabled rule, then drop any rule that an already-detected rule includes. */
 export function detectFan(ctx: ScoringContext) {
@@ -47,5 +49,6 @@ export function calculateFan(ctx: ScoringContext) {
   const d = detectFan(ctx);
   const rawFan = d.detected.reduce((s, f) => s + f.fan, 0);
   const max = ctx.config.maximumFan;
-  return { ...d, rawFan, totalFan: max == null ? rawFan : Math.min(rawFan, max) };
+  const flowerFan = d.detected.filter((f) => FLOWER_BONUS_IDS.includes(f.id)).reduce((s, f) => s + f.fan, 0);
+  return { ...d, rawFan, totalFan: max == null ? rawFan : Math.min(rawFan, max), fanForMinimum: rawFan - flowerFan };
 }

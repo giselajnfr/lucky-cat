@@ -138,7 +138,7 @@ export function todaySummary(hands: TodayHand[]) {
   return {
     total: hands.length, wins: wins.length, draws: hands.length - wins.length,
     selfDraw: wins.filter((h) => h.winning_method === "self_draw").length,
-    topPlayers, best, bestPatterns: best ? patternsOf(best).slice(0, 4) : [], patterns,
+    topPlayers, best, bestPatterns: best ? patternsOf(best).slice(0, 4).map((n) => ruleName(currentLang(), n)) : [], patterns,
   };
 }
 

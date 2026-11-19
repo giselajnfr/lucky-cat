@@ -29,7 +29,7 @@ const SUMMARY_EN: Record<string, string> = {
   "self-draw-after-kong": "Win on the replacement tile after declaring a kong.",
   "last-tile": "Win on the last tile.",
   "robbing-kong": "Win by robbing the tile an opponent uses to add to a kong.",
-  "concealed-hand": "Win on a discard with no open melds. On Self Draw, Self Draw is counted instead of Concealed Hand.",
+  "concealed-hand": "Win on a discard with no open melds (1 faan). If it is also a Self Draw, the two combine into Fully Concealed (3 faan).",
   "pair-258": "The pair (eyes) is a 2, 5 or 8 number tile.",
   "single-wait": "Win by completing the pair: the winning tile is the pair tile you were waiting for.",
   "closed-wait": "The winning tile fills the middle of a chow (e.g. the 2 in 1-_-3).",
@@ -52,7 +52,7 @@ const SUMMARY_EN: Record<string, string> = {
   "lacking-a-suit": "Only two of the three number suits, with no winds or dragons.",
   "all-types": "All three number suits (characters, bamboo, circles), plus winds and dragons, in one hand.",
   "all-terminals": "The whole hand is only pongs or kongs of 1s and 9s (no winds or dragons).",
-  "fully-concealed": "Self Draw with no open sets. Replaces Self Draw and Concealed Hand.",
+  "fully-concealed": "Self Draw with a concealed hand (no set taken from a discard) = 3 faan. Self Draw + Concealed Hand combine into Fully Concealed and replace both.",
   "full-flowers": "Holding all four flowers or all four seasons.",
   "eight-flowers": "Holding all eight flowers and seasons. Replaces Full Flowers / Full Seasons.",
 };
@@ -61,14 +61,14 @@ const SUMMARY_EN: Record<string, string> = {
 const SHORT_ID: Record<string, string> = {
   "seat-wind": "Pong/kong angin sesuai kursi pemenang.", "round-wind": "Pong/kong angin ronde yang sedang berjalan.", "dragon-pong": "Pong/kong naga (merah, hijau atau putih).",
   "no-flower": "Tidak punya bunga atau musim sama sekali.", "suitable-flower": "Bunga/musim bernomor sama dengan kursi pemenang.", "full-flowers": "Empat bunga atau empat musim lengkap.", "eight-flowers": "Kedelapan bunga dan musim. Menggantikan Full Flowers.",
-  "self-draw": "Kartu menang diambil sendiri dari tumpukan.", "self-draw-after-kong": "Menang dari kartu pengganti setelah menyatakan kong.", "concealed-hand": "Menang dari buangan tanpa set terbuka.", "last-tile": "Menang dengan kartu terakhir.", "robbing-kong": "Menang dengan kartu yang dipakai lawan untuk menambah kong.",
-  "single-wait": "Menunggu satu kartu: melengkapi pasangan.", "heavenly-hand": "Dong menang dengan tangan awalnya.", "earthly-hand": "Pemain non-dong menang dari buangan pertama dong.", "fully-exposed": "Semua set dibuka, menang dari buangan untuk melengkapi pasangan.", "three-concealed-pungs": "Tiga pong/kong tertutup.", "fully-concealed": "Self Draw tanpa set terbuka (menggantikan Self Draw + Concealed Hand).",
+  "self-draw": "Kartu menang diambil sendiri dari tumpukan.", "self-draw-after-kong": "Menang dari kartu pengganti setelah menyatakan kong.", "concealed-hand": "Menang dari buangan tanpa set terbuka. Bersama Self Draw jadi Fully Concealed (3 faan).", "fully-concealed": "Self Draw + tangan tertutup digabung: 3 faan.", "last-tile": "Menang dengan kartu terakhir.", "robbing-kong": "Menang dengan kartu yang dipakai lawan untuk menambah kong.",
+  "single-wait": "Menunggu satu kartu: melengkapi pasangan.", "heavenly-hand": "Dong menang dengan tangan awalnya.", "earthly-hand": "Pemain non-dong menang dari buangan pertama dong.", "fully-exposed": "Semua set dibuka, menang dari buangan untuk melengkapi pasangan.", "three-concealed-pungs": "Tiga pong/kong tertutup.", 
 };
 const SHORT_EN: Record<string, string> = {
   "seat-wind": "Pong/kong of the winner's seat wind.", "round-wind": "Pong/kong of the current round wind.", "dragon-pong": "Pong/kong of a dragon (red, green or white).",
   "no-flower": "No flowers or seasons at all.", "suitable-flower": "Flower/season whose number matches the winner's seat.", "full-flowers": "All four flowers or all four seasons.", "eight-flowers": "All eight flowers and seasons. Replaces Full Flowers.",
-  "self-draw": "The winning tile is drawn yourself from the wall.", "self-draw-after-kong": "Win on the replacement tile after declaring a kong.", "concealed-hand": "Win on a discard with no open sets.", "last-tile": "Win on the last tile.", "robbing-kong": "Win on the tile an opponent uses to add to a kong.",
-  "single-wait": "Waiting on one tile: completing the pair.", "heavenly-hand": "Dealer wins with the starting hand.", "earthly-hand": "A non-dealer wins on the dealer's first discard.", "fully-exposed": "All sets open, win on a discard to complete the pair.", "three-concealed-pungs": "Three concealed pongs/kongs.", "fully-concealed": "Self Draw with no open sets (replaces Self Draw + Concealed Hand).",
+  "self-draw": "The winning tile is drawn yourself from the wall.", "self-draw-after-kong": "Win on the replacement tile after declaring a kong.", "concealed-hand": "Win on a discard with no open sets. With Self Draw it becomes Fully Concealed (3 faan).", "fully-concealed": "Self Draw + concealed hand combined: 3 faan.", "last-tile": "Win on the last tile.", "robbing-kong": "Win on the tile an opponent uses to add to a kong.",
+  "single-wait": "Waiting on one tile: completing the pair.", "heavenly-hand": "Dealer wins with the starting hand.", "earthly-hand": "A non-dealer wins on the dealer's first discard.", "fully-exposed": "All sets open, win on a discard to complete the pair.", "three-concealed-pungs": "Three concealed pongs/kongs.", 
 };
 
 const NEEDS_EN: Record<string, string> = {

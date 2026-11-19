@@ -55,7 +55,7 @@ describe("scoreHandForGame (server-side authority)", () => {
     const r = scoreHandForGame({ ...initialState(), dealerSeat: 0 }, players, std(), CFG);
     if ("error" in r) throw new Error(r.error);
     expect(r.seatWind).toBe("S"); expect(r.changes.reduce((s, c) => s + c.change, 0)).toBe(0);
-    expect(r.result.totalFan).toBe(r.changes.find((c) => c.playerId === "p1")!.change / 3);
+    expect(r.result.totalFan).toBe(5); expect(r.changes.find((c) => c.playerId === "p1")!.change).toBe(24 * 2 * 3);   // 5 faan = 24 base, each of 3 opponents pays 2x
   });
   it("a winner on a seat wind pong gets seat wind only for their own wind", () => {
     const hand = { concealedTiles: T("SSS 111m 999p 222s 55p"), winningTile: "5p" as const };
@@ -87,7 +87,7 @@ describe("scoreHandForGame (server-side authority)", () => {
     expect("error" in scoreHandForGame(initialState(), players, std({ concealedTiles: T("111m 999p 222s 555p 3s 4s") }), CFG)).toBe(true);
   });
   it("kong melds work end to end", () => {
-    const r = scoreHandForGame(initialState(), players, std({ concealedTiles: T("123m 456p 55s"), winningTile: "5s", melds: parseMelds("+K:RD C:789s") }), CFG);
+    const r = scoreHandForGame(initialState(), players, std({ concealedTiles: T("123m 55s"), winningTile: "5s", melds: parseMelds("+K:RD +K:GD C:789s") }), CFG);
     expect("error" in r).toBe(false);
   });
 });

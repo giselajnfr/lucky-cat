@@ -15,7 +15,7 @@ describe("single source of truth: HK18 table", () => {
     "chicken-hand": 0, "all-chows": 1, "all-simples": 1, "pure-straight": 3, "all-pongs": 3, "mixed-orphans": 3, "pure-orphans": 5,
     "half-flush": 3, "full-flush": 7, "little-dragon": 5, "great-dragon": 8, "little-wind": 10, "great-wind": 13, "seven-pairs": 4,
     "all-honors": 10, "nine-gates": 15, "thirteen-orphans": 13, "four-kongs": 12,
-    "seat-wind": 1, "round-wind": 1, "dragon-pong": 1, "suitable-flower": 1, "no-flower": 1, "self-draw": 1, "last-tile": 1, "robbing-kong": 1, "concealed-hand": 1,
+    "seat-wind": 1, "round-wind": 1, "dragon-pong": 1, "suitable-flower": 1, "no-flower": 1, "self-draw": 1, "last-tile": 1, "robbing-kong": 1, "concealed-hand": 1, "self-draw-after-kong": 1,
   };
   it("matches the HK18 faan table exactly", () => {
     for (const [id, fan] of Object.entries(expected)) expect(FAN_TABLE.find((r) => r.id === id)?.fan).toBe(fan);
@@ -26,8 +26,7 @@ describe("single source of truth: HK18 table", () => {
     expect(CFG.minimumFan).toBe(3); expect(CFG.maximumFan).toBe(null);
   });
   it("every rule's tile example is a valid hand that actually triggers that rule", () => {
-    for (const r of FAN_TABLE) {
-      expect(r.example, r.id).toBeTruthy();
+    for (const r of FAN_TABLE.filter((x) => x.example)) {   // rules ticked by hand (e.g. Self Draw After Kong) have no tile example
       const res = calculateScore(exampleToInput(r.example!));
       expect(res.errors, `${r.id}: ${res.errors.join()}`).toEqual([]);
       expect(ids(res), r.id).toContain(r.id);
@@ -81,8 +80,10 @@ describe("minimum 3 faan", () => {
   });
   it("chicken hand reaching 3 only via bonus faan is a config switch", () => {
     const base = hand("123m 456p 789s 111p 55s", { winningTile: "5s", winningMethod: "SELF_DRAW", isLastTile: true });
-    expect(calculateScore(base).totalFan).toBe(3); expect(calculateScore(base).canRecord).toBe(true);
-    expect(calculateScore({ ...base, gameConfig: { ...CFG, chickenHandCanWinOnBonusFaan: false } }).canRecord).toBe(false);
+    const bonus = { ...base, manualFan: ["self-draw-after-kong"] };   // self draw 1 + last tile 1 + after kong 1 = 3 (No Flower is added afterwards)
+    expect(calculateScore(bonus).totalFan).toBe(4); expect(calculateScore(bonus).canRecord).toBe(true);
+    expect(calculateScore(base).canRecord).toBe(false);   // flower points alone cannot reach the minimum
+    expect(calculateScore({ ...bonus, gameConfig: { ...CFG, chickenHandCanWinOnBonusFaan: false } }).canRecord).toBe(false);
   });
 });
 

@@ -41,6 +41,12 @@ export function validateHand(input: WinningHandInput): { errors: string[]; decom
   const standard: HandDecomposition[] = findDecompositions(concealedTiles, 4 - melds.length)
     .map((s) => ({ kind: "STANDARD" as const, sets: [...fixed, ...s.sets], pair: s.pair }));
   const decompositions = [...standard, ...detectSpecialHands(input)];
-  if (!decompositions.length) errors.push("Hand cannot form 4 sets and 1 pair");
+  if (!decompositions.length) {
+    const counts = Object.values(countTiles(concealedTiles));
+    const pairsOnly = melds.length === 0 && concealedTiles.length === 14 && counts.every((n) => n === 2 || n === 4);
+    if (pairsOnly && counts.some((n) => n === 4) && input.gameConfig.specialHands.sevenPairs)
+      errors.push("Seven Pairs needs 7 different pairs: the same pair (4 identical tiles) cannot count as two pairs");
+    else errors.push("Hand cannot form 4 sets and 1 pair");
+  }
   return { errors, decompositions };
 }

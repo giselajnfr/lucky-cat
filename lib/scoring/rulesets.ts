@@ -46,7 +46,7 @@ const NEW_RULES: FanRuleConfig[] = [
   np("lacking-a-suit", "Lacking a Suit (缺一門)", 1, "Hanya dua dari tiga jenis angka, tanpa angin atau naga.", ["Tepat dua jenis angka", "Tidak ada kartu kehormatan"], { hand: "123m 456m 789p 234p 55m", win: "5m" }),
   np("all-types", "All Types (五門齊)", 1, "Ada ketiga jenis angka (karakter, bambu, lingkaran), angin dan naga sekaligus dalam satu tangan.", ["Karakter, bambu dan lingkaran: ketiganya ada", "Minimal satu kartu angin dan satu kartu naga"], { hand: "123m 456p 789s EEE RD RD", win: "RD" }),
   np("all-terminals", "Orphans (清么九)", 10, "Seluruh tangan hanya pong atau kong dari kartu 1 dan 9 (tanpa angin dan naga).", ["Semua set adalah pong atau kong dari kartu 1 atau 9", "Pasangan juga kartu 1 atau 9", "Pure Orphans, Mixed Orphans dan All Pongs tidak dihitung lagi"], { hand: "111m 999m 111p 999p 11s", win: "1s" }),
-  na("fully-concealed", "Fully Concealed (門前清自摸)", 3, "Self Draw tanpa set terbuka. Menggantikan Self Draw dan Concealed Hand.", ["Menang dengan kartu ambil sendiri", "Tidak ada set yang diambil dari buangan"], { hand: BASE, win: "5s", method: "SELF_DRAW" }),
+  na("fully-concealed", "Fully Concealed (門前清自摸)", 3, "Self Draw dengan tangan tertutup (tanpa set dari buangan) = 3 faan. Self Draw + Concealed Hand digabung menjadi Fully Concealed dan menggantikan keduanya.", ["Menang dengan kartu ambil sendiri", "Tidak ada set yang diambil dari buangan"], { hand: BASE, win: "5s", method: "SELF_DRAW" }),
   na("full-flowers", "Full Flowers / Full Seasons (一檯花)", 2, "Memiliki keempat bunga atau keempat musim.", ["Bunga 1-4 lengkap, atau musim 1-4 lengkap", "2 faan untuk masing-masing set lengkap"], { hand: BASE, win: "5s", flowers: "F1 F2 F3 F4" }, { perUnit: true }),
   na("eight-flowers", "All 8 Flowers & Seasons (八仙過海)", 8, "Memiliki kedelapan bunga dan musim. Menggantikan Full Flowers / Full Seasons.", ["Semua 8 kartu bunga dan musim"], { hand: BASE, win: "5s", flowers: "F1 F2 F3 F4 S1 S2 S3 S4" }),
 ];
@@ -136,8 +136,8 @@ export const RULESETS: Record<RulesetId, RulesetConfig> = {
     description: "Ruleset paling lengkap: New 6 ditambah pola sekuens, pong dan orphans New 18. Ini adalah aturan rumah HK18 yang sudah ada di aplikasi, dilengkapi.",
     minimumFanToWin: 3, maximumFan: 13,
     specialRules: { ...SPECIAL, sevenPairs: true, thirteenOrphans: true, pair258: true, doubleChow: true, waitBonuses: true, flowerBonuses: true, waitFan: { ...SPECIAL.waitFan, single: 1 } },
-    // Fully Concealed is listed but OFF: the confirmed house rule is that a concealed Self Draw scores Self Draw 1 (not Concealed Hand, not 3).
-    scoringRules: [...FOUNDATION, ...NEW6_EXTRA, ...NEW18_EXTRA].map((id) => id === "fully-concealed" ? get(id, { enabled: false }) : get(id)),
+    // New 18 contains every New 6 rule, including Fully Concealed: a Self Draw with a concealed hand scores 3 faan (it replaces Self Draw + Concealed Hand).
+    scoringRules: [...FOUNDATION, ...NEW6_EXTRA, ...NEW18_EXTRA].map((id) => get(id)),
     stackingRules: { ...STACK },
     conflicts: [...CONFLICTS_COMMON, ...CONFLICTS_NEW6, ...CONFLICTS_NEW18],
     notes: [
