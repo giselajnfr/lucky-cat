@@ -114,7 +114,7 @@ export function NewGameForm({ tableId }: { tableId?: string }) {
           <div><label className="mb-1.5 block text-xs font-semibold" htmlFor="mf">Minimum faan</label><input id="mf" inputMode="numeric" pattern="[0-9]*" maxLength={2} className="input" value={minFan} onFocus={(e) => e.target.select()} onChange={(e) => setMinFan(e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, ""))} /></div>
           <div><label className="mb-1.5 block text-xs font-semibold" htmlFor="sp">Skor awal</label><input id="sp" inputMode="numeric" pattern="[0-9]*" placeholder="0" className="input" value={start} onFocus={(e) => e.target.select()} onChange={(e) => setStart(e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, ""))} /></div>
         </div>
-        <p className="text-xs text-muted">Aturan rumah: HK18 (minimum {HK18_RULES.minimumFan} faan, poin = faan).</p>
+        <p className="text-xs text-muted">Aturan rumah: HK18 (minimum {HK18_RULES.minimumFan} faan, poin mengikuti tabel faan: 3 faan = 8, 4 = 16, 5 = 24, dst).</p>
       </section>
 
       {error && <p role="alert" className="text-sm text-red-300">{error}</p>}

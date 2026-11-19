@@ -100,12 +100,12 @@ function AdditionalList({ rules }: { rules: FanRuleConfig[] }) {
   const t = getT();
   const used = new Set(GROUPS.flatMap((g) => g.ids));
   const groups = [...GROUPS.map((g) => ({ ...g, rules: g.ids.map((id) => rules.find((r) => r.id === id)).filter(Boolean) as FanRuleConfig[] })),
-    { title: "guide.g.win" as Key, note: undefined as Key | undefined, ids: [] as string[], rules: rules.filter((r) => !used.has(r.id)) }].filter((g) => g.rules.length);
+    { title: "guide.g.win" as Key, note: "guide.g.winNote" as Key | undefined, ids: [] as string[], rules: rules.filter((r) => !used.has(r.id)) }].filter((g) => g.rules.length);
   return (
     <div className="space-y-6">{groups.map((g) => (
       <div key={g.title} className="space-y-2.5"><h2 className="section-label">{t(g.title)}</h2>
         {g.rules.map((r) => <AdditionalCard key={r.id} r={r} />)}
-        {g.note && <p className="px-1 text-xs text-muted">{t(g.note)}</p>}</div>))}
+        {g.note && <p className="px-1 text-xs text-muted" dangerouslySetInnerHTML={{ __html: t(g.note) }} />}</div>))}
     </div>
   );
 }

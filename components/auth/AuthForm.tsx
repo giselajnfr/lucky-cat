@@ -2,7 +2,7 @@
 import { errText } from "@/lib/i18n/errors";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/ui/Logo";
 import { useI18n } from "@/components/i18n/I18nProvider";
@@ -19,6 +19,12 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const isLogin = mode === "login";
+
+  // /auth/callback sends people back here with ?error=callback when Google or the email link failed.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("error") === "callback")
+      setError("Login gagal. Link kedaluwarsa atau login dibatalkan. Silakan coba masuk lagi.");
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError(null); setInfo(null);

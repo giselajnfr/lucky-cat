@@ -20,8 +20,9 @@ export function JoinGameForm({ initialCode = "" }: { initialCode?: string }) {
     if (code.length !== 4) return;
     setBusy(true); setError(null);
     const { data, error } = await supabase.rpc("join_game", { code });
+    if (!error && !data) { setError("Kode ruang tidak ditemukan. Periksa lagi huruf dan angkanya. Setelah 7 kode salah, tunggu 1 menit sebelum mencoba lagi."); setBusy(false); return; }
     if (error) {
-      setError(/not found/i.test(error.message) ? "Kode ruang tidak ditemukan. Periksa lagi huruf dan angkanya." : errText(error.message));
+      setError(/too many/i.test(error.message) ? "Terlalu banyak kode salah. Coba lagi dalam 1 menit." : /not found/i.test(error.message) ? "Kode ruang tidak ditemukan. Periksa lagi huruf dan angkanya." : errText(error.message));
       setBusy(false); return;
     }
     router.push(`/game/${data}`); router.refresh();

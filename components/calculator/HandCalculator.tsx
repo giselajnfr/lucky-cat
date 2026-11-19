@@ -173,23 +173,23 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
       <section className="card space-y-2" aria-label="Poin tambahan">
         <div><h2 className="section-label">Poin tambahan</h2><p className="mt-1 text-xs text-muted">Centang yang terjadi di tangan ini. Faan angin, naga, dan bunga dihitung otomatis dari kartu.</p></div>
         <ul className="space-y-2">
-          {(config.fanTable ?? FAN_TABLE).filter((r) => r.category === "additional" && r.enabled && (CHECKABLE.includes(r.id) || (r.id === "self-draw" && !lockedMethod))).map((rule) => {
+          {(() => { const table = config.fanTable ?? FAN_TABLE; const hasFC = table.some((r) => r.id === "fully-concealed" && r.enabled); return table.filter((r) => r.category === "additional" && r.enabled && (CHECKABLE.includes(r.id) || (r.id === "self-draw" && !lockedMethod))).map((rule) => {
             const text = EXTRA_TEXT[rule.id] ?? { title: ruleName(currentLang(), rule.name), hint: rule.summary };
             const flag = (MANUAL_FAN_IDS as readonly string[]).includes(rule.id);
             const blocked = (rule.id === "self-draw-after-kong" && effMethod !== "SELF_DRAW")
-              || ((rule.id === "robbing-kong" || rule.id === "concealed-hand" || rule.id === "fully-exposed") && effMethod !== "DISCARD")
+              || ((rule.id === "robbing-kong" || rule.id === "fully-exposed") && effMethod !== "DISCARD") || (rule.id === "concealed-hand" && effMethod !== "DISCARD" && !hasFC)
               || (rule.id === "heavenly-hand" && effSeat !== "E") || (rule.id === "earthly-hand" && (effSeat === "E" || effMethod !== "DISCARD"));
-            const blockedHint = rule.id === "self-draw-after-kong" ? "Hanya untuk Self Draw setelah menyatakan kong" : rule.id === "concealed-hand" ? "Hanya untuk menang dari buangan (menang sendiri dihitung Self Draw)" : rule.id === "heavenly-hand" ? "Hanya untuk dong (kursi Timur)"
+            const blockedHint = rule.id === "self-draw-after-kong" ? "Hanya untuk Self Draw setelah menyatakan kong" : rule.id === "heavenly-hand" ? "Hanya untuk dong (kursi Timur)"
               : rule.id === "earthly-hand" ? "Hanya untuk pemain non-dong yang menang dari buangan" : "Hanya untuk menang dari buangan";
             const on = flag ? manual.includes(rule.id) && !blocked : rule.id === "last-tile" ? lastTile : rule.id === "robbing-kong" ? robbing && !blocked : rule.id === "concealed-hand" ? !opened && !blocked : rule.id === "self-draw-after-kong" ? manual.includes(rule.id) && !blocked : effMethod === "SELF_DRAW";
             const toggle = () => { if (flag) setManual(manual.includes(rule.id) ? manual.filter((x) => x !== rule.id) : [...manual, rule.id]); else if (rule.id === "last-tile") setLastTile(!lastTile); else if (rule.id === "robbing-kong") setRobbing(!robbing); else if (rule.id === "concealed-hand") setOpened(!opened); else if (rule.id === "self-draw-after-kong") setManual(manual.includes(rule.id) ? manual.filter((x) => x !== rule.id) : [...manual, rule.id]); else setMethod(effMethod === "SELF_DRAW" ? "DISCARD" : "SELF_DRAW"); };
             return (<li key={rule.id}>
               <button type="button" role="checkbox" aria-checked={on} disabled={blocked} onClick={toggle} className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 transition active:scale-[0.99] ${on ? "border-cream/60 bg-cream/10" : "border-line bg-card"} ${blocked ? "opacity-40" : ""}`}>
                 <span aria-hidden className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${on ? "border-cream bg-cream text-base" : "border-line bg-well"}`}>{on && <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>}</span>
-                <span className="min-w-0 flex-1 text-left"><span className="block text-sm font-semibold">{text.title}</span><span className="block text-xs text-muted">{blocked ? blockedHint : text.hint}</span></span>
-                <b className={`shrink-0 text-sm ${on ? "text-pos" : "text-muted"}`}>+{rule.fan}</b>
+                <span className="min-w-0 flex-1 text-left"><span className="block text-sm font-semibold">{text.title}</span><span className="block text-xs text-muted">{blocked ? blockedHint : rule.id === "concealed-hand" && effMethod === "SELF_DRAW" ? "Dicentang bersama Self Draw: dihitung Fully Concealed (+3), menggantikan Self Draw dan Concealed Hand. Hilangkan centang jika ada set yang diambil dari buangan." : text.hint}</span></span>
+                <b className={`shrink-0 text-sm ${on ? "text-pos" : "text-muted"}`}>+{rule.id === "concealed-hand" && effMethod === "SELF_DRAW" ? 3 : rule.fan}</b>
               </button></li>);
-          })}
+          }); })()}
         </ul>
       </section>
     </div>
