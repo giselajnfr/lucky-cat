@@ -55,6 +55,8 @@ export function TvControls() {
       <label className={row}>Stats leaderboard
         <select className="input max-w-[13rem]" value={s.leaderboard_type} onChange={(e) => save({ leaderboard_type: e.target.value as TvSettings["leaderboard_type"] })}>
           <option value="highest_score">Highest score</option><option value="most_wins">Most wins today</option><option value="highest_fan">Highest fan today</option></select></label>
+      <label className={row}>Main leaderboard: players per page
+        <input className="input max-w-[7rem]" type="number" min={4} max={20} value={s.main_rows ?? 8} onChange={(e) => save({ main_rows: Math.min(20, Math.max(4, Math.round(Number(e.target.value) || 8))) })} /></label>
       <label className={row}>Rotation interval (seconds)
         <input className="input max-w-[7rem]" type="number" min={3} max={120} value={s.rotation_interval_ms / 1000} onChange={(e) => save({ rotation_interval_ms: Math.min(120, Math.max(3, Number(e.target.value))) * 1000 })} /></label>
       <label className={row}>Winning hand highlight (seconds)

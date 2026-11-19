@@ -11,8 +11,9 @@ import { useTvFeed } from "@/lib/tv/useTvFeed";
 import { ROUND_NAME, TV_MODE_LABEL, WIND_NAME, seatWind, type LeaderRow, type MainRow, type TvSettings, type TvTable, type WinningHandEvent } from "@/lib/tv/types";
 
 const PER_PAGE = 8;       // tables per page (per-table mode)
-const MAIN_ROWS = 8;      // one clean column, 8 players per page: big enough to read from across the room
+const DEFAULT_MAIN_ROWS = 8;   // players per page on the main leaderboard (admin setting, or ?rows=N on the screen)
 /** Shared column template so the header row and every player row line up exactly. */
+const SPOT_GRID = "grid-cols-[6vw_minmax(0,1fr)_13vw_15vw_14vw]";
 const MAIN_GRID = "grid-cols-[5vw_minmax(0,1fr)_12vw_13vw_16vw]";
 const TV_STATUS: Record<string, { label: string; dot: string }> = {
   WAITING: { label: "Waiting", dot: "bg-warn" }, PLAYING: { label: "Playing", dot: "bg-pos" },
@@ -40,9 +41,9 @@ function Dot({ className = "" }: { className?: string }) {
 const Sep = () => <span className="mx-[0.9vw] inline-block h-[0.35vw] w-[0.35vw] rounded-full bg-line align-middle" />;
 
 /** Rank marker: 1st is a solid cream disc, 2nd/3rd a soft cream disc, the rest a plain number. No emoji. */
-function RankBadge({ rank, size = "2.9vw", text = "text-[1.7vw]" }: { rank: number; size?: string; text?: string }) {
+function RankBadge({ rank, size = "2.9vw", text = "text-[1.7vw]", fs }: { rank: number; size?: string; text?: string; fs?: string }) {
   const tone = rank === 0 ? "bg-cream text-base" : rank === 1 ? "bg-cream/30 text-cream" : rank === 2 ? "bg-cream/15 text-cream" : "text-muted";
-  return <span className={`flex shrink-0 items-center justify-center rounded-full font-extrabold leading-none tabular-nums ${text} ${tone}`} style={{ width: size, height: size }}>{rank + 1}</span>;
+  return <span className={`flex shrink-0 items-center justify-center rounded-full font-extrabold leading-none tabular-nums ${text} ${tone}`} style={{ width: size, height: size, ...(fs ? { fontSize: fs } : {}) }}>{rank + 1}</span>;
 }
 
 function TableCard({ t, cols }: { t: TvTable; cols: number }) {
@@ -76,31 +77,54 @@ function TablesGrid({ list }: { list: TvTable[] }) {
   );
 }
 
+/** One table, full screen: a single clear column (rank, player, seat wind, score, won/lost). */
 function Spotlight({ t }: { t: TvTable }) {
   const dealer = t.dealer_seat ?? 0, start = t.starting_points ?? 0;
+  const st = TV_STATUS[t.status];
   return (
-    <div className="flex h-full flex-col justify-center gap-[2vw] px-[6vw]">
-      <h2 className="text-[6vw] font-extrabold">TABLE {pad(t.table_number)}</h2>
-      <p className="text-[3vw] font-bold text-muted">{t.round_wind ? ROUND_NAME[t.round_wind] : ""} · Hand {t.hand_number ?? "-"}</p>
-      <div className="grid grid-cols-2 gap-[3vw]">
-        <ul className="space-y-[1vw] text-[3.4vw] font-extrabold">
-          {ranked(t).map((p, i) => <li key={p.seat} className="flex items-center justify-between"><span className="flex items-center gap-[1.2vw]"><RankBadge rank={i} size="4.4vw" text="text-[2.4vw]" />{p.name}{p.seat === dealer && <span className="rounded-full border border-line px-[1vw] py-[0.2vw] text-[1.3vw] font-bold uppercase tracking-[0.12em] text-muted">Dealer</span>}</span><span className={scoreTone(p.score, false, start)}>{fmtScore(p.score)}</span></li>)}
-        </ul>
-        <ul className="space-y-[1vw] text-[2.6vw] font-bold text-muted">
-          {[...t.players].sort((a, b) => a.seat - b.seat).map((p) => <li key={p.seat}>{WIND_NAME[seatWind(p.seat, dealer)].toUpperCase()} — <span className="text-cream">{p.name}</span></li>)}
-        </ul>
+    <div className="flex h-full flex-col px-[4vw] pb-[3.5vh] pt-[1vh]">
+      <div className="flex items-end justify-between gap-[2vw] pb-[2.4vh]">
+        <div>
+          <p className="text-[1.1vw] font-bold uppercase tracking-[0.3em] text-muted">{t.round_wind ? `${ROUND_NAME[t.round_wind]} · Hand ${t.hand_number ?? "-"}` : "Waiting for players"}</p>
+          <h2 className="mt-[0.8vh] text-[4.6vw] font-extrabold leading-none">TABLE {pad(t.table_number)}</h2>
+        </div>
+        <span className="inline-flex items-center gap-[0.7vw] rounded-full bg-card px-[1.4vw] py-[0.7vh] text-[1.5vw] font-bold"><Dot className={st.dot} />{st.label}</span>
       </div>
+      <div className={`grid ${SPOT_GRID} items-center border-b border-line/70 px-[2vw] pb-[1.2vh] text-[1vw] font-bold uppercase tracking-[0.2em] text-muted`}>
+        <span className="text-center">#</span><span>Player</span><span className="text-center">Seat</span><span className="text-right">Total</span><span className="text-right">Won / Lost</span>
+      </div>
+      <ol className="mt-[1.2vh] grid min-h-0 flex-1 gap-y-[1.4vh]" style={{ gridTemplateRows: `repeat(${Math.max(4, t.players.length)}, minmax(0, 1fr))` }}>
+        {ranked(t).map((p, i) => {
+          const top = i < 3, n = p.score - start;
+          return (
+            <li key={p.seat} className={`relative grid ${SPOT_GRID} min-h-0 items-center rounded-[1vw] px-[2vw] ${i === 0 ? "border border-cream/40 bg-card" : top ? "bg-card" : "bg-card/55"}`}>
+              {top && <span className={`absolute left-0 top-[18%] h-[64%] w-[0.3vw] rounded-r-full ${i === 0 ? "bg-cream" : "bg-cream/50"}`} />}
+              <span className="flex justify-center"><RankBadge rank={i} size="4vw" text="text-[2.2vw]" /></span>
+              <span className="flex min-w-0 items-center gap-[1.2vw]">
+                <span className={`min-w-0 truncate text-[3.2vw] leading-none ${top ? "font-extrabold" : "font-bold"}`}>{p.name}</span>
+                {p.seat === dealer && <span className="shrink-0 rounded-full border border-line px-[1vw] py-[0.3vh] text-[1.2vw] font-bold uppercase tracking-[0.12em] text-muted">Dealer</span>}
+              </span>
+              <span className="justify-self-center rounded-full border border-line px-[1.2vw] py-[0.5vh] text-[1.3vw] font-bold uppercase leading-tight text-muted">{WIND_NAME[seatWind(p.seat, dealer)]}</span>
+              <span className={`text-right text-[2.6vw] font-extrabold tabular-nums ${scoreTone(p.score, false, start)}`}>{fmtScore(p.score)}</span>
+              <span className={`text-right text-[2vw] font-bold leading-none tabular-nums ${netTone(n)}`}>{net(n)}</span>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
 
 /** Live main leaderboard: every player from every table, ranked by points won/lost against that table's starting points.
  *  One clean column (rank, player, table, total, won/lost). All sizes use vw/vh so it scales to any TV. */
-function MainBoard({ rows, page, pages, tables }: { rows: MainRow[]; page: number; pages: number; tables: number }) {
-  const slice = rows.slice(page * MAIN_ROWS, (page + 1) * MAIN_ROWS);
+function MainBoard({ rows, page, pages, tables, perPage }: { rows: MainRow[]; page: number; pages: number; tables: number; perPage: number }) {
+  const slice = rows.slice(page * perPage, (page + 1) * perPage);
+  // Text scales with the row count so 12 or 16 rows still fit: each row gets ~64vh / perPage of height.
+  const rh = 64 / perPage;
+  const f = (vw: number, k: number) => `min(${vw}vw, ${(rh * k).toFixed(2)}vh)`;
   return (
     <div className="flex h-full flex-col px-[4vw] pb-[3.5vh] pt-[1vh]">
-      <div className="flex items-end justify-between gap-[2vw] pb-[2.4vh]">
+      <div className="flex items-end justify-between gap-[2vw] pb-[2vh]">
         <div>
           <p className="text-[1.1vw] font-bold uppercase tracking-[0.3em] text-muted">Live standings</p>
           <h2 className="mt-[0.8vh] text-[3.4vw] font-extrabold leading-none">Main Leaderboard</h2>
@@ -109,25 +133,25 @@ function MainBoard({ rows, page, pages, tables }: { rows: MainRow[]; page: numbe
       </div>
       {rows.length === 0 ? <p className="flex flex-1 items-center justify-center text-[3vw] font-bold text-muted">No players yet</p> : (
         <>
-          <div className={`grid ${MAIN_GRID} items-center border-b border-line/70 px-[2vw] pb-[1.2vh] text-[1vw] font-bold uppercase tracking-[0.2em] text-muted`}>
+          <div className={`grid ${MAIN_GRID} items-center border-b border-line/70 px-[2vw] pb-[1vh] text-[1vw] font-bold uppercase tracking-[0.2em] text-muted`}>
             <span className="text-center">#</span><span>Player</span><span className="text-center">Table</span><span className="text-right">Total</span><span className="text-right">Won / Lost</span>
           </div>
-          <ol className="mt-[1.2vh] grid min-h-0 flex-1 content-start gap-y-[1.1vh]" style={{ gridTemplateRows: `repeat(${MAIN_ROWS}, minmax(0, 1fr))` }}>
+          <ol className="mt-[1vh] grid min-h-0 flex-1 content-start gap-y-[0.9vh]" style={{ gridTemplateRows: `repeat(${perPage}, minmax(0, 1fr))` }}>
             {slice.map((r, i) => {
-              const rank = page * MAIN_ROWS + i, top = rank < 3;
+              const rank = page * perPage + i, top = rank < 3;
               return (
                 <li key={`${r.table}-${r.name}-${rank}`} className={`relative grid ${MAIN_GRID} min-h-0 items-center rounded-[1vw] px-[2vw] ${rank === 0 ? "border border-cream/40 bg-card" : top ? "bg-card" : "bg-card/55"}`}>
                   {top && <span className={`absolute left-0 top-[18%] h-[64%] w-[0.3vw] rounded-r-full ${rank === 0 ? "bg-cream" : "bg-cream/50"}`} />}
-                  <span className="flex justify-center"><RankBadge rank={rank} /></span>
-                  <span className={`min-w-0 truncate text-[2.2vw] leading-none ${top ? "font-extrabold" : "font-bold"}`}>{r.name}</span>
-                  <span className="justify-self-center rounded-full border border-line px-[1.1vw] py-[0.5vh] text-[1.15vw] font-bold leading-tight text-muted">Table {pad(r.table)}</span>
-                  <span className="text-right text-[1.7vw] font-semibold tabular-nums text-muted">{fmtScore(r.score)}</span>
-                  <span className={`text-right text-[2.6vw] font-extrabold leading-none tabular-nums ${netTone(r.net)}`}>{net(r.net)}</span>
+                  <span className="flex justify-center"><RankBadge rank={rank} size={f(2.9, 0.66)} fs={f(1.7, 0.4)} /></span>
+                  <span className={`min-w-0 truncate leading-none ${top ? "font-extrabold" : "font-bold"}`} style={{ fontSize: f(2.2, 0.52) }}>{r.name}</span>
+                  <span className="justify-self-center rounded-full border border-line px-[1.1vw] py-[0.3vh] font-bold leading-tight text-muted" style={{ fontSize: f(1.15, 0.3) }}>Table {pad(r.table)}</span>
+                  <span className="text-right font-semibold tabular-nums text-muted" style={{ fontSize: f(1.7, 0.4) }}>{fmtScore(r.score)}</span>
+                  <span className={`text-right font-extrabold leading-none tabular-nums ${netTone(r.net)}`} style={{ fontSize: f(2.6, 0.62) }}>{net(r.net)}</span>
                 </li>
               );
             })}
           </ol>
-          {pages > 1 && <div className="mt-[2vh] flex justify-center gap-[0.7vw]">{Array.from({ length: pages }, (_, n) => <span key={n} className={`h-[0.7vh] rounded-full transition-all ${n === page ? "w-[3vw] bg-cream" : "w-[0.7vh] bg-line"}`} />)}</div>}
+          {pages > 1 && <div className="mt-[1.6vh] flex justify-center gap-[0.7vw]">{Array.from({ length: pages }, (_, n) => <span key={n} className={`h-[0.7vh] rounded-full transition-all ${n === page ? "w-[3vw] bg-cream" : "w-[0.7vh] bg-line"}`} />)}</div>}
         </>
       )}
     </div>
@@ -194,11 +218,13 @@ export function TvDisplay({ view }: { view?: string } = {}) {
   const [soundOn, setSoundOn] = useState(false);
   const [slide, setSlide] = useState(0);
   const [override, setOverride] = useState<TvSettings["mode"] | null>(null);
-  useEffect(() => { const v = view ?? new URLSearchParams(window.location.search).get("view"); setOverride(v && VIEWS[v] ? VIEWS[v] : null); }, [view]);
+  const [rowsOverride, setRowsOverride] = useState<number | null>(null);
+  useEffect(() => { const v = view ?? new URLSearchParams(window.location.search).get("view"); setOverride(v && VIEWS[v] ? VIEWS[v] : null); const r = Number(new URLSearchParams(window.location.search).get("rows")); setRowsOverride(r >= 4 && r <= 20 ? Math.round(r) : null); }, [view]);
 
   const onWin = useCallback((e: WinningHandEvent) => { if (queue.current.enqueue(e)) setTick((n) => n + 1); }, []);
   const { tables, settings, leaders, online } = useTvFeed(onWin);
   const mode = override ?? settings.mode;
+  const perPage = Math.min(20, Math.max(4, rowsOverride ?? settings.main_rows ?? DEFAULT_MAIN_ROWS));
 
   // Idle -> pick the next queued winning hand.
   useEffect(() => { if (!current) { const n = queue.current.next(); if (n) setCurrent(n); } }, [tick, current]);
@@ -214,7 +240,7 @@ export function TvDisplay({ view }: { view?: string } = {}) {
   const pages = Math.max(1, Math.ceil(active.length / PER_PAGE));
   const mainRows = useMemo<MainRow[]>(() => active.flatMap((t) => t.players.map((p) => ({ name: p.name, table: t.table_number, roomCode: t.room_code, score: p.score, start: t.starting_points ?? 0, net: p.score - (t.starting_points ?? 0) })))
     .sort((a, b) => b.net - a.net || b.score - a.score || a.name.localeCompare(b.name)), [active]);
-  const mainPages = Math.max(1, Math.ceil(mainRows.length / MAIN_ROWS));
+  const mainPages = Math.max(1, Math.ceil(mainRows.length / perPage));
   // Rotation: table pages -> each table spotlight -> main leaderboard pages -> today's stats.
   const slides = useMemo(() => [
     ...Array.from({ length: pages }, (_, i) => ({ kind: "live" as const, page: i })),
@@ -232,11 +258,11 @@ export function TvDisplay({ view }: { view?: string } = {}) {
   const tablesPage = (p: number) => <TablesGrid list={active.slice(p * PER_PAGE, (p + 1) * PER_PAGE)} />;
   let body: React.ReactNode;
   if (mode === "leaderboard") body = <StatsBoard rows={leaders} type={settings.leaderboard_type} />;
-  else if (mode === "main") body = <MainBoard rows={mainRows} page={slide % mainPages} pages={mainPages} tables={active.length} />;
+  else if (mode === "main") body = <MainBoard rows={mainRows} page={slide % mainPages} pages={mainPages} tables={active.length} perPage={perPage} />;
   else if (mode === "spotlight") body = spot(settings.spotlight_table_id);
   else if (mode === "rotate") {
     const s = slides[slide % slides.length];
-    body = s.kind === "live" ? tablesPage(s.page) : s.kind === "spot" ? spot(s.id) : s.kind === "main" ? <MainBoard rows={mainRows} page={s.page} pages={mainPages} tables={active.length} /> : <StatsBoard rows={leaders} type={settings.leaderboard_type} />;
+    body = s.kind === "live" ? tablesPage(s.page) : s.kind === "spot" ? spot(s.id) : s.kind === "main" ? <MainBoard rows={mainRows} page={s.page} pages={mainPages} tables={active.length} perPage={perPage} /> : <StatsBoard rows={leaders} type={settings.leaderboard_type} />;
   } else body = tablesPage(slide % pages);
   const needsTables = mode !== "leaderboard";
 

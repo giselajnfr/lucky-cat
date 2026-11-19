@@ -71,7 +71,7 @@ create index audit_created_idx on public.admin_audit_log(created_at desc);
 
 create table public.tv_settings (
   id int primary key default 1 check (id = 1),
-  mode text not null default 'live' check (mode in ('live','spotlight','leaderboard','rotate')),
+  mode text not null default 'live' check (mode in ('live','main','spotlight','leaderboard','rotate')),
   spotlight_table_id uuid references public.cafe_tables(id) on delete set null,
   rotation_interval_ms int not null default 15000 check (rotation_interval_ms between 3000 and 120000),
   highlight_duration_ms int not null default 10000 check (highlight_duration_ms between 3000 and 60000),
