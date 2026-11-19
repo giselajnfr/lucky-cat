@@ -1,6 +1,7 @@
 "use client";
 import { errText } from "@/lib/i18n/errors";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { HandCalculator, WIND_LABEL, type CalcInitial, type CalcPayload } from "@/components/calculator/HandCalculator";
 import { ScoreCard } from "@/components/calculator/ScoreCard";
 import { scoreHandForGame, seatWindOf, ROUND_TO_WIND, type SeatedPlayer } from "@/lib/game-engine";
@@ -66,8 +67,18 @@ export function RecordHand({ game, players, handsPlayed, edit, onDone, onCancel 
   );
   const canSubmit = kind === "draw" || (kind === "win" && winner && method && (method === "SELF_DRAW" || discarderId) && preview && !("error" in preview));
 
-  return (
-    <div className="fixed inset-0 z-50 h-[100dvh] overflow-y-auto bg-base" role="dialog" aria-modal="true" aria-label="Catat tangan">
+  // Render on <body> (not inside the game page, whose sticky/transformed ancestors let the tracker show through at the top) and lock the page behind.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] h-[100dvh] overflow-y-auto overscroll-contain bg-base" role="dialog" aria-modal="true" aria-label="Catat tangan">
       <div className="mx-auto max-w-md space-y-4 px-5 pb-32 pt-4 md:max-w-2xl">
         <div className="flex items-center justify-between"><h2 className="text-xl">{edit ? `Ubah tangan #${edit.hand_number}` : `Tangan #${handsPlayed + 1}`}</h2><button type="button" className="text-sm underline" onClick={onCancel}>Batal</button></div>
         <p className="text-sm text-muted">Ronde {WIND_LABEL[ROUND_TO_WIND[viewGame.current_round_wind]]} · Dealer {players.find((p) => p.seat_position === viewGame.current_dealer_seat)?.player_name}</p>
@@ -116,6 +127,7 @@ export function RecordHand({ game, players, handsPlayed, edit, onDone, onCancel 
           <button className="btn-primary" disabled={!canSubmit || busy} onClick={submit}>{busy ? "Menyimpan…" : edit ? "Simpan perubahan" : kind === "draw" ? "Catat seri" : "Catat kemenangan"}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

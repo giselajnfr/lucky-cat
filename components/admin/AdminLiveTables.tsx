@@ -127,12 +127,12 @@ export function AdminLiveTables() {
                         }}>Fix</button></span>
                     </li>))}
                 </ul>
-                <div className="flex flex-wrap gap-2">
-                  {g.status === "paused" ? <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => call("admin_set_game_status", { p_game: g.id, p_status: "in_progress" })}>Resume</button>
-                    : g.status === "in_progress" && <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => call("admin_set_game_status", { p_game: g.id, p_status: "paused" })}>Pause</button>}
-                  {g.status !== "finished" && <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => confirm("Mark this game as finished?") && call("admin_set_game_status", { p_game: g.id, p_status: "finished" })}>Finish</button>}
-                  <Link href={`/admin/games/${g.id}`} className="btn-secondary !min-h-[44px] flex-1">Buka game</Link>
-                  <button className="btn-secondary !min-h-[44px] flex-1" onClick={() => release(r)}>Release</button>
+                <div className="grid grid-cols-3 gap-2">
+                  {g.status === "paused" ? <button className="btn-secondary !min-h-[44px] !text-[15px] !px-2" onClick={() => call("admin_set_game_status", { p_game: g.id, p_status: "in_progress" })}>Resume</button>
+                    : g.status === "in_progress" ? <button className="btn-secondary !min-h-[44px] !text-[15px] !px-2" onClick={() => call("admin_set_game_status", { p_game: g.id, p_status: "paused" })}>Pause</button> : <span />}
+                  {g.status !== "finished" ? <button className="btn-secondary !min-h-[44px] !text-[15px] !px-2" onClick={() => confirm("Mark this game as finished?") && call("admin_set_game_status", { p_game: g.id, p_status: "finished" })}>Finish</button> : <span />}
+                  <Link href={`/admin/games/${g.id}`} className="btn-secondary !min-h-[44px] !text-[15px] !px-2 whitespace-nowrap">Buka game</Link>
+                  <button className="btn-secondary !min-h-[44px] !text-[15px] col-span-3 !px-2" onClick={() => release(r)}>Release</button>
                 </div>
               </>) : (
                 <div className="space-y-2">
