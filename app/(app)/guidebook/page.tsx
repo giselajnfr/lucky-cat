@@ -68,13 +68,24 @@ const GROUPS: { title: Key; ids: string[]; note?: Key }[] = [
   { title: "guide.g.windsDragons", ids: ["seat-wind", "round-wind", "dragon-pong"], note: "guide.g.windsNote" },
   { title: "guide.g.flowers", ids: ["no-flower", "suitable-flower", "full-flowers", "eight-flowers"], note: "guide.g.flowersNote" },
 ];
-const slashRows = (items: string[]) => <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">{items.map((t, i) => <div key={t} className="flex items-center gap-2">{i > 0 && <span className="text-lg font-bold text-muted">/</span>}{row(t, 34)}</div>)}</div>;
-const tilesFor = (id: string) => id === "seat-wind" || id === "round-wind"
-  ? slashRows(["E E E", "S S S", "W W W", "N N N"])
-  : id === "dragon-pong" ? slashRows(["RD RD RD", "GD GD GD", "WD WD WD"]) : null;
+// One example per rule: seat wind shows East, round wind shows South.
+const tilesFor = (id: string) => id === "seat-wind" ? <div className="mt-2">{row("E E E", 34)}</div>
+  : id === "round-wind" ? <div className="mt-2">{row("S S S", 34)}</div> : null;
+const DRAGONS = [
+  { key: "RD", id: "Merah", en: "Red Dragon" },
+  { key: "GD", id: "Hijau", en: "Green Dragon" },
+  { key: "WD", id: "Putih", en: "White Dragon" },
+];
 
 function AdditionalCard({ r }: { r: FanRuleConfig }) {
   const t = getT(), lang = getLang();
+  if (r.id === "dragon-pong") return (<>{DRAGONS.map((d) => (
+    <article key={d.key} id={`${r.id}-${d.key}`} className="card scroll-mt-4 !px-4 !py-3">
+      <div className="flex items-baseline justify-between gap-3"><h3 className="text-lg font-extrabold leading-tight text-cream">{lang === "id" ? `Naga ${d.id}` : d.en}</h3>
+        <span className="shrink-0 rounded-full bg-cream px-3 py-0.5 text-sm font-extrabold text-base">{t("guide.faan", { fan: r.fan })}</span></div>
+      <p className="mt-1 text-sm text-muted">{lang === "id" ? `Pong/kong naga ${d.id.toLowerCase()}.` : `Pong/kong of ${d.en.toLowerCase()}.`}</p>
+      <div className="mt-2">{row(`${d.key} ${d.key} ${d.key}`, 34)}</div>
+    </article>))}</>);
   const origin = HOUSE_RULE_IDS.includes(r.id) ? null : ruleOrigin(r.id);
   return (
     <article id={r.id} className="card scroll-mt-4 !px-4 !py-3">

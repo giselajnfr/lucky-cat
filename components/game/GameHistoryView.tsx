@@ -46,7 +46,7 @@ export async function GameHistoryView({ id, backHref, backLabel, gameHref }: { i
             <div className="flex justify-between"><b>#{x.hand_number} · {x.winner_player_id ? name(x.winner_player_id) : "Seri"}</b><b>{x.winner_player_id ? `${x.total_fan} faan` : "—"}</b></div>
             <p className="text-xs text-muted">{METHOD[x.winning_method as keyof typeof METHOD]}{x.discard_player_id ? ` · dibuang ${name(x.discard_player_id)}` : ""}{d ? ` · kursi ${d.seatWind}` : ""}</p>
             <HandTiles detail={d} tiles={x.hand_tiles} width={30} />
-            {x.hand_fan_details?.length > 0 && <ul className="divide-y divide-line/50">{x.hand_fan_details.map((f: { fan_name: string; fan_value: number }) => <li key={f.fan_name} className="flex justify-between py-1.5"><span>{f.fan_name}</span><b>+{f.fan_value}</b></li>)}</ul>}
+            {x.hand_fan_details?.length > 0 && <ul className="divide-y divide-line/50">{x.hand_fan_details.map((f: { fan_name: string; fan_value: number }) => <li key={f.fan_name} className="flex justify-between py-1.5"><span>{ruleName(currentLang(), f.fan_name)}</span><b>+{f.fan_value}</b></li>)}</ul>}
           </li>); })}</ol></section>
     </main>
   );

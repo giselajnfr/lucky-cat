@@ -126,7 +126,7 @@ export function GameSetup({ gameId, onDone }: { gameId: string; onDone: () => vo
             <button type="button" key={id} role="radio" aria-checked={ruleset === id} onClick={() => setRuleset(id)}
               className={`flex min-h-[64px] flex-col items-center justify-center rounded-xl border px-1 py-2 text-center transition ${ruleset === id ? "border-cream bg-cream text-base" : "border-line bg-card text-cream"}`}>
               <span className="text-sm font-bold leading-tight">{RULESETS[id].name.replace("Hong Kong ", "")}</span>
-              <span className={`mt-0.5 text-[11px] ${ruleset === id ? "text-base/70" : "text-muted"}`}>{RULESETS[id].nameZh} · maks {RULESETS[id].maximumFan}</span>
+              <span className={`mt-0.5 text-[11px] ${ruleset === id ? "text-base/70" : "text-muted"}`}>maks {RULESETS[id].maximumFan}</span>
             </button>))}
         </div>
         <p className="text-xs text-muted">{rs.description}</p>

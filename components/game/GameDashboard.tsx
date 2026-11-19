@@ -1,4 +1,6 @@
 "use client";
+import { ruleName } from "@/lib/i18n/ruleNames";
+import { currentLang } from "@/lib/i18n/locale";
 import { errText } from "@/lib/i18n/errors";
 import { appLocale } from "@/lib/i18n/locale";
 import Link from "next/link";
@@ -138,7 +140,7 @@ export function GameDashboard({ initial, canPlay, canManage, backHref = "/game",
                 <span className="flex items-center gap-1"><b>{h.winner_player_id ? (game.rule_preset === "chicken" ? `${h.final_points} poin` : `${h.total_fan} faan`) : "0"}</b>{canPlay && <button type="button" className="btn-ghost !min-h-[36px] !px-2 text-xs !text-cream underline" onClick={() => setEditing(h)}>Ubah</button>}</span></div>
               <p className="text-xs text-muted">{METHOD[h.winning_method]}{h.discard_player_id ? ` · dibuang ${nameOf(h.discard_player_id)}` : ""} · Ronde {ROUND_LABEL[h.round_wind as keyof typeof ROUND_LABEL]}</p>
               <div className="mt-2"><HandTiles detail={h.hand_detail} tiles={h.hand_tiles} width={34} /></div>
-              {h.hand_fan_details?.length ? <p className="mt-2 text-xs text-muted">{h.hand_fan_details.map((f: FanDetailRow) => `${f.fan_name} +${f.fan_value}`).join(" · ")}</p> : null}
+              {h.hand_fan_details?.length ? <p className="mt-2 text-xs text-muted">{h.hand_fan_details.map((f: FanDetailRow) => `${ruleName(currentLang(), f.fan_name)} +${f.fan_value}`).join(" · ")}</p> : null}
             </li>))}</ol>)}
       </section>
 

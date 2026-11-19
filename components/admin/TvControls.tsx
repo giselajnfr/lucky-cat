@@ -21,7 +21,13 @@ export function TvControls() {
   async function save(patch: Partial<TvSettings>) {
     const before = s;
     setS((p) => ({ ...p, ...patch }));
-    const { error } = await supabase.from("tv_settings").update(patch).eq("id", 1);
+    const { data, error } = await supabase.from("tv_settings").update(patch).eq("id", 1).select("id");
+    // RLS can reject an update WITHOUT an error (0 rows changed): treat that as a failure too, so the screen never shows a mode that was not saved.
+    if (!error && (!data || data.length === 0)) {
+      setS(before);
+      alert("Pengaturan TV tidak tersimpan. Pastikan Anda login sebagai admin.");
+      return;
+    }
     if (error) {
       setS(before);   // do not pretend it was saved
       // "Main Leaderboard" needs migration_008 (the database only allows live/spotlight/leaderboard/rotate until then).
@@ -36,9 +42,9 @@ export function TvControls() {
       <p className="font-bold">{tvs > 0 ? `🟢 Live — ${tvs} screen${tvs > 1 ? "s" : ""} connected` : "🔴 No TV connected"} · <a className="underline" href="/tv" target="_blank">Open /tv</a></p>
       <div className="flex flex-wrap gap-2 text-sm">
         <span className="text-muted">Buka langsung:</span>
-        <a className="underline" href="/tv?view=main" target="_blank" rel="noreferrer">Main Leaderboard</a>
-        <a className="underline" href="/tv?view=tables" target="_blank" rel="noreferrer">Per Table</a>
-        <a className="underline" href="/tv?view=rotate" target="_blank" rel="noreferrer">Auto Rotate</a>
+        <a className="underline" href="/tv/main" target="_blank" rel="noreferrer">Main Leaderboard</a>
+        <a className="underline" href="/tv/tables" target="_blank" rel="noreferrer">Per Table</a>
+        <a className="underline" href="/tv/rotate" target="_blank" rel="noreferrer">Auto Rotate</a>
       </div>
       <label className={row}>Mode
         <select className="input max-w-[13rem]" value={s.mode} onChange={(e) => save({ mode: e.target.value as TvSettings["mode"] })}>
@@ -55,7 +61,7 @@ export function TvControls() {
         <input className="input max-w-[7rem]" type="number" min={3} max={60} value={s.highlight_duration_ms / 1000} onChange={(e) => save({ highlight_duration_ms: Math.min(60, Math.max(3, Number(e.target.value))) * 1000 })} /></label>
       <label className={row}>Sound effects <input type="checkbox" className="h-6 w-6" checked={s.sound_enabled} onChange={(e) => save({ sound_enabled: e.target.checked })} /></label>
       <label className={row}>Winning hand animations <input type="checkbox" className="h-6 w-6" checked={s.animations_enabled} onChange={(e) => save({ animations_enabled: e.target.checked })} /></label>
-      <p className="text-xs text-muted">Two screens? Open <code>/tv?view=tables</code> on one and <code>/tv?view=main</code> on the other: the link overrides the mode above for that screen only.</p>
+      <p className="text-xs text-muted">Two screens? Open <code>/tv/tables</code> on one and <code>/tv/main</code> on the other: the link overrides the mode above for that screen only.</p>
       <p className="text-xs text-muted">Browsers block autoplay audio: after turning sound on, tap “Enable sound” once on the TV screen.</p>
     </div>
   );

@@ -186,7 +186,7 @@ function Highlight({ e, animate, more }: { e: WinningHandEvent; animate: boolean
 /** ?view=tables | main | spotlight | leaderboard | rotate overrides the admin mode for THIS screen only (e.g. two TVs). */
 const VIEWS: Record<string, TvSettings["mode"]> = { tables: "live", live: "live", main: "main", spotlight: "spotlight", leaderboard: "leaderboard", rotate: "rotate" };
 
-export function TvDisplay() {
+export function TvDisplay({ view }: { view?: string } = {}) {
   const queue = useRef(new WinningEventQueue<WinningHandEvent>());
   const chime = useRef(createChime());
   const [current, setCurrent] = useState<WinningHandEvent | null>(null);
@@ -194,7 +194,7 @@ export function TvDisplay() {
   const [soundOn, setSoundOn] = useState(false);
   const [slide, setSlide] = useState(0);
   const [override, setOverride] = useState<TvSettings["mode"] | null>(null);
-  useEffect(() => { const v = new URLSearchParams(window.location.search).get("view"); setOverride(v && VIEWS[v] ? VIEWS[v] : null); }, []);
+  useEffect(() => { const v = view ?? new URLSearchParams(window.location.search).get("view"); setOverride(v && VIEWS[v] ? VIEWS[v] : null); }, [view]);
 
   const onWin = useCallback((e: WinningHandEvent) => { if (queue.current.enqueue(e)) setTick((n) => n + 1); }, []);
   const { tables, settings, leaders, online } = useTvFeed(onWin);
