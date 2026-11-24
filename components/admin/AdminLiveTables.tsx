@@ -18,11 +18,16 @@ export function AdminLiveTables() {
   const supabase = useMemo(() => createClient(), []);
   const [rows, setRows] = useState<Row[]>([]);
   const [num, setNum] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);   // visible feedback for Add table (an alert() can be blocked in app browsers)
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from("cafe_tables")
+    const { data, error } = await supabase.from("cafe_tables")
       .select("id, table_number, status, games(id, room_code, status, current_round_wind, current_dealer_seat, setup_complete, starting_points, session_minutes, session_started_at, min_fan, max_fan, rule_preset, ruleset, game_players(id, player_name, seat_position, current_score), game_hands(count))")
       .order("table_number");
+    if (error) { setLoadError(errText(error.message)); return; }   // e.g. a database migration has not been run yet
+    setLoadError(null);
     if (data) setRows(data as unknown as Row[]);
   }, [supabase]);
 
@@ -38,6 +43,23 @@ export function AdminLiveTables() {
       .subscribe();
     return () => { clearTimeout(t); supabase.removeChannel(ch); };
   }, [supabase, load]);
+
+  /** The number to use when the box is left empty: one more than the highest table. */
+  const nextNumber = rows.reduce((m, r) => Math.max(m, r.table_number), 0) + 1;
+
+  async function addTable(e: React.FormEvent) {
+    e.preventDefault();
+    if (adding) return;
+    const n = num.trim() === "" ? nextNumber : Number(num);
+    if (!Number.isInteger(n) || n < 1) { setNotice({ ok: false, text: "Nomor meja harus bilangan bulat mulai dari 1." }); return; }
+    if (rows.some((r) => r.table_number === n)) { setNotice({ ok: false, text: "Nomor meja sudah dipakai. Pilih nomor lain." }); return; }
+    setAdding(true); setNotice(null);
+    const { error } = await supabase.rpc("admin_create_table", { p_number: n });
+    setAdding(false);
+    if (error) { setNotice({ ok: false, text: errText(error.message) }); return; }
+    setNum(""); setNotice({ ok: true, text: "Meja baru ditambahkan." });
+    load();
+  }
 
   async function call(fn: string, args: Record<string, unknown>) {
     const { error } = await supabase.rpc(fn, args);
@@ -84,10 +106,15 @@ export function AdminLiveTables() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <input className="input max-w-[10rem]" type="number" min={1} placeholder="Table no." value={num} onChange={(e) => setNum(e.target.value)} />
-        <button className="btn-secondary max-w-[10rem]" onClick={() => num && call("admin_create_table", { p_number: Number(num) }).then(() => setNum(""))}>Add table</button>
-      </div>
+      <form onSubmit={addTable} className="space-y-2">
+        <div className="flex gap-2">
+          <input className="input max-w-[10rem]" type="number" min={1} step={1} placeholder="Table no." aria-label="Table no." value={num} onChange={(e) => { setNum(e.target.value); setNotice(null); }} />
+          <button type="submit" className="btn-secondary max-w-[10rem]" disabled={adding}>{adding ? "Menambah…" : "Add table"}</button>
+        </div>
+        <p className="text-xs text-muted">Kosongkan nomor untuk menambah meja berikutnya.</p>
+        {notice && <p role={notice.ok ? "status" : "alert"} className={`text-sm font-semibold ${notice.ok ? "text-pos" : "text-neg"}`}>{notice.text}</p>}
+      </form>
+      {loadError && <p role="alert" className="card text-sm text-neg">Gagal memuat daftar meja: {loadError}. Jika pesan ini menyebut kolom atau fungsi yang tidak ada, jalankan migrasi database terbaru (supabase/migration_002 sampai terbaru).</p>}
       <div className="grid gap-4 lg:grid-cols-2">
         {rows.map((r) => {
           const g = r.games;
