@@ -49,7 +49,7 @@ describe("the same hand scores differently per ruleset", () => {
     expect(ids(calculateScore(input("classic", h, "5s")))).not.toContain("pair-258");
     for (const r of ["new6", "new18"] as const) { const got = ids(calculateScore(input(r, h, "5s"))); expect(got).toContain("pair-258"); expect(got).toContain("single-wait"); }
   });
-  it("Double Chow only in New 18", () => {
+  it("Double Chi only in New 18", () => {
     const h = "123m 123m 456p 789s 55p";
     expect(ids(calculateScore(input("new6", h, "5p")))).not.toContain("double-chow");
     expect(ids(calculateScore(input("new18", h, "5p")))).toContain("double-chow");
@@ -92,7 +92,7 @@ describe("the same hand scores differently per ruleset", () => {
 });
 
 describe("stacking, conflicts and cap", () => {
-  it("Self Draw After Kong adds one faan only when manually checked on a Self Draw", () => {
+  it("Self Draw After Gong adds one faan only when manually checked on a Self Draw", () => {
     const h = "123m 456p 789s 111p 55s";
     expect(ids(calculateScore(input("new18", h, "5s", { winningMethod: "SELF_DRAW", manualFan: ["self-draw-after-kong"] })))).toContain("self-draw-after-kong");
     expect(ids(calculateScore(input("new18", h, "5s", { winningMethod: "DISCARD", manualFan: ["self-draw-after-kong"] })))).not.toContain("self-draw-after-kong");
@@ -101,10 +101,10 @@ describe("stacking, conflicts and cap", () => {
     const r = calculateScore(input("new18", "123m 456m 789m 234m 55m", "5m"));
     expect(ids(r)).toContain("full-flush"); expect(ids(r)).not.toContain("half-flush");
   });
-  it("Double Double Chows replaces Double Chow", () => {
+  it("Double Double Chis replaces Double Chi", () => {
     const r = calculateScore(input("new18", "123m 123m 456m 456m 55p", "5p"));
     expect(ids(r)).toContain("double-double-chows"); expect(ids(r)).not.toContain("double-chow");
-    expect(r.excludedFan.find((e) => e.id === "double-chow")?.reason).toMatch(/Double Chow/);
+    expect(r.excludedFan.find((e) => e.id === "double-chow")?.reason).toMatch(/Double Chi/);
   });
   it("Orphans (10) replaces Pure Orphans and All Pongs", () => {
     const r = calculateScore(input("new18", "111m 999m 111p 999p 11s", "1s"));
@@ -130,7 +130,7 @@ describe("stacking, conflicts and cap", () => {
     expect(ids(calculateScore(input("new18", "111m 222p 333s 456p 55s", "3s")))).not.toContain("three-concealed-pungs");
     expect(ids(calculateScore(input("new18", "111m 222p 333s 456p 55s", "3s", { winningMethod: "SELF_DRAW" }))).includes("three-concealed-pungs")).toBe(true);
   });
-  it("Four into One needs a pung and a chow sharing the 4 copies", () => {
+  it("Four into One needs a pung and a chi sharing the 4 copies", () => {
     expect(ids(calculateScore(input("new18", "111m 123m 456p 789s 55p", "5p")))).toContain("four-into-one");
   });
 });

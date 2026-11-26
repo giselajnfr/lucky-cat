@@ -8,12 +8,12 @@ const input = (concealedTiles: PlayTile[], over: Partial<WinningHandInput> = {})
 });
 const ids = (r: ReturnType<typeof calculateScore>) => r.detectedFan.map((f) => f.id);
 
-describe("kongs are recognised from the tile count", () => {
-  it("14 tiles: no kong, even with four of a kind (111 + a 1 in a chow)", () => {
+describe("gongs are recognised from the tile count", () => {
+  it("14 tiles: no gong, even with four of a kind (111 + a 1 in a chi)", () => {
     const c = meldCandidates(T("111m 1m 23m 456p 789s 55p"));
     expect(c.length).toBe(1); expect(c[0].melds.length).toBe(0); expect(c[0].concealed.length).toBe(14);
   });
-  it("15 tiles with one four-of-a-kind: that group is the kong", () => {
+  it("15 tiles with one four-of-a-kind: that group is the gong", () => {
     const c = meldCandidates(T("1111m 456p 789s 234s 55p"));
     expect(c.length).toBe(1); expect(c[0].melds).toEqual([{ type: "KONG", tiles: ["1m", "1m", "1m", "1m"], exposed: false }]); expect(c[0].concealed.length).toBe(11);
   });
@@ -22,7 +22,7 @@ describe("kongs are recognised from the tile count", () => {
     expect(meldCandidates(t)).toEqual([]);
     expect(maxTilesFor(T("123m 456p 789s 234s 55p 66s"))).toBe(14);
   });
-  it("16 tiles: two kongs", () => {
+  it("16 tiles: two gongs", () => {
     const c = meldCandidates(T("1111m 2222p 789s 234s 55p"));
     expect(c.length).toBe(1); expect(c[0].melds.length).toBe(2); expect(c[0].concealed.length).toBe(8);
   });
@@ -34,7 +34,7 @@ describe("kongs are recognised from the tile count", () => {
   });
 });
 
-describe("chows and pongs need no declaring", () => {
+describe("chis and pongs need no declaring", () => {
   it("a flat concealed hand scores exactly like the same hand with declared concealed sets", () => {
     const flat = T("123m 222s 999p 456s 77p");
     const r = calculateScore(input(flat));
@@ -42,7 +42,7 @@ describe("chows and pongs need no declaring", () => {
     const declared = calculateScore(input(T("123m 456s 77p"), { melds: parseMelds("P:2s P:9p"), winningTile: "7p" }));
     expect(r.totalFan).toBe(declared.totalFan);
   });
-  it("a kong found from 15 tiles scores like a declared concealed kong", () => {
+  it("a gong found from 15 tiles scores like a declared concealed gong", () => {
     const flat = T("1111m 456p 789s 234s 55p");
     const cand = meldCandidates(flat)[0];
     const viaFlat = calculateScore(input(cand.concealed, { melds: cand.melds, winningTile: "5p" }));

@@ -8,10 +8,10 @@ export function validateMeld(m: Meld): string | null {
   if (m.type === "CHOW") {
     const ok = t.length === 3 && t.every((x) => isNumbered(x) && suitOf(x) === suitOf(t[0])) &&
       [...t].map(rankOf).sort((a, b) => a - b).every((r, i, a) => i === 0 || r === a[i - 1] + 1);
-    return ok ? null : `Invalid Chow: ${t.join(" ")}`;
+    return ok ? null : `Invalid Chi: ${t.join(" ")}`;
   }
-  const size = m.type === "PUNG" ? 3 : 4; // a Kong has 4 physical tiles but is ONE logical set
-  return t.length === size && t.every((x) => x === t[0]) ? null : `Invalid ${m.type === "PUNG" ? "Pung" : "Kong"}: ${t.join(" ")}`;
+  const size = m.type === "PUNG" ? 3 : 4; // a Gong has 4 physical tiles but is ONE logical set
+  return t.length === size && t.every((x) => x === t[0]) ? null : `Invalid ${m.type === "PUNG" ? "Pung" : "Gong"}: ${t.join(" ")}`;
 }
 
 export function validateHand(input: WinningHandInput): { errors: string[]; decompositions: HandDecomposition[] } {
@@ -30,7 +30,7 @@ export function validateHand(input: WinningHandInput): { errors: string[]; decom
   for (const [tile, n] of Object.entries(countTiles(all)))
     if (n > 4) errors.push(`Too many copies of the same tile: ${n}× ${tile} (max 4)`);
   if (!concealedTiles.includes(winningTile)) errors.push("Winning tile is missing from the hand");
-  if (input.isRobbingKong && input.winningMethod !== "DISCARD") errors.push("Robbing a Kong is only possible on a discard win");
+  if (input.isRobbingKong && input.winningMethod !== "DISCARD") errors.push("Robbing a Gong is only possible on a discard win");
 
   const expected = 3 * (4 - melds.length) + 2;
   if (concealedTiles.length !== expected)

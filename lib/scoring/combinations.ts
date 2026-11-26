@@ -5,9 +5,9 @@ export type Split = { sets: Meld[]; pair: PlayTile[] };
 
 /**
  * Backtracking search for every way to split `concealed` into `setCount` sets + 1 pair.
- * Only the concealed tiles are split: declared melds (incl. Kongs) are already fixed sets.
+ * Only the concealed tiles are split: declared melds (incl. Gongs) are already fixed sets.
  * Rule of thumb: always resolve the LOWEST remaining tile — it can only be the start of a
- * Pung or the bottom of a Chow — so each split is generated exactly once.
+ * Pung or the bottom of a Chi — so each split is generated exactly once.
  */
 export function findDecompositions(concealed: PlayTile[], setCount: number): Split[] {
   const counts = countTiles(concealed);

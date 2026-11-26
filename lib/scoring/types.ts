@@ -11,7 +11,7 @@ export type HandKind = "STANDARD" | "SEVEN_PAIRS" | "THIRTEEN_ORPHANS";
 export type HandDecomposition = { kind: HandKind; sets: Meld[]; pair: PlayTile[] };
 export type WinMethod = "SELF_DRAW" | "DISCARD";
 
-/** How the winning tile completed the hand. single = pair (eyes) wait, closed = middle of a chow, edge = 3 of 123 / 7 of 789, twoSided = open-ended chow wait, dualPung = waiting on two pungs. */
+/** How the winning tile completed the hand. single = pair (eyes) wait, closed = middle of a chi, edge = 3 of 123 / 7 of 789, twoSided = open-ended chi wait, dualPung = waiting on two pungs. */
 export type WaitType = "single" | "closed" | "edge" | "twoSided" | "dualPung";
 export type RulesetId = "classic" | "new6" | "new18";
 /** A conflict: when `rule` is detected, the rules in `supersedes` are NOT counted (they are already included, or the two may not stack). */

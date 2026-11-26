@@ -26,13 +26,13 @@ describe("single source of truth: HK18 table", () => {
     expect(CFG.minimumFan).toBe(3); expect(CFG.maximumFan).toBe(null);
   });
   it("every rule's tile example is a valid hand that actually triggers that rule", () => {
-    for (const r of FAN_TABLE.filter((x) => x.example)) {   // rules ticked by hand (e.g. Self Draw After Kong) have no tile example
+    for (const r of FAN_TABLE.filter((x) => x.example)) {   // rules ticked by hand (e.g. Self Draw After Gong) have no tile example
       const res = calculateScore(exampleToInput(r.example!));
       expect(res.errors, `${r.id}: ${res.errors.join()}`).toEqual([]);
       expect(ids(res), r.id).toContain(r.id);
     }
   });
-  it("pattern examples show a complete 14-tile hand (kongs aside)", () => {
+  it("pattern examples show a complete 14-tile hand (gongs aside)", () => {
     for (const r of FAN_TABLE.filter((x) => x.category === "pattern" && x.id !== "four-kongs")) {
       const i = exampleToInput(r.example!);
       expect(i.concealedTiles.length + i.melds.length * 3, r.id).toBe(14);
@@ -48,13 +48,13 @@ describe("validation", () => {
     expect(calculateScore(hand("1m 1m 1m 1m 1m 2m 3m 4m 5m 6m 7m 8m 9m 9m")).errors.join()).toContain("Too many copies"));
   it("rejects a missing winning tile", () => expect(calculateScore(hand("123m 456m 789m 222p EE", { winningTile: "5s" })).errors.join()).toContain("Winning tile is missing"));
   it("rejects a wrong tile count", () => expect(calculateScore(hand("123m 456m 789m EE")).errors.join()).toContain("Invalid tile count"));
-  it("rejects robbing a kong on a self draw", () =>
-    expect(calculateScore(hand("123m 456m 789m 222p EE", { winningMethod: "SELF_DRAW", isRobbingKong: true })).errors.join()).toContain("Robbing a Kong"));
+  it("rejects robbing a gong on a self draw", () =>
+    expect(calculateScore(hand("123m 456m 789m 222p EE", { winningMethod: "SELF_DRAW", isRobbingKong: true })).errors.join()).toContain("Robbing a Gong"));
   it("rejects duplicate flowers and unknown tiles", () => {
     expect(calculateScore(hand("123m 456m 789m 222p EE", { flowers: ["F1", "F1"] })).errors.join()).toContain("Duplicate");
     expect(() => T("123x")).toThrow();
   });
-  it("treats a Kong as one set", () => {
+  it("treats a Gong as one set", () => {
     const r = calculateScore(hand("123m 456m 789p EE", { winningTile: "7p", melds: parseMelds("K:RD") }));
     expect(r.valid).toBe(true); expect(ids(r)).toContain("dragon-pong");
   });
@@ -80,7 +80,7 @@ describe("minimum 3 faan", () => {
   });
   it("chicken hand reaching 3 only via bonus faan is a config switch", () => {
     const base = hand("123m 456p 789s 111p 55s", { winningTile: "5s", winningMethod: "SELF_DRAW", isLastTile: true });
-    const bonus = { ...base, manualFan: ["self-draw-after-kong"] };   // self draw 1 + last tile 1 + after kong 1 = 3 (No Flower is added afterwards)
+    const bonus = { ...base, manualFan: ["self-draw-after-kong"] };   // self draw 1 + last tile 1 + after gong 1 = 3 (No Flower is added afterwards)
     expect(calculateScore(bonus).totalFan).toBe(4); expect(calculateScore(bonus).canRecord).toBe(true);
     expect(calculateScore(base).canRecord).toBe(false);   // flower points alone cannot reach the minimum
     expect(calculateScore({ ...bonus, gameConfig: { ...CFG, chickenHandCanWinOnBonusFaan: false } }).canRecord).toBe(false);
@@ -94,11 +94,11 @@ describe("additional faan and stacking", () => {
     const dc = calculateScore(hand("123m 456p 789s 111p 55s", { winningTile: "5s" }));
     expect(ids(dc)).toContain("concealed-hand"); expect(ids(dc)).not.toContain("self-draw");
   });
-  it("concealed hand is lost by an exposed meld, kept by a concealed kong", () => {
+  it("concealed hand is lost by an exposed meld, kept by a concealed gong", () => {
     const exposed = calculateScore(hand("123m 456p 55s", { winningTile: "5s", melds: parseMelds("+P:RD +C:789s") }));
     expect(ids(exposed)).not.toContain("concealed-hand");
-    const kong = calculateScore(hand("123m 456p 55s", { winningTile: "5s", melds: parseMelds("K:RD C:789s") }));
-    expect(ids(kong)).toContain("concealed-hand");
+    const gong = calculateScore(hand("123m 456p 55s", { winningTile: "5s", melds: parseMelds("K:RD C:789s") }));
+    expect(ids(gong)).toContain("concealed-hand");
   });
   it("seat wind and round wind both count when both apply (East seat, East round)", () => {
     const r = calculateScore(hand("EEE 123m 456p 789s 55p", { winningTile: "5p", winnerSeatWind: "E", roundWind: "E" }));
@@ -108,7 +108,7 @@ describe("additional faan and stacking", () => {
     const r = calculateScore(hand("SSS 123m 456p 789s 55p", { winningTile: "5p", winnerSeatWind: "E", roundWind: "N" }));
     expect(ids(r)).not.toContain("seat-wind"); expect(ids(r)).not.toContain("round-wind");
   });
-  it("counts one faan per dragon pong/kong", () => {
+  it("counts one faan per dragon pong/gong", () => {
     const r = calculateScore(hand("RD RD RD GD GD GD 123m 456p 22s", { winningTile: "2s" }));
     expect(fanOf(r, "dragon-pong")).toBe(2);
   });
@@ -125,7 +125,7 @@ describe("additional faan and stacking", () => {
     const r = calculateScore(hand("123m 456p 789s 111p 55s", { winningTile: "5s", flowers: ["F3"] }));
     expect(ids(r)).not.toContain("no-flower");
   });
-  it("last tile and robbing kong", () => {
+  it("last tile and robbing gong", () => {
     expect(ids(calculateScore(hand("123m 456p 789s 111p 55s", { winningTile: "5s", isLastTile: true })))).toContain("last-tile");
     expect(ids(calculateScore(hand("123m 456p 789s 111p 55s", { winningTile: "5s", isRobbingKong: true })))).toContain("robbing-kong");
   });
@@ -139,7 +139,7 @@ describe("additional faan and stacking", () => {
 
 describe("hand patterns", () => {
   const pat = (id: string, tiles: string, o: Partial<WinningHandInput> = {}) => expect(ids(calculateScore(hand(tiles, o)))).toContain(id);
-  it("all chows requires a plain pair", () => {
+  it("all chis requires a plain pair", () => {
     pat("all-chows", "123m 456m 234p 678s 55p");
     expect(ids(calculateScore(hand("123m 456m 234p 678s RD RD")))).not.toContain("all-chows");
     expect(ids(calculateScore(hand("123m 456m 234p 678s EE", { winnerSeatWind: "E" })))).not.toContain("all-chows");
@@ -190,7 +190,7 @@ describe("hand patterns", () => {
     expect(ids(calculateScore(hand("123m 456m 789m 234m 55m")))).not.toContain("nine-gates");
     expect(ids(calculateScore(hand("1112345678999m 1m", { winningTile: "1m" })))).toContain("nine-gates");
   });
-  it("four kongs", () => {
+  it("four gongs", () => {
     const r = calculateScore(hand("55s", { winningTile: "5s", melds: parseMelds("+K:1m +K:RD K:9p +K:E") }));
     expect(ids(r)).toContain("four-kongs"); expect(ids(r)).not.toContain("all-pongs");
   });

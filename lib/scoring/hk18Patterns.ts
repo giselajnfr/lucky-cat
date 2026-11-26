@@ -27,8 +27,8 @@ const pungsOf = (c: ScoringContext) => (std(c) ? c.sets.filter((s) => s.type !==
 const pungHas = (c: ScoringContext, t: string) => pungsOf(c).some((s) => s.tiles[0] === t);
 const chowHas = (c: ScoringContext, t: string) => chowsOf(c).some((s) => s.tiles[0] === t);
 const SU = ["m", "s", "p"];
-/** Pungs/kongs that are concealed. A pung finished by the winning tile off a discard is exposed. If the player only flagged
- *  "there is an open set" (we do not know which), one set is assumed open, and it is a chow when the hand has one. */
+/** Pungs/gongs that are concealed. A pung finished by the winning tile off a discard is exposed. If the player only flagged
+ *  "there is an open set" (we do not know which), one set is assumed open, and it is a chi when the hand has one. */
 export function concealedPungCount(c: ScoringContext): number {
   if (!std(c)) return 0;
   let n = 0;
@@ -52,7 +52,7 @@ export const PATTERN_CHECKS: Record<string, Check> = {
   "all-simples": (c) => c.allTiles.every((t) => isNumbered(t) && rankOf(t) >= 2 && rankOf(t) <= 8),
   "pure-straight": (c) => std(c) && ["m", "s", "p"].some((su) => [1, 4, 7].every((r) => c.sets.some((s) => s.type === "CHOW" && s.tiles[0] === `${r}${su}`))),
   "all-pongs": (c) => std(c) && c.sets.every((s) => s.type !== "CHOW"),
-  // Mixed / Pure Orphans: EVERY set and the pair contains a terminal (1/9) or honor. A 123 or 789 chow counts.
+  // Mixed / Pure Orphans: EVERY set and the pair contains a terminal (1/9) or honor. A 123 or 789 chi counts.
   "mixed-orphans": (c) => std(c) ? groups(c).every((g) => g.some((t) => isTerminal(t) || isHonor(t))) && c.allTiles.some(isHonor)
     : c.allTiles.every((t) => isTerminal(t) || isHonor(t)) && c.allTiles.some(isHonor) && c.allTiles.some(isTerminal),
   "pure-orphans": (c) => std(c) && groups(c).every((g) => g.some(isTerminal)) && !c.allTiles.some(isHonor),
@@ -103,7 +103,7 @@ export const PATTERN_CHECKS: Record<string, Check> = {
   "earthly-hand": (c) => !!c.manual?.includes("earthly-hand") && !c.isDealer && c.method === "DISCARD",
   "fully-exposed": (c) => !!c.manual?.includes("fully-exposed") && c.method === "DISCARD",
   "all-concealed-triplets": (c) => std(c) && c.sets.every((s) => s.type !== "CHOW") && concealedPungCount(c) === 4,
-  // Four identical tiles split between one pung and one chow (not a kong).
+  // Four identical tiles split between one pung and one chi (not a gong).
   "four-into-one": (c) => std(c) && [...new Set(c.allTiles)].some((t) => c.allTiles.filter((x) => x === t).length === 4 &&
     !c.sets.some((s) => s.type === "KONG" && s.tiles[0] === t) && pungHas(c, t) && c.sets.some((s) => s.type === "CHOW" && s.tiles.includes(t as PlayTile))),
   // ---- Suits ----
@@ -122,26 +122,26 @@ const setStr = (s: { tiles: string[] }) => s.tiles.join("");
 export const PATTERN_WHY: Record<string, (c: ScoringContext) => string> = {
   "pair-258": (c) => `Pasangan ${c.pair.join("")} adalah angka 2, 5 atau 8`,
   "single-wait": (c) => c.config.singleWaitMode === "only-one-tile" ? "Hanya satu kartu yang bisa melengkapi tangan" : `Kartu menang ${c.winningTile} melengkapi pasangan (menunggu pasangan)`,
-  "double-chow": (c) => `Dua chow sama: ${L(chowsOf(c).map(setStr))}`,
-  "double-double-chows": (c) => `Dua pasang chow kembar: ${L(chowsOf(c).map(setStr))}`,
-  "min-max-chow": (c) => `Chow 123 dan 789 satu jenis (${SU.find((su) => chowHas(c, `1${su}`) && chowHas(c, `7${su}`)) ?? ""})`,
+  "double-chow": (c) => `Dua chi sama: ${L(chowsOf(c).map(setStr))}`,
+  "double-double-chows": (c) => `Dua pasang chi kembar: ${L(chowsOf(c).map(setStr))}`,
+  "min-max-chow": (c) => `Chi 123 dan 789 satu jenis (${SU.find((su) => chowHas(c, `1${su}`) && chowHas(c, `7${su}`)) ?? ""})`,
   "min-max-pung": (c) => `Pong 1 dan pong 9 satu jenis (${SU.find((su) => pungHas(c, `1${su}`) && pungHas(c, `9${su}`)) ?? ""})`,
-  "three-suits-chow": () => "Chow yang sama di ketiga jenis",
+  "three-suits-chow": () => "Chi yang sama di ketiga jenis",
   "three-suits-pung": () => "Pong angka yang sama di ketiga jenis",
   "three-sequence-pung": () => "Tiga pong berurutan satu jenis",
   "four-sequence-pung": () => "Empat pong berurutan satu jenis",
-  "three-concealed-pungs": (c) => c.manual ? "Tiga pong/kong tertutup (dicentang pemain)" : `${concealedPungCount(c)} pong tertutup`,
+  "three-concealed-pungs": (c) => c.manual ? "Tiga pong/gong tertutup (dicentang pemain)" : `${concealedPungCount(c)} pong tertutup`,
   "heavenly-hand": () => "Dong menang dengan tangan awal",
   "earthly-hand": () => "Pemain non-dong menang dari buangan pertama dong",
   "fully-exposed": () => "Semua set terbuka, menang dari buangan untuk melengkapi pasangan",
   "all-concealed-triplets": () => "Keempat set pong tertutup",
-  "four-into-one": () => "Empat kartu sama terbagi pada satu pong dan satu chow",
+  "four-into-one": () => "Empat kartu sama terbagi pada satu pong dan satu chi",
   "lacking-a-suit": () => "Hanya dua jenis angka, tanpa kartu kehormatan",
   "all-types": () => "Ketiga jenis angka plus angin dan naga",
   "fully-concealed": () => "Self Draw tanpa set terbuka",
   "full-flowers": (c) => `Lengkap 4 bunga atau 4 musim (${c.flowers.join(" ")})`,
   "eight-flowers": () => "Delapan kartu bunga dan musim",
-  "all-terminals": () => "Semua set pong/kong dari kartu 1 atau 9, pasangan 1 atau 9",
+  "all-terminals": () => "Semua set pong/gong dari kartu 1 atau 9, pasangan 1 atau 9",
   "mixed-orphans": () => "Setiap set dan pasangan memuat kartu 1/9 atau kehormatan, ada kehormatan",
   "pure-orphans": () => "Setiap set dan pasangan memuat kartu 1 atau 9, tanpa kehormatan",
 };

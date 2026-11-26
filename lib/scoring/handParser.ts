@@ -29,7 +29,7 @@ export function parseTiles(s: string): PlayTile[] {
   return out as PlayTile[];
 }
 
-/** "+P:RD K:5m +C:123m" -> melds. "+" marks an exposed meld; P=pung C=chow K=kong. */
+/** "+P:RD K:5m +C:123m" -> melds. "+" marks an exposed meld; P=pung C=chi K=gong. */
 export function parseMelds(s = ""): Meld[] {
   return s.trim().split(/\s+/).filter(Boolean).map((tok) => {
     const m = /^(\+?)([PCK]):(.+)$/.exec(tok);

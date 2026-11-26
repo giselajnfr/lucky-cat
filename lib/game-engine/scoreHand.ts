@@ -10,7 +10,7 @@ export type HandSubmission = {
   isLastTile?: boolean; isRobbingKong?: boolean;
   /** faan the players ticked by hand (undefined = hand saved before this existed) */
   manualFan?: string[];
-  /** a chow/pong/kong was taken from a discard (the tiles are one flat list, so the player says so) */
+  /** a chi/pong/gong was taken from a discard (the tiles are one flat list, so the player says so) */
   openMelds?: boolean;
 };
 

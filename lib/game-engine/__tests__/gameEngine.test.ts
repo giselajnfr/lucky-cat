@@ -86,7 +86,7 @@ describe("scoreHandForGame (server-side authority)", () => {
   it("rejects invalid tiles server-side", () => {
     expect("error" in scoreHandForGame(initialState(), players, std({ concealedTiles: T("111m 999p 222s 555p 3s 4s") }), CFG)).toBe(true);
   });
-  it("kong melds work end to end", () => {
+  it("gong melds work end to end", () => {
     const r = scoreHandForGame(initialState(), players, std({ concealedTiles: T("123m 55s"), winningTile: "5s", melds: parseMelds("+K:RD +K:GD C:789s") }), CFG);
     expect("error" in r).toBe(false);
   });

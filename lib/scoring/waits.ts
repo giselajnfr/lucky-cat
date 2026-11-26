@@ -5,7 +5,7 @@ import type { HandDecomposition, PlayTile, WaitType, WinningHandInput } from "./
 /**
  * Which kinds of wait could the winning tile have filled in THIS reading of the hand?
  * Only the concealed part of the hand can hold the winning tile (declared melds are fixed sets).
- * A chow wait is read from the winning tile's place in the chow:
+ * A chi wait is read from the winning tile's place in the chi:
  *   middle (4 in 345) -> closed (kanchan) · 3 in 123 or 7 in 789 -> edge (penchan) · otherwise -> two-sided (ryanmen).
  * Seven Pairs: the last pair is a single wait. Thirteen Orphans: no wait type is assigned.
  * A tile that fits several places gives several waits; rules that pay a wait use the one that favours the winner.

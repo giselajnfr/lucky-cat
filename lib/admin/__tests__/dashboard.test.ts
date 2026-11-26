@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { setRequestLang } from "@/lib/i18n/locale";
 import {
   attentionItems, avgGameMs, buildActivity, dayStartMs, describeAudit, distinctPlayers, fmtDur, handsPerHour, lastHandByGame,
   tableCounts, tableState, todaySummary, whenLabel, type DashGame, type DashTable, type TodayHand,
@@ -90,7 +91,8 @@ describe("today's play", () => {
     hand({ id: "3", winner: { player_name: "Sari" }, total_fan: 5, hand_fan_details: [{ fan_name: "Full Flush", category: "pattern" }] }),
     hand({ id: "4", winner: null, winning_method: "draw", total_fan: 0, final_points: 0 }),
   ];
-  const s = todaySummary(hands);
+  // rule names are translated by the current language (Indonesian when nothing is set); these assertions use the English names
+  const s = (() => { setRequestLang("en"); try { return todaySummary(hands); } finally { setRequestLang("id"); } })();
   it("separates wins from draws", () => expect([s.total, s.wins, s.draws, s.selfDraw]).toEqual([4, 3, 1, 1]));
   it("ranks players by wins, merging the same name typed differently", () => {
     expect(s.topPlayers[0]).toEqual({ name: "Budi", wins: 2, bestFan: 8, points: 27 });
