@@ -9,7 +9,7 @@ import { buildScorecardSvg, downloadBlob, shareBlob, svgToPng } from "@/lib/scor
 import { ruleById } from "@/lib/scoring";
 import type { WaitType } from "@/lib/scoring";
 
-const WAIT_LABEL: Record<WaitType, string> = { single: "Single / Pair Wait (menunggu pasangan)", closed: "Closed Wait (tengah chow)", edge: "Edge Wait (tepi chow)", twoSided: "Two-Sided Wait", dualPung: "Dual Pung Wait" };
+const WAIT_LABEL: Record<WaitType, string> = { single: "Single / Pair Wait (menunggu pasangan)", closed: "Closed Wait (tengah chi)", edge: "Edge Wait (tepi chi)", twoSided: "Two-Sided Wait", dualPung: "Dual Pung Wait" };
 
 /** Result display, in the order: total · method & seat · tiles · itemised breakdown. */
 export function ScoreCard({ payload, winnerName, title }: { payload: CalcPayload; winnerName?: string; title?: string }) {

@@ -47,7 +47,7 @@ export function HandView({ concealed, melds, flowers = [], width = 30, balanced 
     <div className="space-y-2">
       <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
         {melds.map((m, i) => (
-          <div key={i} className="flex gap-0.5 rounded-lg bg-base/40 p-1" aria-label={m.type === "KONG" ? "Kong" : m.type === "PUNG" ? "Pong" : "Chow"}>
+          <div key={i} className="flex gap-0.5 rounded-lg bg-base/40 p-1" aria-label={m.type === "KONG" ? "Gong" : m.type === "PUNG" ? "Pong" : "Chi"}>
             {m.tiles.map((t, j) => <Tile key={j} t={t} width={width} onClick={onRemoveMeld ? () => onRemoveMeld(i) : undefined} label={`Hapus set ${i + 1}`} />)}
           </div>
         ))}

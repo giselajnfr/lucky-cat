@@ -20,16 +20,16 @@ export type CalcInitial = { concealed: PlayTile[]; melds: Meld[]; flowers: Bonus
 const EXTRA_TEXT: Record<string, { title: string; hint: string }> = {
   "self-draw": { title: "Menang sendiri (Self Draw)", hint: "Kartu kemenangan diambil sendiri dari tumpukan" },
   "last-tile": { title: "Kartu terakhir (Last Tile)", hint: "Menang dengan kartu terakhir" },
-  "robbing-kong": { title: "Merampas kong (Robbing Kong)", hint: "Menang dari kartu yang dipakai lawan untuk menambah kong. Hanya untuk menang dari buangan" },
-  "concealed-hand": { title: "Tangan tertutup (Concealed Hand)", hint: "Menang dari buangan tanpa ada set yang diambil dari buangan. Hilangkan centang jika ada chow, pong, atau kong yang kamu ambil dari buangan." },
-  "seat-wind": { title: "Pong angin kursi (Seat Wind)", hint: "Pong/kong angin yang sama dengan kursi pemenang" },
-  "round-wind": { title: "Pong angin ronde (Round Wind)", hint: "Pong/kong angin yang sama dengan ronde" },
+  "robbing-kong": { title: "Merampas gong (Robbing Gong)", hint: "Menang dari kartu yang dipakai lawan untuk menambah gong. Hanya untuk menang dari buangan" },
+  "concealed-hand": { title: "Tangan tertutup (Concealed Hand)", hint: "Menang dari buangan tanpa ada set yang diambil dari buangan. Hilangkan centang jika ada chi, pong, atau gong yang kamu ambil dari buangan." },
+  "seat-wind": { title: "Pong angin kursi (Seat Wind)", hint: "Pong/gong angin yang sama dengan kursi pemenang" },
+  "round-wind": { title: "Pong angin ronde (Round Wind)", hint: "Pong/gong angin yang sama dengan ronde" },
   "heavenly-hand": { title: "Heavenly Hand", hint: "Dong menang dengan tangan awalnya" },
   "earthly-hand": { title: "Earthly Hand", hint: "Pemain non-dong menang dari buangan pertama dong" },
   "fully-exposed": { title: "All from Others", hint: "Semua set dibuka dan menang dari buangan untuk melengkapi pasangan" },
-  "self-draw-after-kong": { title: "Self Draw After Kong", hint: "Menang dari kartu pengganti (replacement tile) setelah menyatakan kong" },
-  "three-concealed-pungs": { title: "Three Concealed Pungs", hint: "Tiga pong/kong tertutup. Pong yang diselesaikan kartu buangan dihitung terbuka" },
-  "dragon-pong": { title: "Pong naga (Dragon Pong/Kong)", hint: "Pong/kong naga merah, hijau, atau putih" },
+  "self-draw-after-kong": { title: "Self Draw After Gong", hint: "Menang dari kartu pengganti (replacement tile) setelah menyatakan gong" },
+  "three-concealed-pungs": { title: "Three Concealed Pungs", hint: "Tiga pong/gong tertutup. Pong yang diselesaikan kartu buangan dihitung terbuka" },
+  "dragon-pong": { title: "Pong naga (Dragon Pong/Gong)", hint: "Pong/gong naga merah, hijau, atau putih" },
   "suitable-flower": { title: "Bunga/musim sesuai kursi", hint: "Nomor sama dengan kursi, dihitung per kartu" },
   "no-flower": { title: "Tanpa bunga (No Flower)", hint: "Tidak punya kartu bunga atau musim" },
 };
@@ -47,8 +47,8 @@ type Props = {
 };
 
 export function HandCalculator({ config, initial, fixed, lockedMethod, onChange }: Props) {
-  // ONE flat list of tiles. Chows and pongs are found by the scoring engine; a kong is recognised from the tile count
-  // (14 tiles = no kong, 15 = one four-of-a-kind is a kong, 16 = two ...).
+  // ONE flat list of tiles. Chis and pongs are found by the scoring engine; a gong is recognised from the tile count
+  // (14 tiles = no gong, 15 = one four-of-a-kind is a gong, 16 = two ...).
   const [tiles, setTiles] = useState<PlayTile[]>(() => (initial ? flattenHand(initial.concealed, initial.melds) : []));
   const [flowers, setFlowers] = useState<BonusTile[]>(initial?.flowers ?? []);
   const [winning, setWinning] = useState<PlayTile | null>(initial?.winningTile ?? null);
@@ -69,7 +69,7 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
   const candidates = useMemo(() => meldCandidates(tiles), [tiles]);
   const complete = candidates.length > 0;
 
-  // Every way to read the tiles (which four-of-a-kind groups are the kongs) is scored; the best reading is used.
+  // Every way to read the tiles (which four-of-a-kind groups are the gongs) is scored; the best reading is used.
   const best = useMemo(() => {
     let top: { c: (typeof candidates)[number]; input: WinningHandInput; result: ScoringResult; win: PlayTile } | null = null;
     for (const c of candidates) {
@@ -95,7 +95,7 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
   function tap(t: PlayTile) {
     setNote(null);
     if (avail(t) <= 0) return;
-    if (tiles.length >= maxTiles) { setNote(tiles.length >= 14 ? "Kartu ke-15 dan seterusnya hanya untuk kong: butuh empat kartu yang sama di tangan." : null); return; }
+    if (tiles.length >= maxTiles) { setNote(tiles.length >= 14 ? "Kartu ke-15 dan seterusnya hanya untuk gong: butuh empat kartu yang sama di tangan." : null); return; }
     setTiles([...tiles, t]);
   }
   const removeTile = (t: string) => { const i = tiles.indexOf(t as PlayTile); if (i >= 0) setTiles(tiles.filter((_, k) => k !== i)); setNote(null); };
@@ -115,7 +115,7 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
       <section className="card space-y-3">
         <div className="flex items-baseline justify-between">
           <h2 className="section-label">Tangan kamu</h2>
-          <span className={`text-sm font-bold ${complete ? "text-cream" : "text-muted"}`}>{tiles.length < 14 ? `${tiles.length}/14 kartu` : `${tiles.length} kartu${shownMelds.length ? ` · ${shownMelds.length} kong` : ""}`}</span>
+          <span className={`text-sm font-bold ${complete ? "text-cream" : "text-muted"}`}>{tiles.length < 14 ? `${tiles.length}/14 kartu` : `${tiles.length} kartu${shownMelds.length ? ` · ${shownMelds.length} gong` : ""}`}</span>
         </div>
         {tiles.length ? (
           <HandView concealed={shownConcealed} melds={shownMelds.map((m) => ({ ...m, exposed: true }))} winningTile={effWin} flowers={flowers} onRemoveTile={removeTile} onRemoveMeld={(i) => removeKong(shownMelds[i].tiles[0])} />
@@ -134,7 +134,7 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
       </section>
 
       <section className="card space-y-3">
-        <p className="text-xs text-muted">Ketuk semua kartu di tanganmu, termasuk kartu kemenangan. Chow dan pong dikenali otomatis. Kong: tiap kong menambah satu kartu, jadi 15 kartu dengan empat kartu yang sama berarti ada satu kong.</p>
+        <p className="text-xs text-muted">Ketuk semua kartu di tanganmu, termasuk kartu kemenangan. Chi dan pong dikenali otomatis. Gong: tiap gong menambah satu kartu, jadi 15 kartu dengan empat kartu yang sama berarti ada satu gong.</p>
         {SUIT_ROWS.map((r) => (
           <div key={r.s}><p className="mb-1 text-xs font-semibold text-muted">{r.label}</p>{palette(ALL_PLAY_TILES.filter((t) => t.endsWith(r.s) && isNumbered(t)), "grid-cols-9")}</div>
         ))}
@@ -179,7 +179,7 @@ export function HandCalculator({ config, initial, fixed, lockedMethod, onChange 
             const blocked = (rule.id === "self-draw-after-kong" && effMethod !== "SELF_DRAW")
               || ((rule.id === "robbing-kong" || rule.id === "fully-exposed") && effMethod !== "DISCARD") || (rule.id === "concealed-hand" && effMethod !== "DISCARD" && !hasFC)
               || (rule.id === "heavenly-hand" && effSeat !== "E") || (rule.id === "earthly-hand" && (effSeat === "E" || effMethod !== "DISCARD"));
-            const blockedHint = rule.id === "self-draw-after-kong" ? "Hanya untuk Self Draw setelah menyatakan kong" : rule.id === "heavenly-hand" ? "Hanya untuk dong (kursi Timur)"
+            const blockedHint = rule.id === "self-draw-after-kong" ? "Hanya untuk Self Draw setelah menyatakan gong" : rule.id === "heavenly-hand" ? "Hanya untuk dong (kursi Timur)"
               : rule.id === "earthly-hand" ? "Hanya untuk pemain non-dong yang menang dari buangan" : "Hanya untuk menang dari buangan";
             const on = flag ? manual.includes(rule.id) && !blocked : rule.id === "last-tile" ? lastTile : rule.id === "robbing-kong" ? robbing && !blocked : rule.id === "concealed-hand" ? !opened && !blocked : rule.id === "self-draw-after-kong" ? manual.includes(rule.id) && !blocked : effMethod === "SELF_DRAW";
             const toggle = () => { if (flag) setManual(manual.includes(rule.id) ? manual.filter((x) => x !== rule.id) : [...manual, rule.id]); else if (rule.id === "last-tile") setLastTile(!lastTile); else if (rule.id === "robbing-kong") setRobbing(!robbing); else if (rule.id === "concealed-hand") setOpened(!opened); else if (rule.id === "self-draw-after-kong") setManual(manual.includes(rule.id) ? manual.filter((x) => x !== rule.id) : [...manual, rule.id]); else setMethod(effMethod === "SELF_DRAW" ? "DISCARD" : "SELF_DRAW"); };

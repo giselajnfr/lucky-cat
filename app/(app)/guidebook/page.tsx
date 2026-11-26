@@ -19,7 +19,7 @@ const row = (s: string, w = 46) => {
   const tiles = parseTiles(s);
   return <div className="flex w-full gap-1" style={{ maxWidth: tiles.length * (w + 4) }}>{tiles.map((t, i) => <div key={i} className="min-w-0 flex-1 [&>span]:block"><Tile t={t} fluid /></div>)}</div>;
 };
-/** Rule example in the order it is written: one block per set, the pair last (so chows read 123 123 456, never 112233). */
+/** Rule example in the order it is written: one block per set, the pair last (so chis read 123 123 456, never 112233). */
 function exampleGroups(hand: string): string[][] {
   const out: string[][] = [];
   for (const tok of hand.trim().split(/\s+/)) {
@@ -83,7 +83,7 @@ function AdditionalCard({ r }: { r: FanRuleConfig }) {
     <article key={d.key} id={`${r.id}-${d.key}`} className="card scroll-mt-4 !px-4 !py-3">
       <div className="flex items-baseline justify-between gap-3"><h3 className="text-lg font-extrabold leading-tight text-cream">{lang === "id" ? `Naga ${d.id}` : d.en}</h3>
         <span className="shrink-0 rounded-full bg-cream px-3 py-0.5 text-sm font-extrabold text-base">{t("guide.faan", { fan: r.fan })}</span></div>
-      <p className="mt-1 text-sm text-muted">{lang === "id" ? `Pong/kong naga ${d.id.toLowerCase()}.` : `Pong/kong of ${d.en.toLowerCase()}.`}</p>
+      <p className="mt-1 text-sm text-muted">{lang === "id" ? `Pong/gong naga ${d.id.toLowerCase()}.` : `Pong/gong of ${d.en.toLowerCase()}.`}</p>
       <div className="mt-2">{row(`${d.key} ${d.key} ${d.key}`, 34)}</div>
     </article>))}</>);
   const origin = HOUSE_RULE_IDS.includes(r.id) ? null : ruleOrigin(r.id);
